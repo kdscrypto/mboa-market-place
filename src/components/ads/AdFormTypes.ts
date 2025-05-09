@@ -1,4 +1,7 @@
 
+import { z } from "zod";
+import { adFormSchema } from "./AdFormValidation";
+
 export interface AdFormData {
   title: string;
   description: string;
@@ -11,6 +14,8 @@ export interface AdFormData {
   adType: string;
   images: File[];
 }
+
+export type AdFormSchemaType = z.infer<typeof adFormSchema>;
 
 export interface FormErrors {
   title?: string;

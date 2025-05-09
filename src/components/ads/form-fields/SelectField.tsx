@@ -7,6 +7,9 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Control } from "react-hook-form";
+import { AdFormData } from "../AdFormTypes";
 
 interface SelectOption {
   id: string | number;
@@ -16,53 +19,59 @@ interface SelectOption {
 
 interface SelectFieldProps {
   id: string;
-  value: string;
-  onValueChange: (value: string) => void;
+  name: keyof AdFormData;
   label: string;
   placeholder: string;
   options: SelectOption[];
   required?: boolean;
-  error?: string;
   disabled?: boolean;
+  control: Control<AdFormData>;
 }
 
 const SelectField = ({
   id,
-  value,
-  onValueChange,
+  name,
   label,
   placeholder,
   options,
   required = false,
-  error,
-  disabled = false
+  disabled = false,
+  control
 }: SelectFieldProps) => {
   return (
-    <div className="space-y-2">
-      <label htmlFor={id} className="block font-medium">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <Select 
-        value={value} 
-        onValueChange={onValueChange}
-        disabled={disabled}
-      >
-        <SelectTrigger className={error ? "border-red-500" : ""}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem 
-              key={option.id} 
-              value={option.value || option.id.toString()}
-            >
-              {option.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-    </div>
+    <FormField
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FormItem>
+          <FormLabel>
+            {label} {required && <span className="text-red-500">*</span>}
+          </FormLabel>
+          <Select
+            disabled={disabled}
+            onValueChange={field.onChange}
+            value={field.value}
+          >
+            <FormControl>
+              <SelectTrigger className={fieldState.error ? "border-red-500" : ""}>
+                <SelectValue placeholder={placeholder} />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {options.map((option) => (
+                <SelectItem
+                  key={option.id}
+                  value={option.value || option.id.toString()}
+                >
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 };
 

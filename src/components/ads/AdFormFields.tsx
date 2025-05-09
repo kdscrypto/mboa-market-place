@@ -6,22 +6,19 @@ import SelectField from "./form-fields/SelectField";
 import ContactFields from "./form-fields/ContactFields";
 import LocationFields from "./form-fields/LocationFields";
 import { categories } from "./LocationData";
-import { AdFormData, FormErrors } from "./AdFormTypes";
+import { Control } from "react-hook-form";
+import { AdFormData } from "./AdFormTypes";
 
 interface AdFormFieldsProps {
-  formData: AdFormData;
+  control: Control<AdFormData>;
   citiesList: string[];
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onSelectChange: (name: string, value: string) => void;
-  errors: FormErrors;
+  setCitiesList: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const AdFormFields = ({ 
-  formData, 
+  control, 
   citiesList, 
-  onInputChange, 
-  onSelectChange,
-  errors
+  setCitiesList 
 }: AdFormFieldsProps) => {
   return (
     <>
@@ -29,37 +26,32 @@ const AdFormFields = ({
       <InputField
         id="title"
         name="title"
-        value={formData.title}
-        onChange={onInputChange}
         label="Titre de l'annonce"
         placeholder="Décrivez votre article en quelques mots"
         required
         maxLength={100}
-        error={errors.title}
+        control={control}
       />
       
       {/* Description */}
       <TextareaField
         id="description"
         name="description"
-        value={formData.description}
-        onChange={onInputChange}
         label="Description"
         placeholder="Décrivez votre article, son état, ses caractéristiques..."
         rows={5}
-        error={errors.description}
+        control={control}
       />
       
       {/* Category */}
       <SelectField 
         id="category"
-        value={formData.category}
-        onValueChange={(value) => onSelectChange("category", value)}
+        name="category"
         label="Catégorie"
         placeholder="Sélectionnez une catégorie"
         options={categories}
         required
-        error={errors.category}
+        control={control}
       />
       
       {/* Price */}
@@ -67,29 +59,20 @@ const AdFormFields = ({
         id="price"
         name="price"
         type="number"
-        value={formData.price}
-        onChange={onInputChange}
         label="Prix (XAF)"
         placeholder="Prix en francs CFA"
-        error={errors.price}
         prefix="XAF"
+        control={control}
       />
       
       {/* Contact information */}
-      <ContactFields
-        phone={formData.phone}
-        whatsapp={formData.whatsapp}
-        onInputChange={onInputChange}
-        errors={errors}
-      />
+      <ContactFields control={control} />
       
       {/* Location */}
       <LocationFields
-        region={formData.region}
-        city={formData.city}
+        control={control}
         citiesList={citiesList}
-        onSelectChange={onSelectChange}
-        errors={errors}
+        setCitiesList={setCitiesList}
       />
     </>
   );

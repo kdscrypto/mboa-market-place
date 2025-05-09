@@ -1,36 +1,102 @@
 
-import React from "react";
+import React, { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import AdFormFields from "@/components/ads/AdFormFields";
 import AdPlanSelector from "@/components/ads/AdPlanSelector";
 import ImageUploader from "@/components/ads/ImageUploader";
 import AdPreviewDialog from "@/components/ads/AdPreviewDialog";
-import { useAdFormState } from "@/components/ads/useAdFormState";
-import { useFormValidation } from "@/components/ads/AdFormValidation";
 import { useAdSubmission } from "@/components/ads/AdFormSubmitter";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AdFormData } from "@/components/ads/AdFormTypes";
+import { adFormSchema } from "@/components/ads/AdFormValidation";
+import { useToast } from "@/hooks/use-toast";
 
 const CreateAd = () => {
-  const {
-    formData,
-    setFormData,
-    imageURLs,
-    citiesList,
-    showPreview,
-    setShowPreview,
-    isLoading,
-    setIsLoading,
-    maxImages,
-    handleInputChange,
-    handleSelectChange,
-    handleImageChange,
-    removeImage
-  } = useAdFormState();
+  const [imageURLs, setImageURLs] = useState<string[]>([]);
+  const [citiesList, setCitiesList] = useState<string[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const maxImages = 5;
+  const { toast } = useToast();
+  const { handleSubmit: handleAdSubmission } = useAdSubmission();
   
-  const { errors, handlePreview } = useFormValidation(formData);
-  const { handleSubmit } = useAdSubmission();
-
+  // Initialize form with react-hook-form and zod validation
+  const form = useForm<AdFormData>({
+    resolver: zodResolver(adFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      category: "",
+      price: "",
+      region: "",
+      city: "",
+      phone: "",
+      whatsapp: "",
+      adType: "standard",
+      images: []
+    }
+  });
+  
+  const { handleSubmit, setValue, watch } = form;
+  const formValues = watch();
+  
+  // Handle image change
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    // Check if adding these files would exceed the limit
+    if (formValues.images.length + files.length > maxImages) {
+      return;
+    }
+    
+    // Add new files to the state
+    const newFiles = Array.from(files);
+    setValue('images', [...formValues.images, ...newFiles]);
+    
+    // Create URLs for preview
+    const newImageURLs = newFiles.map(file => URL.createObjectURL(file));
+    setImageURLs([...imageURLs, ...newImageURLs]);
+  };
+  
+  // Remove image
+  const removeImage = (index: number) => {
+    // Remove image from both arrays
+    const newImages = formValues.images.filter((_, i) => i !== index);
+    const newImageURLs = imageURLs.filter((_, i) => i !== index);
+    
+    setValue('images', newImages);
+    setImageURLs(newImageURLs);
+  };
+  
+  // Handle preview
+  const onPreview = handleSubmit((data) => {
+    setShowPreview(true);
+  }, (errors) => {
+    // Scroll to the first error
+    const firstErrorElement = document.querySelector('.border-red-500');
+    if (firstErrorElement) {
+      firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    toast({
+      title: "Erreur de validation",
+      description: "Veuillez corriger les erreurs dans le formulaire.",
+      variant: "destructive"
+    });
+  });
+  
+  // Clean up object URLs when component unmounts
+  React.useEffect(() => {
+    return () => {
+      imageURLs.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [imageURLs]);
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -40,42 +106,43 @@ const CreateAd = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <h1 className="text-2xl font-bold mb-6">Publier une annonce</h1>
             
-            <form onSubmit={(e) => handlePreview(e, setShowPreview)} className="space-y-6">
-              {/* Core form fields */}
-              <AdFormFields 
-                formData={formData}
-                citiesList={citiesList}
-                onInputChange={handleInputChange}
-                onSelectChange={handleSelectChange}
-                errors={errors}
-              />
-              
-              {/* Ad Plans */}
-              <AdPlanSelector 
-                value={formData.adType}
-                onChange={(value) => setFormData({...formData, adType: value})}
-              />
-              
-              {/* Images */}
-              <ImageUploader 
-                images={formData.images}
-                imageURLs={imageURLs}
-                onImageChange={handleImageChange}
-                onRemoveImage={removeImage}
-                maxImages={maxImages}
-              />
-              {errors.images && <p className="text-red-500 text-sm -mt-4">{errors.images}</p>}
-              
-              {/* Submit Button */}
-              <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  className="w-full bg-mboa-orange hover:bg-mboa-orange/90 text-white py-3"
-                >
-                  Prévisualiser mon annonce
-                </Button>
-              </div>
-            </form>
+            <Form {...form}>
+              <form onSubmit={onPreview} className="space-y-6">
+                {/* Core form fields */}
+                <AdFormFields 
+                  control={form.control}
+                  citiesList={citiesList}
+                  setCitiesList={setCitiesList}
+                />
+                
+                {/* Ad Plans */}
+                <AdPlanSelector 
+                  value={formValues.adType}
+                  onChange={(value) => setValue('adType', value)}
+                />
+                
+                {/* Images */}
+                <ImageUploader 
+                  images={formValues.images}
+                  imageURLs={imageURLs}
+                  onImageChange={handleImageChange}
+                  onRemoveImage={removeImage}
+                  maxImages={maxImages}
+                />
+                {form.formState.errors.images && 
+                  <p className="text-red-500 text-sm -mt-4">{form.formState.errors.images.message as string}</p>}
+                
+                {/* Submit Button */}
+                <div className="pt-4">
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-mboa-orange hover:bg-mboa-orange/90 text-white py-3"
+                  >
+                    Prévisualiser mon annonce
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </div>
         </div>
       </main>
@@ -84,10 +151,10 @@ const CreateAd = () => {
       <AdPreviewDialog 
         open={showPreview}
         onOpenChange={setShowPreview}
-        formData={formData}
+        formData={formValues}
         imageURLs={imageURLs}
         isLoading={isLoading}
-        onSubmit={() => handleSubmit(formData, setShowPreview)}
+        onSubmit={() => handleAdSubmission(formValues, setShowPreview)}
       />
       
       <Footer />

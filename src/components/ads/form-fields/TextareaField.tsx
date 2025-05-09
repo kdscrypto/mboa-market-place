@@ -1,46 +1,51 @@
 
 import React from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Control } from "react-hook-form";
+import { AdFormData } from "../AdFormTypes";
 
 interface TextareaFieldProps {
   id: string;
-  name: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  name: keyof AdFormData;
   label: string;
   placeholder: string;
   required?: boolean;
   rows?: number;
-  error?: string;
+  control: Control<AdFormData>;
 }
 
 const TextareaField = ({
   id,
   name,
-  value,
-  onChange,
   label,
   placeholder,
   required = false,
   rows = 5,
-  error
+  control
 }: TextareaFieldProps) => {
   return (
-    <div className="space-y-2">
-      <label htmlFor={id} className="block font-medium">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <Textarea
-        id={id}
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        rows={rows}
-        className={error ? "border-red-500" : ""}
-      />
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-    </div>
+    <FormField
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FormItem>
+          <FormLabel>
+            {label} {required && <span className="text-red-500">*</span>}
+          </FormLabel>
+          <FormControl>
+            <Textarea
+              id={id}
+              placeholder={placeholder}
+              rows={rows}
+              className={fieldState.error ? "border-red-500" : ""}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 };
 
