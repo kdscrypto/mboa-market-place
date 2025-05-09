@@ -58,7 +58,8 @@ const LoginForm = () => {
         description: "Vous êtes maintenant connecté.",
         duration: 3000
       });
-      navigate("/");
+      // Redirect to user dashboard instead of homepage
+      navigate("/mes-annonces");
     } catch (error) {
       console.error("Erreur de connexion:", error);
       toast({

@@ -1,11 +1,29 @@
 
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { 
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash } from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Edit, Trash, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -39,6 +57,24 @@ const userAds = [
 
 const UserDashboard = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("ads");
+  
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/connexion");
+        return;
+      }
+      setUser(session.user);
+      setLoading(false);
+    };
+    
+    checkAuth();
+  }, [navigate]);
   
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -73,6 +109,32 @@ const UserDashboard = () => {
     });
   };
 
+  const handleProfileUpdate = (data: any) => {
+    // In a real app, this would connect to Supabase to update the user profile
+    console.log("Update profile", data);
+    toast({
+      title: "Fonctionnalité à venir",
+      description: "La mise à jour du profil sera implémentée avec Supabase.",
+      duration: 3000
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow py-8 bg-mboa-gray">
+          <div className="mboa-container max-w-5xl">
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-center">Chargement...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -94,10 +156,11 @@ const UserDashboard = () => {
             
             <Tabs defaultValue="all" className="w-full">
               <TabsList className="mb-6">
-                <TabsTrigger value="all">Toutes</TabsTrigger>
-                <TabsTrigger value="active">Actives</TabsTrigger>
-                <TabsTrigger value="sold">Vendues</TabsTrigger>
-                <TabsTrigger value="expired">Expirées</TabsTrigger>
+                <TabsTrigger value="all" onClick={() => setActiveTab("ads")}>Toutes</TabsTrigger>
+                <TabsTrigger value="active" onClick={() => setActiveTab("ads")}>Actives</TabsTrigger>
+                <TabsTrigger value="sold" onClick={() => setActiveTab("ads")}>Vendues</TabsTrigger>
+                <TabsTrigger value="expired" onClick={() => setActiveTab("ads")}>Expirées</TabsTrigger>
+                <TabsTrigger value="profile" onClick={() => setActiveTab("profile")}>Profil</TabsTrigger>
               </TabsList>
               
               {["all", "active", "sold", "expired"].map((tabValue) => (
@@ -206,6 +269,56 @@ const UserDashboard = () => {
                   </div>
                 </TabsContent>
               ))}
+              
+              <TabsContent value="profile">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Profil utilisateur</CardTitle>
+                    <CardDescription>
+                      Modifiez vos informations personnelles
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Nom d'utilisateur</label>
+                          <Input 
+                            value={user?.user_metadata?.username || ''}
+                            placeholder="Nom d'utilisateur"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Email</label>
+                          <Input 
+                            value={user?.email || ''}
+                            disabled
+                            className="bg-gray-100"
+                          />
+                          <p className="text-xs text-gray-500">L'email ne peut pas être modifié</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Téléphone</label>
+                          <Input 
+                            value={user?.user_metadata?.phone || ''}
+                            placeholder="Numéro de téléphone"
+                          />
+                        </div>
+                      </div>
+                    </form>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      onClick={() => handleProfileUpdate(user)}
+                      className="w-full bg-mboa-orange hover:bg-mboa-orange/90"
+                    >
+                      Mettre à jour le profil
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </TabsContent>
             </Tabs>
           </div>
         </div>

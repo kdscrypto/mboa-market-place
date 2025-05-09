@@ -1,16 +1,64 @@
 
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, User, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Temporary until we integrate Supabase auth
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session);
+      setUsername(session?.user?.user_metadata?.username || null);
+    });
+
+    // Initial session check
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+      setUsername(session?.user?.user_metadata?.username || null);
+    };
+    
+    checkSession();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté avec succès.",
+        duration: 3000
+      });
+      navigate("/");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la déconnexion.",
+        duration: 3000
+      });
+    }
   };
 
   return (
@@ -46,12 +94,23 @@ const Header = () => {
             </Button>
             
             {isLoggedIn ? (
-              <Button 
-                asChild 
-                variant="outline"
-              >
-                <Link to="/mes-annonces">Mes Annonces</Link>
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  asChild 
+                  variant="outline"
+                >
+                  <Link to="/mes-annonces">
+                    {username ? `Bonjour, ${username}` : "Mon compte"}
+                  </Link>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             ) : (
               <Button 
                 asChild 
@@ -100,13 +159,23 @@ const Header = () => {
               </Button>
               
               {isLoggedIn ? (
-                <Button 
-                  asChild 
-                  variant="outline" 
-                  className="w-full"
-                >
-                  <Link to="/mes-annonces">Mes Annonces</Link>
-                </Button>
+                <>
+                  <Button 
+                    asChild 
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    <Link to="/mes-annonces">Mon tableau de bord</Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Déconnexion
+                  </Button>
+                </>
               ) : (
                 <Button 
                   asChild 

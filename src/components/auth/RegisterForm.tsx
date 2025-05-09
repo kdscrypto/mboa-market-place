@@ -78,7 +78,8 @@ const RegisterForm = () => {
         description: "Votre compte a été créé avec succès. Veuillez vérifier votre email pour confirmer votre compte.",
         duration: 5000
       });
-      navigate("/");
+      // Redirect to dashboard instead of homepage
+      navigate("/mes-annonces");
     } catch (error) {
       console.error("Erreur d'inscription:", error);
       toast({
