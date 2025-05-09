@@ -10,6 +10,7 @@ import CreateAd from "./pages/CreateAd";
 import UserDashboard from "./pages/UserDashboard";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
+import AdminModeration from "./pages/AdminModeration";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/publier-annonce" element={<CreateAd />} />
           <Route path="/mes-annonces" element={<UserDashboard />} />
           <Route path="/conditions-utilisation" element={<TermsOfService />} />
+          <Route path="/admin/moderation" element={<AdminModeration />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
