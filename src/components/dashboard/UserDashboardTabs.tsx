@@ -19,10 +19,11 @@ const UserDashboardTabs = ({ activeTab, setActiveTab, user, userAds }: UserDashb
         <TabsTrigger value="active" onClick={() => setActiveTab("ads")}>Actives</TabsTrigger>
         <TabsTrigger value="sold" onClick={() => setActiveTab("ads")}>Vendues</TabsTrigger>
         <TabsTrigger value="expired" onClick={() => setActiveTab("ads")}>Expirées</TabsTrigger>
+        <TabsTrigger value="pending" onClick={() => setActiveTab("ads")}>En attente</TabsTrigger>
         <TabsTrigger value="profile" onClick={() => setActiveTab("profile")}>Profil</TabsTrigger>
       </TabsList>
       
-      {["all", "active", "sold", "expired"].map((tabValue) => (
+      {["all", "active", "sold", "expired", "pending"].map((tabValue) => (
         <TabsContent key={tabValue} value={tabValue}>
           <UserAdsTable ads={userAds} tabValue={tabValue} />
         </TabsContent>

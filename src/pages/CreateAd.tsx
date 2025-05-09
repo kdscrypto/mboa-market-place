@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,9 +11,16 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Phone } from "lucide-react";
 
 // Mock data - In a real app, these would come from Supabase
 const categories = [
@@ -51,8 +59,18 @@ const cities = {
   "sud": ["Ebolowa", "Kribi", "Sangmélima"],
 };
 
+// Ad plan options
+const adPlans = [
+  { id: "standard", name: "Annonce Standard", price: 0, duration: "30 jours", description: "Gratuit" },
+  { id: "premium_24h", name: "Premium 24H", price: 1000, duration: "24 heures", description: "Mise en avant pendant 24 heures" },
+  { id: "premium_7d", name: "Premium 7 Jours", price: 5000, duration: "7 jours", description: "Mise en avant pendant 7 jours" },
+  { id: "premium_15d", name: "Premium 15 Jours", price: 10000, duration: "15 jours", description: "Mise en avant pendant 15 jours" },
+  { id: "premium_30d", name: "Premium 30 Jours", price: 15000, duration: "30 jours", description: "Mise en avant pendant 30 jours" },
+];
+
 const CreateAd = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -60,10 +78,15 @@ const CreateAd = () => {
     price: "",
     region: "",
     city: "",
+    phone: "",
+    whatsapp: "",
+    adType: "standard",
     images: [] as File[]
   });
   const [imageURLs, setImageURLs] = useState<string[]>([]);
   const [citiesList, setCitiesList] = useState<string[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const maxImages = 5;
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -134,17 +157,57 @@ const CreateAd = () => {
     });
     setImageURLs(newImageURLs);
   };
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handlePreview = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowPreview(true);
+  };
+  
+  const handleSubmit = async () => {
+    setIsLoading(true);
     
-    // In a real app, this would connect to Supabase to save the ad
-    console.log("Form data:", formData);
-    toast({
-      title: "Fonctionnalité à venir",
-      description: "La publication d'annonces sera implémentée avec Supabase.",
-      duration: 3000
-    });
+    try {
+      // Check authentication status
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Connexion requise",
+          description: "Vous devez être connecté pour publier une annonce.",
+          variant: "destructive"
+        });
+        navigate("/connexion");
+        return;
+      }
+      
+      // In a real app, this would connect to Supabase to save the ad
+      console.log("Form data:", formData);
+      
+      // Simulate submission
+      setTimeout(() => {
+        toast({
+          title: "Annonce soumise",
+          description: "Votre annonce a été soumise pour approbation.",
+          duration: 3000
+        });
+        setIsLoading(false);
+        setShowPreview(false);
+        navigate("/mes-annonces");
+      }, 1500);
+    } catch (error) {
+      console.error("Error submitting the ad:", error);
+      toast({
+        title: "Erreur",
+        description: "Un problème est survenu lors de la publication de votre annonce.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
+  };
+
+  // Format price to display comma separated thousands
+  const formatPrice = (price: string | number) => {
+    return Number(price).toLocaleString('fr-FR');
   };
 
   return (
@@ -156,7 +219,7 @@ const CreateAd = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <h1 className="text-2xl font-bold mb-6">Publier une annonce</h1>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handlePreview} className="space-y-6">
               {/* Title */}
               <div className="space-y-2">
                 <label htmlFor="title" className="block font-medium">
@@ -233,6 +296,43 @@ const CreateAd = () => {
                 </div>
               </div>
               
+              {/* Contact information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="block font-medium">
+                    Téléphone <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="Ex: 6xxxxxxxx"
+                      required
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="whatsapp" className="block font-medium">
+                    WhatsApp (optionnel)
+                  </label>
+                  <Input
+                    id="whatsapp"
+                    name="whatsapp"
+                    type="tel"
+                    value={formData.whatsapp}
+                    onChange={handleInputChange}
+                    placeholder="Numéro WhatsApp"
+                  />
+                </div>
+              </div>
+              
               {/* Location */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -279,6 +379,36 @@ const CreateAd = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              
+              {/* Ad Plans */}
+              <div className="space-y-3">
+                <label className="block font-medium">
+                  Type d'annonce <span className="text-red-500">*</span>
+                </label>
+                
+                <RadioGroup 
+                  value={formData.adType}
+                  onValueChange={(value) => setFormData({...formData, adType: value})}
+                  className="space-y-3"
+                >
+                  {adPlans.map((plan) => (
+                    <div key={plan.id} className="flex items-center space-x-2 border rounded-md p-3">
+                      <RadioGroupItem id={plan.id} value={plan.id} />
+                      <Label htmlFor={plan.id} className="flex-1 cursor-pointer">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full">
+                          <div>
+                            <div className="font-medium">{plan.name}</div>
+                            <div className="text-sm text-gray-500">{plan.description} • {plan.duration}</div>
+                          </div>
+                          <div className="font-semibold mt-2 sm:mt-0">
+                            {plan.price === 0 ? "Gratuit" : `${formatPrice(plan.price)} XAF`}
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
               </div>
               
               {/* Images */}
@@ -345,13 +475,134 @@ const CreateAd = () => {
                   type="submit" 
                   className="w-full bg-mboa-orange hover:bg-mboa-orange/90 text-white py-3"
                 >
-                  Publier mon annonce
+                  Prévisualiser mon annonce
                 </Button>
               </div>
             </form>
           </div>
         </div>
       </main>
+      
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Prévisualisation de l'annonce</DialogTitle>
+          </DialogHeader>
+          
+          <div className="mt-4 space-y-6">
+            {/* Preview content */}
+            <div className="space-y-4">
+              {/* Images */}
+              {imageURLs.length > 0 ? (
+                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden relative">
+                  <img
+                    src={imageURLs[0]}
+                    alt="Image principale"
+                    className="w-full h-full object-contain"
+                  />
+                  
+                  {imageURLs.length > 1 && (
+                    <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+                      {imageURLs.map((_, idx) => (
+                        <div
+                          key={idx}
+                          className={`w-2 h-2 rounded-full ${idx === 0 ? "bg-mboa-orange" : "bg-white/70"}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-400">Aucune image</p>
+                </div>
+              )}
+              
+              {/* Title and Price */}
+              <div>
+                <h2 className="text-xl font-bold">{formData.title || "Titre de l'annonce"}</h2>
+                {formData.price && (
+                  <p className="text-xl font-bold text-mboa-orange mt-1">
+                    {formatPrice(formData.price)} XAF
+                  </p>
+                )}
+              </div>
+              
+              {/* Ad Type Badge */}
+              {formData.adType !== "standard" && (
+                <div className="inline-flex bg-yellow-100 text-yellow-800 text-sm px-2 py-1 rounded">
+                  {adPlans.find(p => p.id === formData.adType)?.name || "Premium"}
+                </div>
+              )}
+              
+              {/* Location */}
+              <div className="text-sm text-gray-600">
+                {formData.city && formData.region ? (
+                  <p>
+                    {formData.city}, {regions.find(r => r.id.toString() === formData.region)?.name}
+                  </p>
+                ) : (
+                  <p>Lieu non spécifié</p>
+                )}
+              </div>
+              
+              {/* Category */}
+              <div className="text-sm text-mboa-orange">
+                {formData.category ? (
+                  <p>
+                    {categories.find(c => c.id.toString() === formData.category)?.name}
+                  </p>
+                ) : (
+                  <p>Catégorie non spécifiée</p>
+                )}
+              </div>
+              
+              {/* Description */}
+              <div className="mt-4">
+                <h3 className="font-semibold mb-2">Description</h3>
+                <div className="whitespace-pre-wrap text-gray-700">
+                  {formData.description || "Aucune description fournie."}
+                </div>
+              </div>
+              
+              {/* Contact info (will be hidden in the preview) */}
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold mb-2">Contact</h3>
+                <p className="text-sm text-gray-600">
+                  Les coordonnées du vendeur seront visibles uniquement aux utilisateurs connectés.
+                </p>
+              </div>
+              
+              {/* Status notice */}
+              <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
+                <p className="text-sm font-medium">
+                  Cette annonce sera soumise à modération avant d'être publiée sur le site.
+                  Vous pouvez suivre son statut dans votre tableau de bord.
+                </p>
+              </div>
+            </div>
+            
+            {/* Action buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowPreview(false)}
+                className="flex-1"
+              >
+                Modifier l'annonce
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                className="flex-1 bg-mboa-orange hover:bg-mboa-orange/90"
+                disabled={isLoading}
+              >
+                {isLoading ? "Traitement..." : "Publier définitivement"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
