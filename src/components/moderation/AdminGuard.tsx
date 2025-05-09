@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
-// Cet HOC vérifie si l'utilisateur est administrateur avant de rendre le contenu
+// Ce HOC vérifie si l'utilisateur est administrateur avant de rendre le contenu
 const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,9 +29,12 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
-        // Pour l'instant, simulons que certains utilisateurs sont administrateurs
-        // Dans une implémentation réelle, vous vérifieriez une table de rôles ou de droits
-        const isUserAdmin = session.user.email?.endsWith('@admin.com') || false;
+        // Utiliser la fonction is_admin pour vérifier si l'utilisateur est administrateur
+        const { data: isUserAdmin, error } = await supabase.rpc('is_admin', {
+          user_id: session.user.id
+        });
+        
+        if (error) throw error;
         
         if (!isUserAdmin) {
           setIsAdmin(false);
@@ -64,7 +68,10 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Vérification de vos droits d'accès...</p>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-mboa-green mx-auto mb-2" />
+          <p>Vérification de vos droits d'accès...</p>
+        </div>
       </div>
     );
   }

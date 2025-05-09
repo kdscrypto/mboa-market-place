@@ -3,13 +3,14 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Menu, X, User, LogOut } from "lucide-react";
+import { Search, Menu, X, User, LogOut, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -17,8 +18,16 @@ const Header = () => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsLoggedIn(!!session);
+      const loggedIn = !!session;
+      setIsLoggedIn(loggedIn);
       setUsername(session?.user?.user_metadata?.username || null);
+      
+      // Vérifier si l'utilisateur est admin
+      if (loggedIn) {
+        checkIfAdmin(session.user.id);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     // Initial session check
@@ -26,6 +35,28 @@ const Header = () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsLoggedIn(!!session);
       setUsername(session?.user?.user_metadata?.username || null);
+      
+      // Vérifier si l'utilisateur est admin
+      if (session) {
+        checkIfAdmin(session.user.id);
+      }
+    };
+    
+    const checkIfAdmin = async (userId: string) => {
+      try {
+        const { data: isUserAdmin, error } = await supabase.rpc('is_admin', {
+          user_id: userId
+        });
+        
+        if (error) {
+          console.error("Erreur lors de la vérification des droits admin:", error);
+          return;
+        }
+        
+        setIsAdmin(isUserAdmin || false);
+      } catch (err) {
+        console.error("Erreur lors de la vérification des droits admin:", err);
+      }
     };
     
     checkSession();
@@ -95,6 +126,17 @@ const Header = () => {
             
             {isLoggedIn ? (
               <div className="flex items-center space-x-2">
+                {isAdmin && (
+                  <Button 
+                    asChild 
+                    variant="outline"
+                  >
+                    <Link to="/admin/moderation">
+                      <ShieldCheck className="h-4 w-4 mr-2" />
+                      Modération
+                    </Link>
+                  </Button>
+                )}
                 <Button 
                   asChild 
                   variant="outline"
@@ -160,6 +202,18 @@ const Header = () => {
               
               {isLoggedIn ? (
                 <>
+                  {isAdmin && (
+                    <Button 
+                      asChild 
+                      variant="outline" 
+                      className="w-full"
+                    >
+                      <Link to="/admin/moderation">
+                        <ShieldCheck className="h-4 w-4 mr-2" />
+                        Modération
+                      </Link>
+                    </Button>
+                  )}
                   <Button 
                     asChild 
                     variant="outline" 
