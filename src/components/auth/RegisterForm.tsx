@@ -44,7 +44,9 @@ const RegisterForm = () => {
       username: "",
       password: "",
       phone: "",
-      acceptTerms: false
+      // The fix: Don't provide a default value for acceptTerms
+      // This will make the field initially undefined instead of false
+      // The user will have to explicitly check the box
     }
   });
 
