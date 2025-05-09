@@ -10,8 +10,8 @@ import AdFormFields from "@/components/ads/AdFormFields";
 import AdPlanSelector from "@/components/ads/AdPlanSelector";
 import ImageUploader from "@/components/ads/ImageUploader";
 import AdPreviewDialog from "@/components/ads/AdPreviewDialog";
-import { AdFormData } from "@/components/ads/AdFormTypes";
-import { cities } from "@/components/ads/LocationData";
+import { AdFormData, FormErrors } from "@/components/ads/AdFormTypes";
+import { regions, cities } from "@/components/ads/LocationData";
 
 const CreateAd = () => {
   const { toast } = useToast();
@@ -28,6 +28,7 @@ const CreateAd = () => {
     adType: "standard",
     images: []
   });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [imageURLs, setImageURLs] = useState<string[]>([]);
   const [citiesList, setCitiesList] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -40,6 +41,14 @@ const CreateAd = () => {
       ...formData,
       [name]: value
     });
+    
+    // Clear error for this field when user updates it
+    if (errors[name as keyof FormErrors]) {
+      setErrors({
+        ...errors,
+        [name]: undefined
+      });
+    }
   };
   
   const handleSelectChange = (name: string, value: string) => {
@@ -47,6 +56,14 @@ const CreateAd = () => {
       ...formData,
       [name]: value
     });
+    
+    // Clear error for this field
+    if (errors[name as keyof FormErrors]) {
+      setErrors({
+        ...errors,
+        [name]: undefined
+      });
+    }
     
     // If region changes, update cities list
     if (name === "region") {
@@ -89,6 +106,14 @@ const CreateAd = () => {
     // Create URLs for preview
     const newImageURLs = newFiles.map(file => URL.createObjectURL(file));
     setImageURLs([...imageURLs, ...newImageURLs]);
+    
+    // Clear any image error
+    if (errors.images) {
+      setErrors({
+        ...errors,
+        images: undefined
+      });
+    }
   };
   
   const removeImage = (index: number) => {
@@ -103,9 +128,71 @@ const CreateAd = () => {
     setImageURLs(newImageURLs);
   };
 
+  // Validation function
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    
+    // Required field validation
+    if (!formData.title.trim()) {
+      newErrors.title = "Le titre est requis";
+    } else if (formData.title.length < 5) {
+      newErrors.title = "Le titre doit contenir au moins 5 caractères";
+    }
+    
+    if (!formData.category) {
+      newErrors.category = "Veuillez sélectionner une catégorie";
+    }
+    
+    if (!formData.region) {
+      newErrors.region = "Veuillez sélectionner une région";
+    }
+    
+    if (!formData.city) {
+      newErrors.city = "Veuillez sélectionner une ville";
+    }
+    
+    // Phone validation (numeric, starts with 6,7,9 for Cameroon and has 9 digits)
+    const phonePattern = /^[679]\d{8}$/;
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Le numéro de téléphone est requis";
+    } else if (!phonePattern.test(formData.phone)) {
+      newErrors.phone = "Format invalide. Ex: 6xxxxxxxx (9 chiffres)";
+    }
+    
+    // WhatsApp validation (if provided)
+    if (formData.whatsapp && !phonePattern.test(formData.whatsapp)) {
+      newErrors.whatsapp = "Format invalide. Ex: 6xxxxxxxx (9 chiffres)";
+    }
+    
+    // Price validation (must be numeric if provided)
+    if (formData.price && isNaN(Number(formData.price))) {
+      newErrors.price = "Le prix doit être un nombre";
+    }
+    
+    // Set errors and return validation result
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handlePreview = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowPreview(true);
+    
+    // Validate form before showing preview
+    if (validateForm()) {
+      setShowPreview(true);
+    } else {
+      // Scroll to the first error
+      const firstErrorElement = document.querySelector('.border-red-500');
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      toast({
+        title: "Erreur de validation",
+        description: "Veuillez corriger les erreurs dans le formulaire.",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleSubmit = async () => {
@@ -150,9 +237,6 @@ const CreateAd = () => {
     }
   };
 
-  // Import these from LocationData to maintain proper typings
-  const { regions } = require("@/components/ads/LocationData");
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -169,6 +253,7 @@ const CreateAd = () => {
                 citiesList={citiesList}
                 onInputChange={handleInputChange}
                 onSelectChange={handleSelectChange}
+                errors={errors}
               />
               
               {/* Ad Plans */}
@@ -185,6 +270,7 @@ const CreateAd = () => {
                 onRemoveImage={removeImage}
                 maxImages={maxImages}
               />
+              {errors.images && <p className="text-red-500 text-sm -mt-4">{errors.images}</p>}
               
               {/* Submit Button */}
               <div className="pt-4">

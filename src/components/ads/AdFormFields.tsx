@@ -11,20 +11,22 @@ import {
 } from "@/components/ui/select";
 import { Phone } from "lucide-react";
 import { regions, cities, categories } from "./LocationData";
-import { AdFormData } from "./AdFormTypes";
+import { AdFormData, FormErrors } from "./AdFormTypes";
 
 interface AdFormFieldsProps {
   formData: AdFormData;
   citiesList: string[];
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSelectChange: (name: string, value: string) => void;
+  errors: FormErrors;
 }
 
 const AdFormFields = ({ 
   formData, 
   citiesList, 
   onInputChange, 
-  onSelectChange 
+  onSelectChange,
+  errors
 }: AdFormFieldsProps) => {
   return (
     <>
@@ -41,7 +43,9 @@ const AdFormFields = ({
           placeholder="Décrivez votre article en quelques mots"
           required
           maxLength={100}
+          className={errors.title ? "border-red-500" : ""}
         />
+        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
       </div>
       
       {/* Description */}
@@ -56,7 +60,9 @@ const AdFormFields = ({
           onChange={onInputChange}
           placeholder="Décrivez votre article, son état, ses caractéristiques..."
           rows={5}
+          className={errors.description ? "border-red-500" : ""}
         />
+        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
       </div>
       
       {/* Category */}
@@ -69,7 +75,7 @@ const AdFormFields = ({
           onValueChange={(value) => onSelectChange("category", value)}
           required
         >
-          <SelectTrigger>
+          <SelectTrigger className={errors.category ? "border-red-500" : ""}>
             <SelectValue placeholder="Sélectionnez une catégorie" />
           </SelectTrigger>
           <SelectContent>
@@ -80,6 +86,7 @@ const AdFormFields = ({
             ))}
           </SelectContent>
         </Select>
+        {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
       </div>
       
       {/* Price */}
@@ -96,12 +103,13 @@ const AdFormFields = ({
             value={formData.price}
             onChange={onInputChange}
             placeholder="Prix en francs CFA"
-            className="pl-16"
+            className={`pl-16 ${errors.price ? "border-red-500" : ""}`}
           />
           <div className="absolute inset-y-0 left-0 flex items-center px-3 pointer-events-none bg-gray-100 border-r rounded-l-md">
             XAF
           </div>
         </div>
+        {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
       </div>
       
       {/* Contact information */}
@@ -119,11 +127,13 @@ const AdFormFields = ({
               onChange={onInputChange}
               placeholder="Ex: 6xxxxxxxx"
               required
+              className={errors.phone ? "border-red-500" : ""}
             />
             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
               <Phone className="h-4 w-4 text-gray-400" />
             </div>
           </div>
+          {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
         </div>
         
         <div className="space-y-2">
@@ -137,7 +147,9 @@ const AdFormFields = ({
             value={formData.whatsapp}
             onChange={onInputChange}
             placeholder="Numéro WhatsApp"
+            className={errors.whatsapp ? "border-red-500" : ""}
           />
+          {errors.whatsapp && <p className="text-red-500 text-sm mt-1">{errors.whatsapp}</p>}
         </div>
       </div>
       
@@ -152,7 +164,7 @@ const AdFormFields = ({
             onValueChange={(value) => onSelectChange("region", value)}
             required
           >
-            <SelectTrigger>
+            <SelectTrigger className={errors.region ? "border-red-500" : ""}>
               <SelectValue placeholder="Sélectionnez une région" />
             </SelectTrigger>
             <SelectContent>
@@ -163,6 +175,7 @@ const AdFormFields = ({
               ))}
             </SelectContent>
           </Select>
+          {errors.region && <p className="text-red-500 text-sm mt-1">{errors.region}</p>}
         </div>
         
         <div className="space-y-2">
@@ -175,7 +188,7 @@ const AdFormFields = ({
             disabled={citiesList.length === 0}
             required
           >
-            <SelectTrigger>
+            <SelectTrigger className={errors.city ? "border-red-500" : ""}>
               <SelectValue placeholder="Sélectionnez une ville" />
             </SelectTrigger>
             <SelectContent>
@@ -186,6 +199,7 @@ const AdFormFields = ({
               ))}
             </SelectContent>
           </Select>
+          {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
         </div>
       </div>
     </>
