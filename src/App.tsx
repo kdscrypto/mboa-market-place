@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import CreateAd from "./pages/CreateAd";
 import UserDashboard from "./pages/UserDashboard";
+import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/connexion" element={<Login />} />
           <Route path="/publier-annonce" element={<CreateAd />} />
           <Route path="/mes-annonces" element={<UserDashboard />} />
+          <Route path="/conditions-utilisation" element={<TermsOfService />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
