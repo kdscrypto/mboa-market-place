@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Trash, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Ad {
@@ -31,6 +31,10 @@ const UserAdsTable = ({ ads, tabValue }: UserAdsTableProps) => {
         return <Badge className="bg-blue-500">Vendue</Badge>;
       case "expired":
         return <Badge className="bg-gray-500">Expirée</Badge>;
+      case "pending":
+        return <Badge className="bg-amber-500 flex items-center gap-1">
+          <Clock className="h-3 w-3" /> En attente
+        </Badge>;
       default:
         return <Badge>{status}</Badge>;
     }

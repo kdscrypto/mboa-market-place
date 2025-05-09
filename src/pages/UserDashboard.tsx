@@ -34,6 +34,22 @@ const userAds = [
     createdAt: "2023-03-22T09:15:00Z",
     imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
   },
+  {
+    id: "4",
+    title: "Caméra DSLR Canon EOS 5D",
+    price: 750000,
+    status: "pending",
+    createdAt: "2023-05-18T08:30:00Z",
+    imageUrl: "https://images.unsplash.com/photo-1516724562728-afc824a36e84?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+  },
+  {
+    id: "5",
+    title: "MacBook Pro M1 - 512GB",
+    price: 950000,
+    status: "pending",
+    createdAt: "2023-05-19T10:15:00Z",
+    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
+  }
 ];
 
 const UserDashboard = () => {
@@ -41,7 +57,7 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("ads");
+  const [activeTab, setActiveTab] = useState("all");
   
   useEffect(() => {
     const checkAuth = async () => {
@@ -56,6 +72,20 @@ const UserDashboard = () => {
     
     checkAuth();
   }, [navigate]);
+
+  // Use useEffect to check if there are pending ads and show a toast notification
+  useEffect(() => {
+    if (!loading) {
+      const pendingAds = userAds.filter(ad => ad.status === "pending");
+      if (pendingAds.length > 0) {
+        toast({
+          title: `${pendingAds.length} annonce${pendingAds.length > 1 ? 's' : ''} en attente`,
+          description: "Vos annonces sont en cours de modération et seront publiées prochainement.",
+          duration: 5000
+        });
+      }
+    }
+  }, [loading, toast]);
 
   if (loading) {
     return (
