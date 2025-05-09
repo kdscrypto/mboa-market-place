@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Control } from "react-hook-form";
-import { AdFormData } from "../AdFormTypes";
+import { AdFormData, isFileArray } from "../AdFormTypes";
 
 interface SelectOption {
   id: string | number;
@@ -42,35 +42,40 @@ const SelectField = ({
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => (
-        <FormItem>
-          <FormLabel>
-            {label} {required && <span className="text-red-500">*</span>}
-          </FormLabel>
-          <Select
-            disabled={disabled}
-            onValueChange={field.onChange}
-            value={field.value}
-          >
-            <FormControl>
-              <SelectTrigger className={fieldState.error ? "border-red-500" : ""}>
-                <SelectValue placeholder={placeholder} />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {options.map((option) => (
-                <SelectItem
-                  key={option.id}
-                  value={option.value || option.id.toString()}
-                >
-                  {option.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      )}
+      render={({ field, fieldState }) => {
+        // Handle File[] type for images field separately
+        const fieldValue = isFileArray(field.value) ? '' : field.value as string;
+        
+        return (
+          <FormItem>
+            <FormLabel>
+              {label} {required && <span className="text-red-500">*</span>}
+            </FormLabel>
+            <Select
+              disabled={disabled}
+              onValueChange={field.onChange}
+              value={fieldValue}
+            >
+              <FormControl>
+                <SelectTrigger className={fieldState.error ? "border-red-500" : ""}>
+                  <SelectValue placeholder={placeholder} />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem
+                    key={option.id}
+                    value={option.value || option.id.toString()}
+                  >
+                    {option.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
   );
 };
