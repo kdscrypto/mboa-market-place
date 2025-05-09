@@ -41,7 +41,7 @@ const CreateAd = () => {
     }
   });
   
-  const { handleSubmit, setValue, watch } = form;
+  const { handleSubmit, setValue, watch, formState } = form;
   const formValues = watch();
   
   // Handle image change
@@ -51,12 +51,17 @@ const CreateAd = () => {
     
     // Check if adding these files would exceed the limit
     if (formValues.images.length + files.length > maxImages) {
+      toast({
+        title: "Limite d'images",
+        description: `Vous ne pouvez pas ajouter plus de ${maxImages} images.`,
+        variant: "destructive"
+      });
       return;
     }
     
     // Add new files to the state
     const newFiles = Array.from(files);
-    setValue('images', [...formValues.images, ...newFiles]);
+    setValue('images', [...formValues.images, ...newFiles], { shouldValidate: true });
     
     // Create URLs for preview
     const newImageURLs = newFiles.map(file => URL.createObjectURL(file));
@@ -69,7 +74,7 @@ const CreateAd = () => {
     const newImages = formValues.images.filter((_, i) => i !== index);
     const newImageURLs = imageURLs.filter((_, i) => i !== index);
     
-    setValue('images', newImages);
+    setValue('images', newImages, { shouldValidate: true });
     setImageURLs(newImageURLs);
   };
   
@@ -128,9 +133,8 @@ const CreateAd = () => {
                   onImageChange={handleImageChange}
                   onRemoveImage={removeImage}
                   maxImages={maxImages}
+                  error={formState.errors.images?.message as string}
                 />
-                {form.formState.errors.images && 
-                  <p className="text-red-500 text-sm -mt-4">{form.formState.errors.images.message as string}</p>}
                 
                 {/* Submit Button */}
                 <div className="pt-4">

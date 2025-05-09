@@ -9,18 +9,36 @@ interface ImageUploaderProps {
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: (index: number) => void;
   maxImages: number;
+  error?: string; // Ajout d'une prop pour afficher les erreurs
 }
 
-const ImageUploader = ({ images, imageURLs, onImageChange, onRemoveImage, maxImages }: ImageUploaderProps) => {
+const ImageUploader = ({ 
+  images, 
+  imageURLs, 
+  onImageChange, 
+  onRemoveImage, 
+  maxImages,
+  error 
+}: ImageUploaderProps) => {
+  // Référence à l'input file pour pouvoir déclencher le clic programmatiquement
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Fonction pour déclencher le clic sur l'input file
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   return (
     <div className="space-y-2">
       <label className="block font-medium">
         Photos (maximum {maxImages})
       </label>
-      <div className="border-2 border-dashed border-gray-300 rounded-md p-4">
+      <div className={`border-2 border-dashed ${error ? 'border-red-500' : 'border-gray-300'} rounded-md p-4`}>
         <div className="flex items-center justify-center">
-          <label className="w-full cursor-pointer">
-            <div className="text-center py-6">
+          <div className="w-full cursor-pointer">
+            <div className="text-center py-6" onClick={triggerFileInput}>
               <p className="text-gray-500 mb-2">
                 Cliquez ou glissez-déposez des photos
               </p>
@@ -28,11 +46,16 @@ const ImageUploader = ({ images, imageURLs, onImageChange, onRemoveImage, maxIma
                 type="button" 
                 variant="outline"
                 disabled={images.length >= maxImages}
+                onClick={(e) => {
+                  e.preventDefault();
+                  triggerFileInput();
+                }}
               >
                 Sélectionner des images
               </Button>
             </div>
             <Input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               multiple
@@ -40,7 +63,7 @@ const ImageUploader = ({ images, imageURLs, onImageChange, onRemoveImage, maxIma
               className="hidden"
               disabled={images.length >= maxImages}
             />
-          </label>
+          </div>
         </div>
         
         {imageURLs.length > 0 && (
@@ -65,6 +88,7 @@ const ImageUploader = ({ images, imageURLs, onImageChange, onRemoveImage, maxIma
           </div>
         )}
       </div>
+      {error && <p className="text-red-500 text-sm">{error}</p>}
       <p className="text-xs text-gray-500">
         Formats acceptés: JPG, PNG. Taille maximale: 5 MB par image.
       </p>
