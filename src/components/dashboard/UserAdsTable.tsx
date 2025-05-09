@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Ad {
   id: string;
   title: string;
   price: number;
   status: string;
-  createdAt: string;
+  created_at: string;
   imageUrl: string;
 }
 
@@ -40,24 +41,52 @@ const UserAdsTable = ({ ads, tabValue }: UserAdsTableProps) => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    // In a real app, this would connect to Supabase to delete the ad
-    console.log("Delete ad", id);
-    toast({
-      title: "Fonctionnalité à venir",
-      description: "La suppression d'annonces sera implémentée avec Supabase.",
-      duration: 3000
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('ads')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Annonce supprimée",
+        description: "Votre annonce a été supprimée avec succès.",
+        duration: 3000
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'annonce:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'annonce.",
+        variant: "destructive"
+      });
+    }
   };
   
-  const handleMarkAsSold = (id: string) => {
-    // In a real app, this would connect to Supabase to update the ad status
-    console.log("Mark as sold", id);
-    toast({
-      title: "Fonctionnalité à venir",
-      description: "Le marquage comme vendu sera implémenté avec Supabase.",
-      duration: 3000
-    });
+  const handleMarkAsSold = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('ads')
+        .update({ status: 'sold' })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Annonce mise à jour",
+        description: "Votre annonce a été marquée comme vendue.",
+        duration: 3000
+      });
+    } catch (error) {
+      console.error("Erreur lors du marquage de l'annonce comme vendue:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour l'annonce.",
+        variant: "destructive"
+      });
+    }
   };
 
   const filteredAds = ads.filter(ad => tabValue === "all" || ad.status === tabValue);
@@ -118,7 +147,7 @@ const UserAdsTable = ({ ads, tabValue }: UserAdsTableProps) => {
                 {getStatusBadge(ad.status)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {new Date(ad.createdAt).toLocaleDateString('fr-FR')}
+                {new Date(ad.created_at).toLocaleDateString('fr-FR')}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                 <Button

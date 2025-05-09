@@ -8,54 +8,20 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import UserDashboardTabs from "@/components/dashboard/UserDashboardTabs";
 
-// Mock data - In a real app, these would come from Supabase
-const userAds = [
-  {
-    id: "1",
-    title: "Samsung Galaxy S21 Ultra - Comme neuf",
-    price: 350000,
-    status: "active",
-    createdAt: "2023-05-15T12:00:00Z",
-    imageUrl: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-  },
-  {
-    id: "2",
-    title: "iPhone 13 Pro Max - 256GB",
-    price: 450000,
-    status: "sold",
-    createdAt: "2023-04-10T14:30:00Z",
-    imageUrl: "https://images.unsplash.com/photo-1632661674596-df8be070a5c5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-  },
-  {
-    id: "3",
-    title: "Ordinateur Portable HP Spectre",
-    price: 650000,
-    status: "expired",
-    createdAt: "2023-03-22T09:15:00Z",
-    imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-  },
-  {
-    id: "4",
-    title: "Caméra DSLR Canon EOS 5D",
-    price: 750000,
-    status: "pending",
-    createdAt: "2023-05-18T08:30:00Z",
-    imageUrl: "https://images.unsplash.com/photo-1516724562728-afc824a36e84?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-  },
-  {
-    id: "5",
-    title: "MacBook Pro M1 - 512GB",
-    price: 950000,
-    status: "pending",
-    createdAt: "2023-05-19T10:15:00Z",
-    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80",
-  }
-];
+interface Ad {
+  id: string;
+  title: string;
+  price: number;
+  status: string;
+  created_at: string;
+  imageUrl?: string; // URL de l'image principale (optionnelle)
+}
 
 const UserDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
+  const [userAds, setUserAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   
@@ -67,16 +33,45 @@ const UserDashboard = () => {
         return;
       }
       setUser(session.user);
-      setLoading(false);
+      fetchUserAds(session.user.id);
     };
     
     checkAuth();
   }, [navigate]);
 
-  // Use useEffect to check if there are pending ads and show a toast notification
-  useEffect(() => {
-    if (!loading) {
-      const pendingAds = userAds.filter(ad => ad.status === "pending");
+  // Récupérer les annonces de l'utilisateur
+  const fetchUserAds = async (userId: string) => {
+    try {
+      // Récupérer les annonces
+      const { data: ads, error } = await supabase
+        .from('ads')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Pour chaque annonce, récupérer l'image principale
+      const adsWithImages = await Promise.all(
+        ads.map(async (ad) => {
+          const { data: images } = await supabase
+            .from('ad_images')
+            .select('image_url')
+            .eq('ad_id', ad.id)
+            .order('position', { ascending: true })
+            .limit(1);
+          
+          return {
+            ...ad,
+            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
+          };
+        })
+      );
+      
+      setUserAds(adsWithImages);
+      
+      // Vérifier les annonces en attente
+      const pendingAds = adsWithImages.filter(ad => ad.status === "pending");
       if (pendingAds.length > 0) {
         toast({
           title: `${pendingAds.length} annonce${pendingAds.length > 1 ? 's' : ''} en attente`,
@@ -84,8 +79,42 @@ const UserDashboard = () => {
           duration: 5000
         });
       }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des annonces:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger vos annonces",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  }, [loading, toast]);
+  };
+
+  // S'abonner aux mises à jour en temps réel des annonces
+  useEffect(() => {
+    if (!user) return;
+    
+    const channel = supabase
+      .channel('public:ads')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'ads',
+          filter: `user_id=eq.${user.id}`
+        }, 
+        (payload) => {
+          console.log('Changement détecté:', payload);
+          fetchUserAds(user.id);
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   if (loading) {
     return (

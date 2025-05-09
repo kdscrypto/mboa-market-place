@@ -9,7 +9,89 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      ad_images: {
+        Row: {
+          ad_id: string
+          created_at: string
+          id: string
+          image_url: string
+          position: number
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          position?: number
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_images_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ads: {
+        Row: {
+          ad_type: string
+          category: string
+          city: string
+          created_at: string
+          description: string
+          id: string
+          phone: string
+          price: number
+          region: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          ad_type?: string
+          category: string
+          city: string
+          created_at?: string
+          description: string
+          id?: string
+          phone: string
+          price: number
+          region: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          ad_type?: string
+          category?: string
+          city?: string
+          created_at?: string
+          description?: string
+          id?: string
+          phone?: string
+          price?: number
+          region?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
