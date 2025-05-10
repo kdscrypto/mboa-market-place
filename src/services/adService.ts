@@ -21,7 +21,7 @@ export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
     }
     
     // Fetch all ads with the specified status, without filtering by user_id
-    // This ensures moderators can see all ads from all users
+    // The RLS policies will handle access control based on user role
     const { data: ads, error } = await supabase
       .from('ads')
       .select('*')
@@ -29,11 +29,11 @@ export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error(`Erreur lors de la récupération des annonces ${status}:`, error);
+      console.error(`Error retrieving ads with status ${status}:`, error);
       throw error;
     }
     
-    console.log(`${status} ads retrieved:`, ads);
+    console.log(`${status} ads retrieved:`, ads?.length || 0);
     
     // Pour chaque annonce, récupérer l'image principale
     const adsWithImages = await Promise.all(
@@ -71,11 +71,20 @@ export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
   }
 };
 
-// Fonction pour mettre à jour le statut d'une annonce
+// Fonction pour mettre à jour le statut d'une annonce avec vérification d'authentification
 export const updateAdStatus = async (adId: string, status: 'approved' | 'rejected'): Promise<boolean> => {
   try {
     console.log(`Updating ad ${adId} to status: ${status}`);
     
+    // Check authentication before proceeding
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      console.error("Authentication error:", sessionError || "No active session");
+      throw new Error("Authentication required");
+    }
+    
+    // Let Row Level Security handle permission checks
     const { error } = await supabase
       .from('ads')
       .update({ status })
@@ -83,6 +92,9 @@ export const updateAdStatus = async (adId: string, status: 'approved' | 'rejecte
     
     if (error) {
       console.error(`Error updating ad ${adId}:`, error);
+      if (error.code === 'PGRST116') {
+        throw new Error("Permission denied: You don't have the required privileges");
+      }
       throw error;
     }
     

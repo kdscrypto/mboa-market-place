@@ -39,19 +39,17 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
         
         console.log("User session found:", session.user.id);
         
-        // Utiliser la fonction is_admin pour vérifier si l'utilisateur est administrateur
-        const { data: isUserAdmin, error: adminCheckError } = await supabase.rpc('is_admin', {
-          user_id: session.user.id
-        });
+        // Utiliser la fonction is_admin_or_moderator pour vérifier les droits d'accès
+        const { data: hasAccess, error: adminCheckError } = await supabase.rpc('is_admin_or_moderator');
         
         if (adminCheckError) {
           console.error("Error checking admin status:", adminCheckError);
           throw adminCheckError;
         }
         
-        console.log("Admin check result:", isUserAdmin);
+        console.log("Admin check result:", hasAccess);
         
-        if (!isUserAdmin) {
+        if (!hasAccess) {
           setIsAdmin(false);
           toast({
             title: "Accès refusé",
@@ -79,6 +77,17 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
     
     checkAdminStatus();
   }, [navigate, toast]);
+
+  // Setup auth state change listener
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      // Re-check admin status when auth state changes
+      setIsLoading(true);
+      setIsAdmin(null);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
 
   if (isLoading) {
     return (

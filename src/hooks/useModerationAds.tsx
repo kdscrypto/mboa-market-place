@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Ad } from "@/types/adTypes";
 import { fetchAdsWithStatus, updateAdStatus } from "@/services/adService";
 import { useAdRealtime } from "@/hooks/useAdRealtime";
+import { supabase } from "@/integrations/supabase/client";
 
 // Change this re-export to use 'export type' syntax
 export type { Ad } from "@/types/adTypes";
@@ -14,6 +15,58 @@ export const useModerationAds = () => {
   const [pendingAds, setPendingAds] = useState<Ad[]>([]);
   const [approvedAds, setApprovedAds] = useState<Ad[]>([]);
   const [rejectedAds, setRejectedAds] = useState<Ad[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  
+  // Check authentication and admin status
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authenticated = !!session;
+      setIsAuthenticated(authenticated);
+      
+      if (authenticated) {
+        // Check if user is admin or moderator
+        try {
+          const { data, error } = await supabase.rpc('is_admin_or_moderator');
+          
+          if (error) throw error;
+          
+          setIsAdmin(!!data);
+          if (!data) {
+            toast({
+              title: "Accès restreint",
+              description: "Vous n'avez pas les droits nécessaires pour modérer les annonces.",
+              variant: "destructive"
+            });
+          }
+        } catch (error) {
+          console.error("Error checking admin status:", error);
+          setIsAdmin(false);
+          toast({
+            title: "Erreur",
+            description: "Impossible de vérifier vos droits d'accès.",
+            variant: "destructive"
+          });
+        }
+      }
+    };
+    
+    checkAuthStatus();
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+      // We'll recheck admin status when auth changes
+      if (session) {
+        checkAuthStatus();
+      } else {
+        setIsAdmin(false);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [toast]);
 
   // Configure real-time updates
   useAdRealtime({ setPendingAds, setApprovedAds, setRejectedAds });
@@ -21,6 +74,11 @@ export const useModerationAds = () => {
   // Récupérer les annonces au chargement initial
   useEffect(() => {
     const loadAllAds = async () => {
+      if (!isAuthenticated || !isAdmin) {
+        setIsLoading(false);
+        return;
+      }
+      
       setIsLoading(true);
       
       try {
@@ -51,10 +109,19 @@ export const useModerationAds = () => {
     };
     
     loadAllAds();
-  }, [toast]);
+  }, [toast, isAuthenticated, isAdmin]);
 
   // Fonctions pour mettre à jour le statut d'une annonce
   const handleApproveAd = async (adId: string) => {
+    if (!isAuthenticated || !isAdmin) {
+      toast({
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits pour effectuer cette action",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       console.log("Approving ad:", adId);
       
@@ -85,6 +152,15 @@ export const useModerationAds = () => {
   };
 
   const handleRejectAd = async (adId: string) => {
+    if (!isAuthenticated || !isAdmin) {
+      toast({
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits pour effectuer cette action",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       console.log("Rejecting ad:", adId);
       
@@ -120,6 +196,8 @@ export const useModerationAds = () => {
     approvedAds,
     rejectedAds,
     handleApproveAd,
-    handleRejectAd
+    handleRejectAd,
+    isAuthenticated,
+    isAdmin
   };
 };
