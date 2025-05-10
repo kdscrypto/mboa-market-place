@@ -3,6 +3,8 @@ import React from "react";
 import { Ad } from "@/types/adTypes";
 import AdCard from "@/components/AdCard";
 import PremiumBadge from "@/components/PremiumBadge";
+import { Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface PremiumAdGridProps {
   ads: Ad[];
