@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ModerationTable from "@/components/moderation/ModerationTable";
-import { Ad } from "@/hooks/useModerationAds";
+import { Ad } from "@/types/adTypes";
 
 interface ModerationTabsProps {
   pendingAds: Ad[];

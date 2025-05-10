@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Ad } from "@/hooks/useModerationAds";
+import { Ad } from "@/types/adTypes";
 import AdStatusBadge from "./AdStatusBadge";
 import AdActionButtons from "./AdActionButtons";
 import AdPreviewDialog from "./AdPreviewDialog";

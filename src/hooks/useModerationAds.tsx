@@ -1,23 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Ad } from "@/types/adTypes";
+import { fetchAdsWithStatus, updateAdStatus } from "@/services/adService";
+import { useAdRealtime } from "@/hooks/useAdRealtime";
 
-export interface Ad {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  city: string;
-  region: string;
-  phone: string;
-  whatsapp?: string;
-  status: string;
-  created_at: string;
-  imageUrl: string;
-  user_id: string;
-}
+export { Ad } from "@/types/adTypes";
 
 export const useModerationAds = () => {
   const { toast } = useToast();
@@ -26,78 +14,8 @@ export const useModerationAds = () => {
   const [approvedAds, setApprovedAds] = useState<Ad[]>([]);
   const [rejectedAds, setRejectedAds] = useState<Ad[]>([]);
 
-  // Fonction pour récupérer toutes les annonces avec leurs images principales
-  const fetchAdsWithStatus = async (status: string) => {
-    try {
-      console.log(`Fetching ads with status: ${status}`);
-      
-      // Vérifier si l'utilisateur est admin avant de récupérer les annonces
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        throw sessionError;
-      }
-      
-      if (!session) {
-        console.error("No active session found");
-        throw new Error("Not authenticated");
-      }
-      
-      // Important: Ne pas filtrer par user_id pour permettre aux modérateurs de voir toutes les annonces
-      const { data: ads, error } = await supabase
-        .from('ads')
-        .select('*')
-        .eq('status', status)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error(`Erreur lors de la récupération des annonces ${status}:`, error);
-        throw error;
-      }
-      
-      console.log(`${status} ads retrieved:`, ads);
-      
-      // Pour chaque annonce, récupérer l'image principale
-      const adsWithImages = await Promise.all(
-        (ads || []).map(async (ad) => {
-          try {
-            const { data: images, error: imageError } = await supabase
-              .from('ad_images')
-              .select('image_url')
-              .eq('ad_id', ad.id)
-              .order('position', { ascending: true })
-              .limit(1);
-            
-            if (imageError) {
-              console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
-            }
-            
-            return {
-              ...ad,
-              imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
-            };
-          } catch (err) {
-            console.error(`Error processing images for ad ${ad.id}:`, err);
-            return {
-              ...ad,
-              imageUrl: '/placeholder.svg'
-            };
-          }
-        })
-      );
-      
-      return adsWithImages;
-    } catch (error) {
-      console.error(`Error retrieving ads with status ${status}:`, error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les annonces",
-        variant: "destructive"
-      });
-      return [];
-    }
-  };
+  // Configure real-time updates
+  useAdRealtime({ setPendingAds, setApprovedAds, setRejectedAds });
 
   // Récupérer les annonces au chargement initial
   useEffect(() => {
@@ -105,17 +23,6 @@ export const useModerationAds = () => {
       setIsLoading(true);
       
       try {
-        // Vérifier que l'utilisateur est connecté et est un administrateur
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session) {
-          console.error("Session error or no session:", sessionError);
-          setIsLoading(false);
-          return;
-        }
-        
-        console.log("Loading ads for admin user:", session.user.id);
-        
         // Récupérer les annonces en attente
         const pending = await fetchAdsWithStatus('pending');
         console.log("Pending ads loaded:", pending.length);
@@ -132,6 +39,11 @@ export const useModerationAds = () => {
         setRejectedAds(rejected);
       } catch (error) {
         console.error("Error loading ads:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les annonces",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
@@ -140,60 +52,14 @@ export const useModerationAds = () => {
     loadAllAds();
   }, [toast]);
 
-  // S'abonner aux mises à jour en temps réel
-  useEffect(() => {
-    console.log("Setting up realtime subscription for ads");
-    
-    const channel = supabase
-      .channel('ads-changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'ads'
-        }, 
-        async (payload) => {
-          console.log('Change detected in ads:', payload);
-          
-          // Mettre à jour la liste appropriée en fonction du statut
-          if (payload.new && typeof payload.new === 'object' && 'status' in payload.new) {
-            const status = payload.new.status as string;
-            
-            // Rafraîchir la liste appropriée
-            if (status === 'pending') {
-              const pending = await fetchAdsWithStatus('pending');
-              setPendingAds(pending);
-            } else if (status === 'approved') {
-              const approved = await fetchAdsWithStatus('approved');
-              setApprovedAds(approved);
-            } else if (status === 'rejected') {
-              const rejected = await fetchAdsWithStatus('rejected');
-              setRejectedAds(rejected);
-            }
-          }
-        }
-      )
-      .subscribe(status => {
-        console.log("Realtime subscription status:", status);
-      });
-      
-    return () => {
-      console.log("Removing realtime subscription");
-      supabase.removeChannel(channel);
-    };
-  }, [toast]);
-
   // Fonctions pour mettre à jour le statut d'une annonce
   const handleApproveAd = async (adId: string) => {
     try {
       console.log("Approving ad:", adId);
       
-      const { error } = await supabase
-        .from('ads')
-        .update({ status: 'approved' })
-        .eq('id', adId);
+      const success = await updateAdStatus(adId, 'approved');
       
-      if (error) throw error;
+      if (!success) throw new Error("Failed to approve ad");
       
       toast({
         title: "Annonce approuvée",
@@ -221,12 +87,9 @@ export const useModerationAds = () => {
     try {
       console.log("Rejecting ad:", adId);
       
-      const { error } = await supabase
-        .from('ads')
-        .update({ status: 'rejected' })
-        .eq('id', adId);
+      const success = await updateAdStatus(adId, 'rejected');
       
-      if (error) throw error;
+      if (!success) throw new Error("Failed to reject ad");
       
       toast({
         title: "Annonce rejetée",
