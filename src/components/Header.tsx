@@ -24,7 +24,7 @@ const Header = () => {
       
       // Vérifier si l'utilisateur est admin
       if (loggedIn) {
-        checkIfAdmin(session.user.id);
+        checkIfAdmin();
       } else {
         setIsAdmin(false);
       }
@@ -38,21 +38,21 @@ const Header = () => {
       
       // Vérifier si l'utilisateur est admin
       if (session) {
-        checkIfAdmin(session.user.id);
+        checkIfAdmin();
       }
     };
     
-    const checkIfAdmin = async (userId: string) => {
+    const checkIfAdmin = async () => {
       try {
-        const { data: isUserAdmin, error } = await supabase.rpc('is_admin', {
-          user_id: userId
-        });
+        console.log("Header: Checking admin status...");
+        const { data: isUserAdmin, error } = await supabase.rpc('is_admin_or_moderator');
         
         if (error) {
           console.error("Erreur lors de la vérification des droits admin:", error);
           return;
         }
         
+        console.log("Header: Admin check result:", isUserAdmin);
         setIsAdmin(isUserAdmin || false);
       } catch (err) {
         console.error("Erreur lors de la vérification des droits admin:", err);

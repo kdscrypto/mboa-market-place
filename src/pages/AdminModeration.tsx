@@ -21,12 +21,18 @@ const AdminModeration = () => {
     isAdmin
   } = useModerationAds();
   
-  // Redirect if user is not authenticated or not an admin
+  // Mettre en place la redirection avec un délai pour éviter les problèmes de rendu
   useEffect(() => {
+    console.log("AdminModeration effect - auth status:", { isLoading, isAuthenticated, isAdmin });
+    
     if (!isLoading && !isAuthenticated) {
+      console.log("Not authenticated, redirecting to login");
       navigate("/connexion");
+    } else if (!isLoading && isAuthenticated && !isAdmin) {
+      console.log("Not admin, redirecting to home");
+      navigate("/");
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isAdmin, isLoading, navigate]);
   
   useEffect(() => {
     console.log("AdminModeration effect - data loaded:", {

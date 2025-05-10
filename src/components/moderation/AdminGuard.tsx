@@ -15,7 +15,7 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        console.log("Checking admin status...");
+        console.log("AdminGuard: Checking admin status...");
         
         // Vérifier si l'utilisateur est connecté
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -26,18 +26,18 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
         }
         
         if (!session) {
-          console.log("No user session found");
+          console.log("AdminGuard: No user session found");
           setIsAdmin(false);
           toast({
             title: "Accès refusé",
             description: "Vous devez être connecté pour accéder à cette page.",
             variant: "destructive"
           });
-          navigate("/connexion");
+          setTimeout(() => navigate("/connexion"), 100);
           return;
         }
         
-        console.log("User session found:", session.user.id);
+        console.log("AdminGuard: User session found:", session.user.id);
         
         // Utiliser la fonction is_admin_or_moderator pour vérifier les droits d'accès
         const { data: hasAccess, error: adminCheckError } = await supabase.rpc('is_admin_or_moderator');
@@ -47,7 +47,7 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
           throw adminCheckError;
         }
         
-        console.log("Admin check result:", hasAccess);
+        console.log("AdminGuard: Admin check result:", hasAccess);
         
         if (!hasAccess) {
           setIsAdmin(false);
@@ -56,7 +56,7 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
             description: "Vous n'avez pas les droits d'administration nécessaires.",
             variant: "destructive"
           });
-          navigate("/");
+          setTimeout(() => navigate("/"), 100);
           return;
         }
         
@@ -69,7 +69,7 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
           description: "Un problème est survenu lors de la vérification des droits d'accès.",
           variant: "destructive"
         });
-        navigate("/");
+        setTimeout(() => navigate("/"), 100);
       } finally {
         setIsLoading(false);
       }
@@ -78,16 +78,8 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
     checkAdminStatus();
   }, [navigate, toast]);
 
-  // Setup auth state change listener
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      // Re-check admin status when auth state changes
-      setIsLoading(true);
-      setIsAdmin(null);
-    });
-    
-    return () => subscription.unsubscribe();
-  }, []);
+  // Pas besoin de re-vérifier quand l'état d'authentification change, 
+  // car nous utiliserons le composant parent pour gérer cela
 
   if (isLoading) {
     return (

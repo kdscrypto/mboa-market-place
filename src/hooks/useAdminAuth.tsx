@@ -15,17 +15,25 @@ export const useAdminAuth = () => {
   // Check authentication and admin status
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const authenticated = !!session;
-      setIsAuthenticated(authenticated);
-      
-      if (authenticated) {
-        try {
+      try {
+        // Vérifier si l'utilisateur est connecté
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+        
+        const authenticated = !!session;
+        setIsAuthenticated(authenticated);
+        
+        if (authenticated) {
+          console.log("User is authenticated, checking admin status...");
+          // Vérifier si l'utilisateur a des droits d'administrateur ou de modérateur
           const { data, error } = await supabase.rpc('is_admin_or_moderator');
           
           if (error) throw error;
           
+          console.log("Admin check result:", data);
           setIsAdmin(!!data);
+          
           if (!data) {
             toast({
               title: "Accès restreint",
@@ -33,15 +41,22 @@ export const useAdminAuth = () => {
               variant: "destructive"
             });
           }
-        } catch (error) {
-          console.error("Error checking admin status:", error);
+        } else {
+          console.log("User is not authenticated");
           setIsAdmin(false);
-          toast({
-            title: "Erreur",
-            description: "Impossible de vérifier vos droits d'accès.",
-            variant: "destructive"
-          });
         }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error checking auth status:", error);
+        setIsAuthenticated(false);
+        setIsAdmin(false);
+        setIsLoading(false);
+        toast({
+          title: "Erreur",
+          description: "Impossible de vérifier vos droits d'accès.",
+          variant: "destructive"
+        });
       }
     };
     
@@ -49,12 +64,15 @@ export const useAdminAuth = () => {
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event);
       setIsAuthenticated(!!session);
+      
       // We'll recheck admin status when auth changes
       if (session) {
         checkAuthStatus();
       } else {
         setIsAdmin(false);
+        setIsLoading(false);
       }
     });
     
