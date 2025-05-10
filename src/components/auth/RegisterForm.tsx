@@ -2,8 +2,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -14,23 +12,16 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage, Form } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { registerSchema, RegisterFormValues } from "./validation/authSchemas";
+import EmailField from "./components/EmailField";
+import UsernameField from "./components/UsernameField";
+import PhoneField from "./components/PhoneField";
+import PasswordField from "./components/PasswordField";
+import TermsCheckbox from "./components/TermsCheckbox";
 import TermsDialog from "./TermsDialog";
-
-const registerSchema = z.object({
-  email: z.string().email("Email invalide"),
-  username: z.string().min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères"),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
-  phone: z.string().optional(),
-  acceptTerms: z.literal(true, {
-    errorMap: () => ({ message: "Vous devez accepter les conditions générales d'utilisation" })
-  })
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
 
 interface RegisterFormProps {
   redirectPath?: string;
@@ -48,9 +39,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ redirectPath = "/mes-annonc
       username: "",
       password: "",
       phone: "",
-      // The fix: Don't provide a default value for acceptTerms
-      // This will make the field initially undefined instead of false
-      // The user will have to explicitly check the box
+      // No default value for acceptTerms so user must explicitly check it
     }
   });
 
@@ -107,107 +96,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ redirectPath = "/mes-annonc
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleRegister)}>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="votre@email.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom d'utilisateur</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Votre pseudo"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Téléphone (optionnel)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="tel"
-                        placeholder="6XXXXXXXX"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mot de passe</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Le mot de passe doit contenir au moins 6 caractères.
-                    </p>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="acceptTerms"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <div className="text-sm text-muted-foreground">
-                        J'accepte les{" "}
-                        <button
-                          type="button"
-                          className="text-mboa-orange hover:underline font-medium"
-                          onClick={() => setIsTermsDialogOpen(true)}
-                        >
-                          conditions générales d'utilisation
-                        </button>
-                      </div>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
+              <EmailField form={form} />
+              <UsernameField form={form} />
+              <PhoneField form={form} />
+              <PasswordField form={form} />
+              <TermsCheckbox 
+                form={form} 
+                onShowTerms={() => setIsTermsDialogOpen(true)} 
               />
             </CardContent>
             
