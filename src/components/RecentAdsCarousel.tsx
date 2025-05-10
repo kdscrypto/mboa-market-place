@@ -1,11 +1,10 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { ArrowRight, Heart } from "lucide-react";
 import { Ad } from "@/types/adTypes";
 import PremiumBadge from "@/components/PremiumBadge";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 import { 
   Carousel, 
   CarouselContent, 
@@ -19,39 +18,9 @@ interface RecentAdsCarouselProps {
 }
 
 const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const navigate = useNavigate();
-  
   // Diviser les annonces en deux rangées
   const firstRowAds = ads.slice(0, Math.ceil(ads.length / 2));
   const secondRowAds = ads.slice(Math.ceil(ads.length / 2));
-
-  useEffect(() => {
-    // Vérifier si l'utilisateur est authentifié
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
-    };
-    
-    checkAuth();
-
-    // Écouter les changements d'état d'authentification
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleAdClick = (e: React.MouseEvent, adId: string) => {
-    e.preventDefault();
-    
-    if (isAuthenticated) {
-      navigate(`/annonce/${adId}`);
-    } else {
-      navigate('/connexion', { state: { from: `/annonce/${adId}` } });
-    }
-  };
 
   return (
     <section>
@@ -78,10 +47,9 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
           {firstRowAds.map((ad) => (
             <CarouselItem key={ad.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
               <div className="relative h-full">
-                <a 
-                  href={`/annonce/${ad.id}`} 
+                <Link 
+                  to={`/annonce/${ad.id}`} 
                   className="h-full block"
-                  onClick={(e) => handleAdClick(e, ad.id)}
                 >
                   <div className="relative aspect-square overflow-hidden rounded-t-md">
                     <img
@@ -112,7 +80,7 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
                     <h3 className="font-medium text-xs sm:text-sm line-clamp-1">{ad.title}</h3>
                     <p className="text-xs text-gray-500 mt-1 line-clamp-1">{ad.city}</p>
                   </div>
-                </a>
+                </Link>
                 {ad.is_premium && (
                   <div className="absolute top-2 left-2">
                     <PremiumBadge className="z-20 scale-75" />
@@ -142,10 +110,9 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
             {secondRowAds.map((ad) => (
               <CarouselItem key={ad.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
                 <div className="relative h-full">
-                  <a 
-                    href={`/annonce/${ad.id}`} 
+                  <Link 
+                    to={`/annonce/${ad.id}`} 
                     className="h-full block"
-                    onClick={(e) => handleAdClick(e, ad.id)}
                   >
                     <div className="relative aspect-square overflow-hidden rounded-t-md">
                       <img
@@ -176,7 +143,7 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
                       <h3 className="font-medium text-xs sm:text-sm line-clamp-1">{ad.title}</h3>
                       <p className="text-xs text-gray-500 mt-1 line-clamp-1">{ad.city}</p>
                     </div>
-                  </a>
+                  </Link>
                   {ad.is_premium && (
                     <div className="absolute top-2 left-2">
                       <PremiumBadge className="z-20 scale-75" />
