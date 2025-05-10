@@ -7,7 +7,7 @@ export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
   try {
     console.log(`Fetching ads with status: ${status}`);
     
-    // Vérifier si l'utilisateur est admin avant de récupérer les annonces
+    // Vérifier si l'utilisateur est connecté
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {

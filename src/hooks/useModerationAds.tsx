@@ -69,10 +69,10 @@ export const useModerationAds = () => {
       });
       
       // Mettre à jour les listes localement
-      setPendingAds(pendingAds.filter(ad => ad.id !== adId));
+      setPendingAds(prev => prev.filter(ad => ad.id !== adId));
       const approvedAd = pendingAds.find(ad => ad.id === adId);
       if (approvedAd) {
-        setApprovedAds([{ ...approvedAd, status: 'approved' }, ...approvedAds]);
+        setApprovedAds(prev => [{ ...approvedAd, status: 'approved' }, ...prev]);
       }
     } catch (error) {
       console.error("Error approving ad:", error);
@@ -99,10 +99,10 @@ export const useModerationAds = () => {
       });
       
       // Mettre à jour les listes localement
-      setPendingAds(pendingAds.filter(ad => ad.id !== adId));
+      setPendingAds(prev => prev.filter(ad => ad.id !== adId));
       const rejectedAd = pendingAds.find(ad => ad.id === adId);
       if (rejectedAd) {
-        setRejectedAds([{ ...rejectedAd, status: 'rejected' }, ...rejectedAds]);
+        setRejectedAds(prev => [{ ...rejectedAd, status: 'rejected' }, ...prev]);
       }
     } catch (error) {
       console.error("Error rejecting ad:", error);

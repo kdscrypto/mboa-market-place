@@ -29,17 +29,15 @@ export const useAdRealtime = ({ setPendingAds, setApprovedAds, setRejectedAds }:
           if (payload.new && typeof payload.new === 'object' && 'status' in payload.new) {
             const status = payload.new.status as string;
             
-            // Rafraîchir la liste appropriée
-            if (status === 'pending') {
-              const pending = await fetchAdsWithStatus('pending');
-              setPendingAds(pending);
-            } else if (status === 'approved') {
-              const approved = await fetchAdsWithStatus('approved');
-              setApprovedAds(approved);
-            } else if (status === 'rejected') {
-              const rejected = await fetchAdsWithStatus('rejected');
-              setRejectedAds(rejected);
-            }
+            // Rafraîchir toutes les listes pour s'assurer que les données sont à jour
+            const pending = await fetchAdsWithStatus('pending');
+            setPendingAds(pending);
+            
+            const approved = await fetchAdsWithStatus('approved');
+            setApprovedAds(approved);
+            
+            const rejected = await fetchAdsWithStatus('rejected');
+            setRejectedAds(rejected);
           }
         }
       )
