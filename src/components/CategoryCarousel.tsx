@@ -12,21 +12,23 @@ interface CategoryCarouselProps {
 }
 
 const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }) => {
-  // Configuration du plugin autoplay avec un délai de 3 secondes et direction inversée
+  // Configuration du plugin autoplay avec un délai de 3 secondes
   const autoplayPlugin = React.useRef(
     Autoplay({
       delay: 3000,
       stopOnInteraction: true,
-      reverseDirection: true  // Défilement de droite à gauche
+      // La propriété reverseDirection n'est pas supportée, à la place nous utilisons
+      // direction dans les options du carousel
     })
   );
 
-  // Initialisation du carousel avec direction verticale et plugin d'autoplay
+  // Initialisation du carousel avec direction horizontale et plugin d'autoplay
   const [emblaRef] = useEmblaCarousel(
     { 
-      axis: "y",      // Défilement vertical
-      loop: true,     // Boucle infinie
-      dragFree: true  // Glissement libre
+      axis: "x",     // Défilement horizontal
+      loop: true,    // Boucle infinie
+      dragFree: true, // Glissement libre
+      direction: "rtl" // Direction de droite à gauche
     },
     [autoplayPlugin.current]
   );
@@ -35,30 +37,20 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }
     <section className="mb-12">
       <h2 className="text-2xl font-bold mb-6">{title}</h2>
       
-      <div className="h-[500px] overflow-hidden">
-        <Carousel 
-          opts={{ 
-            axis: "y", 
-            loop: true 
-          }}
-          plugins={[autoplayPlugin.current]}
-          className="h-full"
-          orientation="vertical"
-        >
-          <CarouselContent className="-mt-4">
-            {categories.map((category) => (
-              <CarouselItem key={category.id} className="pt-4 basis-1/3 md:basis-1/4">
-                <CategoryCard
-                  name={category.name}
-                  slug={category.slug}
-                  icon={category.icon}
-                  coverImage={category.coverImage}
-                  className="h-full"
-                />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex">
+          {categories.map((category) => (
+            <div key={category.id} className="min-w-[200px] md:min-w-[220px] p-2">
+              <CategoryCard
+                name={category.name}
+                slug={category.slug}
+                icon={category.icon}
+                coverImage={category.coverImage}
+                className="h-full"
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
