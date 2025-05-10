@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import CategoryCard from "@/components/CategoryCard";
+import CategoryCarousel from "@/components/CategoryCarousel";
 import AdCard from "@/components/AdCard";
 import SearchFilters from "@/components/SearchFilters";
 import { Button } from "@/components/ui/button";
@@ -87,68 +86,67 @@ const Index = () => {
           <SearchFilters onSearch={handleSearch} />
         </div>
 
-        {/* Categories Section */}
-        <section className="mboa-container mb-12">
-          <h2 className="text-2xl font-bold mb-6">Catégories populaires</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {featuredCategories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                name={category.name}
-                slug={category.slug}
-                icon={category.icon}
-                coverImage={category.coverImage}
+        {/* Categories Section avec Défilement Vertical */}
+        <div className="mboa-container">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Carousel vertical des catégories */}
+            <div className="md:col-span-1">
+              <CategoryCarousel 
+                categories={featuredCategories}
+                title="Catégories populaires"
               />
-            ))}
-          </div>
-        </section>
+            </div>
+            
+            {/* Recent Ads */}
+            <div className="md:col-span-2">
+              <section className="mb-12">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Annonces récentes</h2>
+                  <Link to="/annonces" className="text-mboa-orange hover:underline">
+                    Voir toutes les annonces
+                  </Link>
+                </div>
 
-        {/* Recent Ads */}
-        <section className="mboa-container mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Annonces récentes</h2>
-            <Link to="/annonces" className="text-mboa-orange hover:underline">
-              Voir toutes les annonces
-            </Link>
+                {isLoading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-mboa-orange" />
+                    <span className="ml-2">Chargement des annonces...</span>
+                  </div>
+                ) : recentAds.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {recentAds.map((ad) => (
+                      <AdCard
+                        key={ad.id}
+                        id={ad.id}
+                        title={ad.title}
+                        price={ad.price}
+                        location={{
+                          city: ad.city,
+                          region: ad.region
+                        }}
+                        imageUrl={ad.imageUrl}
+                        createdAt={new Date(ad.created_at)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <p className="text-gray-500">Aucune annonce disponible pour le moment.</p>
+                    <Button 
+                      asChild 
+                      variant="outline"
+                      className="mt-4"
+                    >
+                      <Link to="/publier-annonce">
+                        Soyez le premier à publier une annonce
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </section>
+            </div>
           </div>
-
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-mboa-orange" />
-              <span className="ml-2">Chargement des annonces...</span>
-            </div>
-          ) : recentAds.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              {recentAds.map((ad) => (
-                <AdCard
-                  key={ad.id}
-                  id={ad.id}
-                  title={ad.title}
-                  price={ad.price}
-                  location={{
-                    city: ad.city,
-                    region: ad.region
-                  }}
-                  imageUrl={ad.imageUrl}
-                  createdAt={new Date(ad.created_at)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Aucune annonce disponible pour le moment.</p>
-              <Button 
-                asChild 
-                variant="outline"
-                className="mt-4"
-              >
-                <Link to="/publier-annonce">
-                  Soyez le premier à publier une annonce
-                </Link>
-              </Button>
-            </div>
-          )}
-        </section>
+        </div>
 
         {/* CTA Section */}
         <section className="bg-mboa-gray py-12">
