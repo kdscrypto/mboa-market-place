@@ -8,7 +8,8 @@ import PremiumBadge from "@/components/PremiumBadge";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Carousel, 
   CarouselContent, 
@@ -20,6 +21,8 @@ import {
 const TrendingAdsSection: React.FC = () => {
   const [trendingAds, setTrendingAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const autoplayPlugin = React.useRef(
     Autoplay({
@@ -29,6 +32,14 @@ const TrendingAdsSection: React.FC = () => {
   );
 
   useEffect(() => {
+    // Vérifier si l'utilisateur est authentifié
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuth();
+    
     const loadTrendingAds = async () => {
       setIsLoading(true);
       try {
@@ -42,7 +53,24 @@ const TrendingAdsSection: React.FC = () => {
     };
 
     loadTrendingAds();
+
+    // Écouter les changements d'état d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const handleAdClick = (e: React.MouseEvent, adId: string) => {
+    e.preventDefault();
+    
+    if (isAuthenticated) {
+      navigate(`/annonce/${adId}`);
+    } else {
+      navigate('/connexion', { state: { from: `/annonce/${adId}` } });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -83,7 +111,11 @@ const TrendingAdsSection: React.FC = () => {
           {trendingAds.map((ad) => (
             <CarouselItem key={ad.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
               <div className="relative h-full">
-                <Link to={`/annonce/${ad.id}`} className="h-full block">
+                <a 
+                  href={`/annonce/${ad.id}`} 
+                  className="h-full block"
+                  onClick={(e) => handleAdClick(e, ad.id)}
+                >
                   <div className="relative aspect-square overflow-hidden rounded-t-md">
                     <img
                       src={ad.imageUrl || '/placeholder.svg'}
@@ -113,7 +145,7 @@ const TrendingAdsSection: React.FC = () => {
                     <h3 className="font-medium text-xs sm:text-sm line-clamp-1">{ad.title}</h3>
                     <p className="text-xs text-gray-500 mt-1 line-clamp-1">{ad.city}</p>
                   </div>
-                </Link>
+                </a>
                 <div className="absolute top-2 left-2">
                   <PremiumBadge className="z-20 scale-75" />
                 </div>

@@ -56,14 +56,7 @@ const App = () => (
           <Route path="/recherche" element={<SearchResults />} />
           <Route path="/categorie/:slug" element={<CategoryPage />} />
           <Route path="/annonces-premium" element={<PremiumAds />} />
-          <Route 
-            path="/annonce/:id" 
-            element={
-              <AuthGuard>
-                <AdDetail />
-              </AuthGuard>
-            } 
-          />
+          <Route path="/annonce/:id" element={<AdDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

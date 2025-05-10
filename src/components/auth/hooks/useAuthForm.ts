@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LoginFormValues, RegisterFormValues } from "../validation/authSchemas";
@@ -8,7 +8,11 @@ import { LoginFormValues, RegisterFormValues } from "../validation/authSchemas";
 export const useLoginForm = (redirectPath: string = "/mes-annonces") => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Récupérer le chemin de redirection s'il existe dans l'état de location
+  const from = location.state?.from || redirectPath;
 
   const handleLogin = async (values: LoginFormValues) => {
     setIsLoading(true);
@@ -32,8 +36,9 @@ export const useLoginForm = (redirectPath: string = "/mes-annonces") => {
         description: "Vous êtes maintenant connecté.",
         duration: 3000
       });
-      // Redirect to the path that was provided or user dashboard
-      navigate(redirectPath);
+      
+      // Redirect to the path that was provided in location state or default
+      navigate(from);
     } catch (error) {
       console.error("Erreur de connexion:", error);
       toast({
@@ -52,7 +57,11 @@ export const useLoginForm = (redirectPath: string = "/mes-annonces") => {
 export const useRegisterForm = (redirectPath: string = "/mes-annonces") => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Récupérer le chemin de redirection s'il existe dans l'état de location
+  const from = location.state?.from || redirectPath;
 
   const handleRegister = async (values: RegisterFormValues) => {
     setIsLoading(true);
@@ -83,8 +92,9 @@ export const useRegisterForm = (redirectPath: string = "/mes-annonces") => {
         description: "Votre compte a été créé avec succès. Veuillez vérifier votre email pour confirmer votre compte.",
         duration: 5000
       });
-      // Redirect to the path that was provided or dashboard
-      navigate(redirectPath);
+      
+      // Redirect to the path that was provided in location state or default
+      navigate(from);
     } catch (error) {
       console.error("Erreur d'inscription:", error);
       toast({
