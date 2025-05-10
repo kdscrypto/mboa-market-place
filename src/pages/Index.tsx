@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import CategoryCarousel from "@/components/CategoryCarousel";
 import AdCard from "@/components/AdCard";
 import SearchFilters from "@/components/SearchFilters";
+import TrendingAdsSection from "@/components/TrendingAdsSection";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { fetchApprovedAds } from "@/services/homeService";
@@ -85,6 +86,11 @@ const Index = () => {
         {/* Search Filters */}
         <div className="mboa-container -mt-6 mb-8">
           <SearchFilters onSearch={handleSearch} />
+        </div>
+
+        {/* Trending Ads Section (NEW) */}
+        <div className="mboa-container mb-8">
+          <TrendingAdsSection />
         </div>
 
         {/* Categories Section avec Carousel Horizontal */}
