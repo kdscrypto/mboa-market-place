@@ -25,19 +25,24 @@ export const useAdRealtime = ({ setPendingAds, setApprovedAds, setRejectedAds }:
         async (payload) => {
           console.log('Change detected in ads:', payload);
           
-          // Mettre à jour la liste appropriée en fonction du statut
-          if (payload.new && typeof payload.new === 'object' && 'status' in payload.new) {
-            const status = payload.new.status as string;
+          // Refresh all lists regardless of the specific change
+          // This ensures we capture any status transitions completely
+          try {
+            console.log("Refreshing all ad lists due to database change");
             
-            // Rafraîchir toutes les listes pour s'assurer que les données sont à jour
             const pending = await fetchAdsWithStatus('pending');
+            console.log("Refreshed pending ads count:", pending.length);
             setPendingAds(pending);
             
             const approved = await fetchAdsWithStatus('approved');
+            console.log("Refreshed approved ads count:", approved.length);
             setApprovedAds(approved);
             
             const rejected = await fetchAdsWithStatus('rejected');
+            console.log("Refreshed rejected ads count:", rejected.length);
             setRejectedAds(rejected);
+          } catch (error) {
+            console.error("Error refreshing ad lists:", error);
           }
         }
       )

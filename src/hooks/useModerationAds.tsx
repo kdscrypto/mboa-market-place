@@ -68,7 +68,7 @@ export const useModerationAds = () => {
         duration: 3000
       });
       
-      // Mettre à jour les listes localement
+      // Mettre à jour les listes localement - use functional updates
       setPendingAds(prev => prev.filter(ad => ad.id !== adId));
       const approvedAd = pendingAds.find(ad => ad.id === adId);
       if (approvedAd) {
@@ -98,7 +98,7 @@ export const useModerationAds = () => {
         duration: 3000
       });
       
-      // Mettre à jour les listes localement
+      // Mettre à jour les listes localement - use functional updates
       setPendingAds(prev => prev.filter(ad => ad.id !== adId));
       const rejectedAd = pendingAds.find(ad => ad.id === adId);
       if (rejectedAd) {
