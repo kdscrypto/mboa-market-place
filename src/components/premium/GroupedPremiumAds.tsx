@@ -8,8 +8,12 @@ interface GroupedPremiumAdsListProps {
 }
 
 const GroupedPremiumAdsList: React.FC<GroupedPremiumAdsListProps> = ({ groupedAds }) => {
+  if (!groupedAds || groupedAds.length === 0) {
+    return null;
+  }
+  
   return (
-    <>
+    <div className="space-y-8">
       {groupedAds.map((group, index) => (
         <PremiumAdGrid 
           key={index} 
@@ -17,7 +21,7 @@ const GroupedPremiumAdsList: React.FC<GroupedPremiumAdsListProps> = ({ groupedAd
           title={`${group.category} à ${group.city}`} 
         />
       ))}
-    </>
+    </div>
   );
 };
 

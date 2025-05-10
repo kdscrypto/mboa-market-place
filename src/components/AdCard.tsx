@@ -51,19 +51,19 @@ const AdCard: React.FC<AdCardProps> = ({
           />
         </div>
         
-        <CardContent className="p-3">
-          <h3 className="font-semibold text-sm line-clamp-1">{title}</h3>
+        <CardContent className="p-2">
+          <h3 className="font-semibold text-xs sm:text-sm line-clamp-1">{title}</h3>
           
-          <div className="mt-2 font-bold text-mboa-orange">
+          <div className="mt-1 font-bold text-mboa-orange text-xs sm:text-sm">
             {formattedPrice} {currency}
           </div>
           
-          <div className="flex items-center mt-1 text-xs text-gray-500">
+          <div className="flex items-center mt-0.5 text-xs text-gray-500">
             <MapPin className="h-3 w-3 mr-1" />
-            <span>{location.city}</span>
+            <span className="truncate max-w-[90%]">{location.city}</span>
           </div>
           
-          <div className="text-xs text-gray-400 mt-2">{timeAgo}</div>
+          <div className="text-xs text-gray-400 mt-1">{timeAgo}</div>
         </CardContent>
       </Card>
     </Link>

@@ -22,7 +22,7 @@ const TrendingAdsSection: React.FC = () => {
     })
   );
 
-  // Initialisation du carousel
+  // Initialisation du carousel avec plus d'éléments visibles
   const [emblaRef] = useEmblaCarousel(
     { 
       axis: "x",
@@ -30,7 +30,7 @@ const TrendingAdsSection: React.FC = () => {
       dragFree: true,
       direction: "ltr",
       align: "start",
-      slidesToScroll: 2
+      slidesToScroll: 3 // Augmenté pour un défilement plus fluide
     },
     [autoplayPlugin.current]
   );
@@ -39,7 +39,7 @@ const TrendingAdsSection: React.FC = () => {
     const loadTrendingAds = async () => {
       setIsLoading(true);
       try {
-        const ads = await fetchPremiumAds(12); // Récupérer 12 annonces premium max pour avoir plus de choix
+        const ads = await fetchPremiumAds(12); 
         setTrendingAds(ads);
       } catch (error) {
         console.error("Error loading trending ads:", error);
@@ -82,7 +82,7 @@ const TrendingAdsSection: React.FC = () => {
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {trendingAds.map((ad) => (
-            <div key={ad.id} className="min-w-[160px] sm:min-w-[180px] md:min-w-[200px] p-1 sm:p-2 flex-shrink-0">
+            <div key={ad.id} className="min-w-[140px] sm:min-w-[160px] md:min-w-[180px] p-1 sm:p-1.5 flex-shrink-0">
               <div className="relative">
                 <AdCard
                   id={ad.id}
@@ -96,7 +96,7 @@ const TrendingAdsSection: React.FC = () => {
                   createdAt={new Date(ad.created_at)}
                 />
                 <div className="absolute top-1 right-1">
-                  <PremiumBadge className="z-20 scale-75 sm:scale-90" />
+                  <PremiumBadge className="z-20 scale-70 sm:scale-75" />
                 </div>
               </div>
             </div>
