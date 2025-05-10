@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from "react";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { Loader2, ArrowRight } from "lucide-react";
 import { fetchPremiumAds } from "@/services/trendingService";
 import { Ad } from "@/types/adTypes";
@@ -29,7 +28,9 @@ const TrendingAdsSection: React.FC = () => {
       axis: "x",
       loop: true,
       dragFree: true,
-      direction: "ltr"
+      direction: "ltr",
+      align: "start",
+      slidesToScroll: 2
     },
     [autoplayPlugin.current]
   );
@@ -38,7 +39,7 @@ const TrendingAdsSection: React.FC = () => {
     const loadTrendingAds = async () => {
       setIsLoading(true);
       try {
-        const ads = await fetchPremiumAds(10); // Récupérer 10 annonces premium max
+        const ads = await fetchPremiumAds(12); // Récupérer 12 annonces premium max pour avoir plus de choix
         setTrendingAds(ads);
       } catch (error) {
         console.error("Error loading trending ads:", error);
@@ -52,8 +53,8 @@ const TrendingAdsSection: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-mboa-orange" />
+      <div className="flex justify-center items-center py-6">
+        <Loader2 className="h-6 w-6 animate-spin text-mboa-orange" />
         <span className="ml-2">Chargement des tendances...</span>
       </div>
     );
@@ -64,10 +65,10 @@ const TrendingAdsSection: React.FC = () => {
   }
 
   return (
-    <section className="mb-12">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold">Tendance en ce moment</h2>
+    <section className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold">Tendance en ce moment</h2>
           <PremiumBadge />
         </div>
         
@@ -81,7 +82,7 @@ const TrendingAdsSection: React.FC = () => {
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {trendingAds.map((ad) => (
-            <div key={ad.id} className="min-w-[200px] md:min-w-[220px] p-2">
+            <div key={ad.id} className="min-w-[160px] sm:min-w-[180px] md:min-w-[200px] p-1 sm:p-2 flex-shrink-0">
               <div className="relative">
                 <AdCard
                   id={ad.id}
@@ -94,8 +95,8 @@ const TrendingAdsSection: React.FC = () => {
                   imageUrl={ad.imageUrl}
                   createdAt={new Date(ad.created_at)}
                 />
-                <div className="absolute top-2 right-2">
-                  <PremiumBadge className="z-20" />
+                <div className="absolute top-1 right-1">
+                  <PremiumBadge className="z-20 scale-75 sm:scale-90" />
                 </div>
               </div>
             </div>
