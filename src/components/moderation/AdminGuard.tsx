@@ -19,6 +19,7 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
+          console.log("Aucune session utilisateur trouvée");
           setIsAdmin(false);
           toast({
             title: "Accès refusé",
@@ -29,12 +30,19 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
+        console.log("Session utilisateur trouvée:", session.user.id);
+        
         // Utiliser la fonction is_admin pour vérifier si l'utilisateur est administrateur
         const { data: isUserAdmin, error } = await supabase.rpc('is_admin', {
           user_id: session.user.id
         });
         
-        if (error) throw error;
+        if (error) {
+          console.error("Erreur RPC is_admin:", error);
+          throw error;
+        }
+        
+        console.log("Résultat is_admin:", isUserAdmin);
         
         if (!isUserAdmin) {
           setIsAdmin(false);

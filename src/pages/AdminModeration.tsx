@@ -26,17 +26,26 @@ const AdminModeration = () => {
         .eq('status', status)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error(`Erreur lors de la récupération des annonces ${status}:`, error);
+        throw error;
+      }
+      
+      console.log(`Annonces ${status} récupérées:`, ads);
       
       // Pour chaque annonce, récupérer l'image principale
       const adsWithImages = await Promise.all(
         (ads || []).map(async (ad) => {
-          const { data: images } = await supabase
+          const { data: images, error: imageError } = await supabase
             .from('ad_images')
             .select('image_url')
             .eq('ad_id', ad.id)
             .order('position', { ascending: true })
             .limit(1);
+          
+          if (imageError) {
+            console.error(`Erreur lors de la récupération des images pour l'annonce ${ad.id}:`, imageError);
+          }
           
           return {
             ...ad,
@@ -62,19 +71,23 @@ const AdminModeration = () => {
     const loadAllAds = async () => {
       setIsLoading(true);
       
-      // Récupérer les annonces en attente
-      const pending = await fetchAdsWithStatus('pending');
-      setPendingAds(pending);
-      
-      // Récupérer les annonces approuvées
-      const approved = await fetchAdsWithStatus('approved');
-      setApprovedAds(approved);
-      
-      // Récupérer les annonces rejetées
-      const rejected = await fetchAdsWithStatus('rejected');
-      setRejectedAds(rejected);
-      
-      setIsLoading(false);
+      try {
+        // Récupérer les annonces en attente
+        const pending = await fetchAdsWithStatus('pending');
+        setPendingAds(pending);
+        
+        // Récupérer les annonces approuvées
+        const approved = await fetchAdsWithStatus('approved');
+        setApprovedAds(approved);
+        
+        // Récupérer les annonces rejetées
+        const rejected = await fetchAdsWithStatus('rejected');
+        setRejectedAds(rejected);
+      } catch (error) {
+        console.error("Erreur lors du chargement des annonces:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     loadAllAds();
