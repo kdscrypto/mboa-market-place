@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, SlidersHorizontal } from 'lucide-react';
 
 // Mock data - In a real app, these would come from Supabase
 const categories = [
@@ -39,16 +39,23 @@ const regions = [
 interface SearchFiltersProps {
   onSearch: (filters: any) => void;
   className?: string;
+  initialFilters?: {
+    query?: string;
+    category?: string;
+    region?: string;
+    minPrice?: string;
+    maxPrice?: string;
+  };
 }
 
-const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className }) => {
+const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className, initialFilters = {} }) => {
   const [expanded, setExpanded] = useState(false);
   const [filters, setFilters] = useState({
-    query: '',
-    category: '0',
-    region: '0',
-    minPrice: '',
-    maxPrice: ''
+    query: initialFilters.query || '',
+    category: initialFilters.category || '0',
+    region: initialFilters.region || '0',
+    minPrice: initialFilters.minPrice || '',
+    maxPrice: initialFilters.maxPrice || ''
   });
 
   const handleChange = (name: string, value: string) => {
@@ -57,22 +64,73 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className }) =>
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(filters);
+    
+    // Prepare filters object to include only non-empty values
+    const cleanedFilters = Object.entries(filters).reduce((acc, [key, value]) => {
+      // Only include values that are not empty strings or '0' for category/region
+      if (value !== '') {
+        if ((key === 'category' || key === 'region') && value === '0') {
+          // Skip default "all" values
+          return acc;
+        }
+        return { ...acc, [key]: value };
+      }
+      return acc;
+    }, {});
+    
+    onSearch(cleanedFilters);
   };
 
+  const handleReset = () => {
+    setFilters({
+      query: '',
+      category: '0',
+      region: '0',
+      minPrice: '',
+      maxPrice: ''
+    });
+    
+    // Submit the reset filters immediately
+    onSearch({});
+  };
+
+  const getCategoryName = (id: string) => {
+    const category = categories.find(c => c.id.toString() === id);
+    return category ? category.name : 'Toutes les catégories';
+  };
+  
+  const getRegionName = (id: string) => {
+    const region = regions.find(r => r.id.toString() === id);
+    return region ? region.name : 'Tout le Cameroun';
+  };
+  
   return (
-    <div className={`bg-white border rounded-lg p-4 ${className}`}>
+    <div className={`bg-white border rounded-lg p-4 shadow-sm ${className}`}>
       <form onSubmit={handleSubmit}>
         <div className="flex flex-col gap-4">
+          {/* Search input - always visible */}
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Rechercher une annonce..."
+              value={filters.query}
+              onChange={(e) => handleChange('query', e.target.value)}
+              className="pl-10 pr-4 mboa-input w-full"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          </div>
+          
           {/* Always visible filters */}
-          <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
             <div className="flex-grow">
               <Select 
                 value={filters.category} 
                 onValueChange={(value) => handleChange('category', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Catégorie" />
+                  <SelectValue placeholder="Catégorie">
+                    {getCategoryName(filters.category)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(category => (
@@ -90,7 +148,9 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className }) =>
                 onValueChange={(value) => handleChange('region', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Région" />
+                  <SelectValue placeholder="Région">
+                    {getRegionName(filters.region)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {regions.map(region => (
@@ -108,6 +168,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className }) =>
               className="flex items-center gap-1"
               onClick={() => setExpanded(!expanded)}
             >
+              <SlidersHorizontal className="h-4 w-4 mr-1" />
               Plus de filtres
               <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
             </Button>
@@ -128,6 +189,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className }) =>
                   value={filters.minPrice}
                   onChange={(e) => handleChange('minPrice', e.target.value)}
                   className="mboa-input"
+                  min="0"
                 />
               </div>
               
@@ -139,7 +201,19 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className }) =>
                   value={filters.maxPrice}
                   onChange={(e) => handleChange('maxPrice', e.target.value)}
                   className="mboa-input"
+                  min="0"
                 />
+              </div>
+              
+              <div className="md:col-span-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handleReset}
+                >
+                  Réinitialiser les filtres
+                </Button>
               </div>
             </div>
           )}

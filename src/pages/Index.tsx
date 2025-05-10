@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CategoryCard from "@/components/CategoryCard";
@@ -22,6 +23,7 @@ const featuredCategories = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -43,7 +45,19 @@ const Index = () => {
 
   const handleSearch = (filters: any) => {
     console.log("Search filters:", filters);
-    // In a real app, this would navigate to search results page with filters
+    
+    // Convert filters to URL search params
+    const searchParams = new URLSearchParams();
+    
+    // Only add non-empty filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== '' && value !== undefined && value !== null) {
+        searchParams.set(key, value as string);
+      }
+    });
+    
+    // Navigate to search results page with the filters in the URL
+    navigate(`/recherche?${searchParams.toString()}`);
   };
 
   return (

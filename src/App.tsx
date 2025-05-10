@@ -11,6 +11,7 @@ import UserDashboard from "./pages/UserDashboard";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import AdminModeration from "./pages/AdminModeration";
+import SearchResults from "./pages/SearchResults";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/mes-annonces" element={<UserDashboard />} />
           <Route path="/conditions-utilisation" element={<TermsOfService />} />
           <Route path="/admin/moderation" element={<AdminModeration />} />
+          <Route path="/recherche" element={<SearchResults />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
