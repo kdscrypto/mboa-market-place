@@ -12,13 +12,11 @@ interface CategoryCarouselProps {
 }
 
 const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }) => {
-  // Configuration du plugin autoplay avec un délai de 3 secondes
+  // Configuration du plugin autoplay avec un délai plus long (5 secondes au lieu de 3)
   const autoplayPlugin = React.useRef(
     Autoplay({
-      delay: 3000,
+      delay: 5000, // Plus lent: 5000ms = 5 secondes
       stopOnInteraction: true,
-      // La propriété reverseDirection n'est pas supportée, à la place nous utilisons
-      // direction dans les options du carousel
     })
   );
 
@@ -28,7 +26,7 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }
       axis: "x",     // Défilement horizontal
       loop: true,    // Boucle infinie
       dragFree: true, // Glissement libre
-      direction: "rtl" // Direction de droite à gauche
+      direction: "ltr" // Direction de gauche à droite (left to right)
     },
     [autoplayPlugin.current]
   );
