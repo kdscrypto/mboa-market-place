@@ -32,7 +32,11 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-const RegisterForm = () => {
+interface RegisterFormProps {
+  redirectPath?: string;
+}
+
+const RegisterForm: React.FC<RegisterFormProps> = ({ redirectPath = "/mes-annonces" }) => {
   const [isTermsDialogOpen, setIsTermsDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -78,8 +82,8 @@ const RegisterForm = () => {
         description: "Votre compte a été créé avec succès. Veuillez vérifier votre email pour confirmer votre compte.",
         duration: 5000
       });
-      // Redirect to dashboard instead of homepage
-      navigate("/mes-annonces");
+      // Redirect to the path that was provided or dashboard
+      navigate(redirectPath);
     } catch (error) {
       console.error("Erreur d'inscription:", error);
       toast({

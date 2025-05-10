@@ -5,14 +5,26 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
+import { useLocation } from "react-router-dom";
 
 const Login = () => {
+  const location = useLocation();
+  const fromPage = (location.state as { from?: string })?.from || "/";
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       
       <main className="flex-grow flex items-center justify-center py-12 bg-mboa-gray">
         <div className="mboa-container max-w-md">
+          {fromPage !== "/" && (
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                Vous devez vous connecter ou créer un compte pour accéder à cette page.
+              </p>
+            </div>
+          )}
+          
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid grid-cols-2 mb-4">
               <TabsTrigger value="login">Connexion</TabsTrigger>
@@ -20,11 +32,11 @@ const Login = () => {
             </TabsList>
             
             <TabsContent value="login">
-              <LoginForm />
+              <LoginForm redirectPath={fromPage} />
             </TabsContent>
             
             <TabsContent value="register">
-              <RegisterForm />
+              <RegisterForm redirectPath={fromPage} />
             </TabsContent>
           </Tabs>
         </div>

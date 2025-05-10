@@ -14,6 +14,8 @@ import AdminModeration from "./pages/AdminModeration";
 import SearchResults from "./pages/SearchResults";
 import CategoryPage from "./pages/CategoryPage";
 import PremiumAds from "./pages/PremiumAds";
+import AdDetail from "./pages/AdDetail";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 const queryClient = new QueryClient();
 
@@ -26,13 +28,42 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/connexion" element={<Login />} />
-          <Route path="/publier-annonce" element={<CreateAd />} />
-          <Route path="/mes-annonces" element={<UserDashboard />} />
+          <Route 
+            path="/publier-annonce" 
+            element={
+              <AuthGuard>
+                <CreateAd />
+              </AuthGuard>
+            } 
+          />
+          <Route 
+            path="/mes-annonces" 
+            element={
+              <AuthGuard>
+                <UserDashboard />
+              </AuthGuard>
+            } 
+          />
           <Route path="/conditions-utilisation" element={<TermsOfService />} />
-          <Route path="/admin/moderation" element={<AdminModeration />} />
+          <Route 
+            path="/admin/moderation" 
+            element={
+              <AuthGuard>
+                <AdminModeration />
+              </AuthGuard>
+            } 
+          />
           <Route path="/recherche" element={<SearchResults />} />
           <Route path="/categorie/:slug" element={<CategoryPage />} />
           <Route path="/annonces-premium" element={<PremiumAds />} />
+          <Route 
+            path="/annonce/:id" 
+            element={
+              <AuthGuard>
+                <AdDetail />
+              </AuthGuard>
+            } 
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

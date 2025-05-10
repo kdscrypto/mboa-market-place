@@ -25,7 +25,11 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const LoginForm = () => {
+interface LoginFormProps {
+  redirectPath?: string;
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({ redirectPath = "/mes-annonces" }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -58,8 +62,8 @@ const LoginForm = () => {
         description: "Vous êtes maintenant connecté.",
         duration: 3000
       });
-      // Redirect to user dashboard instead of homepage
-      navigate("/mes-annonces");
+      // Redirect to the path that was provided or user dashboard
+      navigate(redirectPath);
     } catch (error) {
       console.error("Erreur de connexion:", error);
       toast({
