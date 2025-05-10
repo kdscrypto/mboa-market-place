@@ -16,6 +16,7 @@ export interface Ad {
   status: string;
   created_at: string;
   imageUrl: string;
+  user_id: string;
 }
 
 export const useModerationAds = () => {
@@ -30,6 +31,20 @@ export const useModerationAds = () => {
     try {
       console.log(`Fetching ads with status: ${status}`);
       
+      // Vérifier si l'utilisateur est admin avant de récupérer les annonces
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
+      
+      if (!session) {
+        console.error("No active session found");
+        throw new Error("Not authenticated");
+      }
+      
+      // Important: Ne pas filtrer par user_id pour permettre aux modérateurs de voir toutes les annonces
       const { data: ads, error } = await supabase
         .from('ads')
         .select('*')
@@ -82,6 +97,15 @@ export const useModerationAds = () => {
       setIsLoading(true);
       
       try {
+        // Vérifier que l'utilisateur est connecté et est un administrateur
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.error("Session error or no session:", sessionError);
+          setIsLoading(false);
+          return;
+        }
+        
         // Récupérer les annonces en attente
         const pending = await fetchAdsWithStatus('pending');
         console.log("Pending ads loaded:", pending.length);

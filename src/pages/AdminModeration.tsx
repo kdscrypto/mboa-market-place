@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import ModerationLayout from "@/components/moderation/ModerationLayout";
 import ModerationTabs from "@/components/moderation/ModerationTabs";
 import { useModerationAds } from "@/hooks/useModerationAds";
@@ -16,19 +16,20 @@ const AdminModeration = () => {
     handleRejectAd
   } = useModerationAds();
   
-  console.log("AdminModeration data:", {
-    isLoading,
-    pendingAds: pendingAds?.length || 0,
-    approvedAds: approvedAds?.length || 0,
-    rejectedAds: rejectedAds?.length || 0
-  });
+  useEffect(() => {
+    console.log("AdminModeration effect - data loaded:", {
+      pendingAdsCount: pendingAds?.length || 0,
+      approvedAdsCount: approvedAds?.length || 0,
+      rejectedAdsCount: rejectedAds?.length || 0
+    });
+  }, [pendingAds, approvedAds, rejectedAds]);
   
   return (
     <ModerationLayout>
       <ModerationTabs
-        pendingAds={pendingAds}
-        approvedAds={approvedAds}
-        rejectedAds={rejectedAds}
+        pendingAds={pendingAds || []}
+        approvedAds={approvedAds || []}
+        rejectedAds={rejectedAds || []}
         isLoading={isLoading}
         onApprove={handleApproveAd}
         onReject={handleRejectAd}

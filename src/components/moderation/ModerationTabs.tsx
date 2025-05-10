@@ -14,9 +14,9 @@ interface ModerationTabsProps {
 }
 
 const ModerationTabs: React.FC<ModerationTabsProps> = ({
-  pendingAds,
-  approvedAds,
-  rejectedAds,
+  pendingAds = [],
+  approvedAds = [],
+  rejectedAds = [],
   isLoading,
   onApprove,
   onReject
@@ -35,9 +35,9 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
       <TabsList className="grid w-full grid-cols-3 mb-8">
         <TabsTrigger value="pending" className="relative">
           En attente
-          {pendingAds.length > 0 && (
+          {(pendingAds?.length || 0) > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-              {pendingAds.length}
+              {pendingAds?.length || 0}
             </span>
           )}
         </TabsTrigger>
@@ -47,7 +47,7 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
       
       <TabsContent value="pending">
         <ModerationTable 
-          ads={pendingAds} 
+          ads={pendingAds || []} 
           status="pending" 
           isLoading={isLoading}
           onApprove={onApprove}
@@ -57,7 +57,7 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
       
       <TabsContent value="approved">
         <ModerationTable 
-          ads={approvedAds} 
+          ads={approvedAds || []} 
           status="approved" 
           isLoading={isLoading}
         />
@@ -65,7 +65,7 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
       
       <TabsContent value="rejected">
         <ModerationTable 
-          ads={rejectedAds} 
+          ads={rejectedAds || []} 
           status="rejected" 
           isLoading={isLoading}
         />
