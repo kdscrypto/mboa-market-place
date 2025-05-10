@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect } from "react";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import { fetchPremiumAds } from "@/services/trendingService";
 import { Ad } from "@/types/adTypes";
 import AdCard from "@/components/AdCard";
 import PremiumBadge from "@/components/PremiumBadge";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const TrendingAdsSection: React.FC = () => {
   const [trendingAds, setTrendingAds] = useState<Ad[]>([]);
@@ -16,7 +18,7 @@ const TrendingAdsSection: React.FC = () => {
   // Configuration du plugin autoplay
   const autoplayPlugin = React.useRef(
     Autoplay({
-      delay: 4000, // 4 secondes
+      delay: 5000, // 5 secondes
       stopOnInteraction: true,
     })
   );
@@ -63,15 +65,23 @@ const TrendingAdsSection: React.FC = () => {
 
   return (
     <section className="mb-12">
-      <div className="flex items-center gap-3 mb-6">
-        <h2 className="text-2xl font-bold">Tendance en ce moment</h2>
-        <PremiumBadge />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold">Tendance en ce moment</h2>
+          <PremiumBadge />
+        </div>
+        
+        <Button variant="ghost" asChild className="text-mboa-orange hover:text-mboa-orange/80">
+          <Link to="/annonces-premium" className="flex items-center gap-1">
+            Voir toutes <ArrowRight size={16} />
+          </Link>
+        </Button>
       </div>
       
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {trendingAds.map((ad) => (
-            <div key={ad.id} className="min-w-[240px] md:min-w-[280px] p-2">
+            <div key={ad.id} className="min-w-[200px] md:min-w-[220px] p-2">
               <div className="relative">
                 <AdCard
                   id={ad.id}
