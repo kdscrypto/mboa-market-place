@@ -36,7 +36,7 @@ const AdminModeration = () => {
     });
   }, [pendingAds, approvedAds, rejectedAds]);
   
-  // If still checking authentication or loading data
+  // Si still checking authentication or loading data
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -48,7 +48,7 @@ const AdminModeration = () => {
     );
   }
   
-  // If not an admin, show access denied
+  // Si not an admin, show access denied
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
