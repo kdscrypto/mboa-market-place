@@ -11,21 +11,15 @@ import { Link } from "react-router-dom";
 import { fetchApprovedAds } from "@/services/homeService";
 import { Loader2 } from "lucide-react";
 import { Ad } from "@/types/adTypes";
-
-// Mock data - In a real app, these would come from Supabase
-const featuredCategories = [
-  { id: 1, name: "Électronique", slug: "electronique", iconClass: "fas fa-mobile-alt" },
-  { id: 2, name: "Véhicules", slug: "vehicules", iconClass: "fas fa-car" },
-  { id: 3, name: "Immobilier", slug: "immobilier", iconClass: "fas fa-home" },
-  { id: 4, name: "Vêtements", slug: "vetements", iconClass: "fas fa-tshirt" },
-  { id: 5, name: "Services", slug: "services", iconClass: "fas fa-concierge-bell" },
-  { id: 6, name: "Emploi", slug: "emploi", iconClass: "fas fa-briefcase" },
-];
+import { categories } from "@/data/categoriesData";
 
 const Index = () => {
   const navigate = useNavigate();
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  // Featured categories - select first 6 or 12 categories to display
+  const featuredCategories = categories.slice(0, 12);
 
   useEffect(() => {
     const loadApprovedAds = async () => {
@@ -96,13 +90,14 @@ const Index = () => {
         {/* Categories Section */}
         <section className="mboa-container mb-12">
           <h2 className="text-2xl font-bold mb-6">Catégories populaires</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {featuredCategories.map((category) => (
               <CategoryCard
                 key={category.id}
                 name={category.name}
                 slug={category.slug}
-                iconClass={category.iconClass}
+                icon={category.icon}
+                coverImage={category.coverImage}
               />
             ))}
           </div>

@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
+import { categories, regions } from "@/data/categoriesData";
 
 interface SearchFilters {
   query?: string;
@@ -28,20 +29,14 @@ export const searchAds = async (filters: SearchFilters): Promise<{ ads: Ad[], co
       query = query.ilike('title', `%${filters.query.trim()}%`);
     }
 
-    if (filters.category && filters.category !== '0') {
-      // Find the category by ID in your categories array
-      const categoryObj = categories.find(c => c.id.toString() === filters.category);
-      if (categoryObj) {
-        query = query.eq('category', categoryObj.slug);
-      }
+    if (filters.category && filters.category !== 'all') {
+      // Direct matching on category slug
+      query = query.eq('category', filters.category);
     }
 
-    if (filters.region && filters.region !== '0') {
-      // Find the region by ID in your regions array
-      const regionObj = regions.find(r => r.id.toString() === filters.region);
-      if (regionObj) {
-        query = query.eq('region', regionObj.slug);
-      }
+    if (filters.region && filters.region !== 'all') {
+      // Direct matching on region slug
+      query = query.eq('region', filters.region);
     }
 
     if (filters.minPrice && Number(filters.minPrice) > 0) {
@@ -52,7 +47,8 @@ export const searchAds = async (filters: SearchFilters): Promise<{ ads: Ad[], co
       query = query.lte('price', Number(filters.maxPrice));
     }
 
-    // Always sort by most recent
+    // First sort by ad_type (premium first), then by most recent
+    query = query.order('ad_type', { ascending: false });
     query = query.order('created_at', { ascending: false });
 
     // Apply pagination if provided
@@ -112,28 +108,3 @@ export const searchAds = async (filters: SearchFilters): Promise<{ ads: Ad[], co
     return { ads: [], count: 0 };
   }
 };
-
-// Mock data for category and region lookups
-const categories = [
-  { id: 0, name: 'Toutes les catégories', slug: 'all' },
-  { id: 1, name: 'Électronique', slug: 'electronique' },
-  { id: 2, name: 'Véhicules', slug: 'vehicules' },
-  { id: 3, name: 'Immobilier', slug: 'immobilier' },
-  { id: 4, name: 'Vêtements', slug: 'vetements' },
-  { id: 5, name: 'Services', slug: 'services' },
-  { id: 6, name: 'Emploi', slug: 'emploi' },
-];
-
-const regions = [
-  { id: 0, name: 'Tout le Cameroun', slug: 'all' },
-  { id: 1, name: 'Littoral', slug: 'littoral' },
-  { id: 2, name: 'Centre', slug: 'centre' },
-  { id: 3, name: 'Ouest', slug: 'ouest' },
-  { id: 4, name: 'Sud-Ouest', slug: 'sud-ouest' },
-  { id: 5, name: 'Nord-Ouest', slug: 'nord-ouest' },
-  { id: 6, name: 'Est', slug: 'est' },
-  { id: 7, name: 'Adamaoua', slug: 'adamaoua' },
-  { id: 8, name: 'Nord', slug: 'nord' },
-  { id: 9, name: 'Extrême-Nord', slug: 'extreme-nord' },
-  { id: 10, name: 'Sud', slug: 'sud' },
-];

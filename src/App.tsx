@@ -12,6 +12,7 @@ import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import AdminModeration from "./pages/AdminModeration";
 import SearchResults from "./pages/SearchResults";
+import CategoryPage from "./pages/CategoryPage";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/conditions-utilisation" element={<TermsOfService />} />
           <Route path="/admin/moderation" element={<AdminModeration />} />
           <Route path="/recherche" element={<SearchResults />} />
+          <Route path="/categorie/:slug" element={<CategoryPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
