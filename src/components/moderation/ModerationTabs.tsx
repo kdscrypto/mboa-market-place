@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ModerationTable from "@/components/moderation/ModerationTable";
 import { Ad } from "@/hooks/useModerationAds";
@@ -21,6 +21,15 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
   onApprove,
   onReject
 }) => {
+  // Add debug logging to track when props change
+  useEffect(() => {
+    console.log("ModerationTabs updated with:");
+    console.log("- Pending ads:", pendingAds?.length || 0);
+    console.log("- Approved ads:", approvedAds?.length || 0);
+    console.log("- Rejected ads:", rejectedAds?.length || 0);
+    console.log("- isLoading:", isLoading);
+  }, [pendingAds, approvedAds, rejectedAds, isLoading]);
+  
   return (
     <Tabs defaultValue="pending" className="w-full">
       <TabsList className="grid w-full grid-cols-3 mb-8">

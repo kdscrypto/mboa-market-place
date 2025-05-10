@@ -15,11 +15,18 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
+        console.log("Checking admin status...");
+        
         // Vérifier si l'utilisateur est connecté
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Error getting session:", sessionError);
+          throw sessionError;
+        }
         
         if (!session) {
-          console.log("Aucune session utilisateur trouvée");
+          console.log("No user session found");
           setIsAdmin(false);
           toast({
             title: "Accès refusé",
@@ -30,19 +37,19 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
-        console.log("Session utilisateur trouvée:", session.user.id);
+        console.log("User session found:", session.user.id);
         
         // Utiliser la fonction is_admin pour vérifier si l'utilisateur est administrateur
-        const { data: isUserAdmin, error } = await supabase.rpc('is_admin', {
+        const { data: isUserAdmin, error: adminCheckError } = await supabase.rpc('is_admin', {
           user_id: session.user.id
         });
         
-        if (error) {
-          console.error("Erreur RPC is_admin:", error);
-          throw error;
+        if (adminCheckError) {
+          console.error("Error checking admin status:", adminCheckError);
+          throw adminCheckError;
         }
         
-        console.log("Résultat is_admin:", isUserAdmin);
+        console.log("Admin check result:", isUserAdmin);
         
         if (!isUserAdmin) {
           setIsAdmin(false);
@@ -57,7 +64,7 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
         
         setIsAdmin(true);
       } catch (error) {
-        console.error("Erreur lors de la vérification des droits administrateur:", error);
+        console.error("Error checking admin rights:", error);
         setIsAdmin(false);
         toast({
           title: "Erreur",

@@ -28,6 +28,8 @@ export const useModerationAds = () => {
   // Fonction pour récupérer toutes les annonces avec leurs images principales
   const fetchAdsWithStatus = async (status: string) => {
     try {
+      console.log(`Fetching ads with status: ${status}`);
+      
       const { data: ads, error } = await supabase
         .from('ads')
         .select('*')
@@ -39,7 +41,7 @@ export const useModerationAds = () => {
         throw error;
       }
       
-      console.log(`Annonces ${status} récupérées:`, ads);
+      console.log(`${status} ads retrieved:`, ads);
       
       // Pour chaque annonce, récupérer l'image principale
       const adsWithImages = await Promise.all(
@@ -52,7 +54,7 @@ export const useModerationAds = () => {
             .limit(1);
           
           if (imageError) {
-            console.error(`Erreur lors de la récupération des images pour l'annonce ${ad.id}:`, imageError);
+            console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
           }
           
           return {
@@ -64,7 +66,7 @@ export const useModerationAds = () => {
       
       return adsWithImages;
     } catch (error) {
-      console.error(`Erreur lors de la récupération des annonces avec statut ${status}:`, error);
+      console.error(`Error retrieving ads with status ${status}:`, error);
       toast({
         title: "Erreur",
         description: "Impossible de charger les annonces",
@@ -82,17 +84,20 @@ export const useModerationAds = () => {
       try {
         // Récupérer les annonces en attente
         const pending = await fetchAdsWithStatus('pending');
+        console.log("Pending ads loaded:", pending.length);
         setPendingAds(pending);
         
         // Récupérer les annonces approuvées
         const approved = await fetchAdsWithStatus('approved');
+        console.log("Approved ads loaded:", approved.length);
         setApprovedAds(approved);
         
         // Récupérer les annonces rejetées
         const rejected = await fetchAdsWithStatus('rejected');
+        console.log("Rejected ads loaded:", rejected.length);
         setRejectedAds(rejected);
       } catch (error) {
-        console.error("Erreur lors du chargement des annonces:", error);
+        console.error("Error loading ads:", error);
       } finally {
         setIsLoading(false);
       }
@@ -103,6 +108,8 @@ export const useModerationAds = () => {
 
   // S'abonner aux mises à jour en temps réel
   useEffect(() => {
+    console.log("Setting up realtime subscription for ads");
+    
     const channel = supabase
       .channel('ads-changes')
       .on('postgres_changes', 
@@ -112,7 +119,7 @@ export const useModerationAds = () => {
           table: 'ads'
         }, 
         async (payload) => {
-          console.log('Changement dans les annonces détecté:', payload);
+          console.log('Change detected in ads:', payload);
           
           // Mettre à jour la liste appropriée en fonction du statut
           if (payload.new && typeof payload.new === 'object' && 'status' in payload.new) {
@@ -142,6 +149,8 @@ export const useModerationAds = () => {
   // Fonctions pour mettre à jour le statut d'une annonce
   const handleApproveAd = async (adId: string) => {
     try {
+      console.log("Approving ad:", adId);
+      
       const { error } = await supabase
         .from('ads')
         .update({ status: 'approved' })
@@ -162,7 +171,7 @@ export const useModerationAds = () => {
         setApprovedAds([{ ...approvedAd, status: 'approved' }, ...approvedAds]);
       }
     } catch (error) {
-      console.error("Erreur lors de l'approbation de l'annonce:", error);
+      console.error("Error approving ad:", error);
       toast({
         title: "Erreur",
         description: "Un problème est survenu lors de l'approbation de l'annonce",
@@ -173,6 +182,8 @@ export const useModerationAds = () => {
 
   const handleRejectAd = async (adId: string) => {
     try {
+      console.log("Rejecting ad:", adId);
+      
       const { error } = await supabase
         .from('ads')
         .update({ status: 'rejected' })
@@ -193,7 +204,7 @@ export const useModerationAds = () => {
         setRejectedAds([{ ...rejectedAd, status: 'rejected' }, ...rejectedAds]);
       }
     } catch (error) {
-      console.error("Erreur lors du rejet de l'annonce:", error);
+      console.error("Error rejecting ad:", error);
       toast({
         title: "Erreur",
         description: "Un problème est survenu lors du rejet de l'annonce",

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -32,11 +32,19 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
 }) => {
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
   
+  // Add debug logging
+  useEffect(() => {
+    console.log(`ModerationTable (${status}) updated:`, {
+      adsCount: ads?.length || 0,
+      isLoading
+    });
+  }, [ads, status, isLoading]);
+  
   if (isLoading) {
     return <p className="text-center py-10">Chargement des annonces...</p>;
   }
   
-  if (ads.length === 0) {
+  if (!ads || ads.length === 0) {
     return (
       <p className="text-center py-10 text-gray-500">
         {status === "pending"

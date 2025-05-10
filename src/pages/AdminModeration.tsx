@@ -5,6 +5,8 @@ import ModerationTabs from "@/components/moderation/ModerationTabs";
 import { useModerationAds } from "@/hooks/useModerationAds";
 
 const AdminModeration = () => {
+  console.log("AdminModeration page rendered");
+  
   const {
     isLoading,
     pendingAds,
@@ -13,6 +15,13 @@ const AdminModeration = () => {
     handleApproveAd,
     handleRejectAd
   } = useModerationAds();
+  
+  console.log("AdminModeration data:", {
+    isLoading,
+    pendingAds: pendingAds?.length || 0,
+    approvedAds: approvedAds?.length || 0,
+    rejectedAds: rejectedAds?.length || 0
+  });
   
   return (
     <ModerationLayout>
