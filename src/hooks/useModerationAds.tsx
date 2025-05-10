@@ -61,21 +61,29 @@ export const useModerationAds = () => {
       // Pour chaque annonce, récupérer l'image principale
       const adsWithImages = await Promise.all(
         (ads || []).map(async (ad) => {
-          const { data: images, error: imageError } = await supabase
-            .from('ad_images')
-            .select('image_url')
-            .eq('ad_id', ad.id)
-            .order('position', { ascending: true })
-            .limit(1);
-          
-          if (imageError) {
-            console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
+          try {
+            const { data: images, error: imageError } = await supabase
+              .from('ad_images')
+              .select('image_url')
+              .eq('ad_id', ad.id)
+              .order('position', { ascending: true })
+              .limit(1);
+            
+            if (imageError) {
+              console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
+            }
+            
+            return {
+              ...ad,
+              imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
+            };
+          } catch (err) {
+            console.error(`Error processing images for ad ${ad.id}:`, err);
+            return {
+              ...ad,
+              imageUrl: '/placeholder.svg'
+            };
           }
-          
-          return {
-            ...ad,
-            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
-          };
         })
       );
       
@@ -105,6 +113,8 @@ export const useModerationAds = () => {
           setIsLoading(false);
           return;
         }
+        
+        console.log("Loading ads for admin user:", session.user.id);
         
         // Récupérer les annonces en attente
         const pending = await fetchAdsWithStatus('pending');
@@ -163,9 +173,12 @@ export const useModerationAds = () => {
           }
         }
       )
-      .subscribe();
+      .subscribe(status => {
+        console.log("Realtime subscription status:", status);
+      });
       
     return () => {
+      console.log("Removing realtime subscription");
       supabase.removeChannel(channel);
     };
   }, [toast]);
