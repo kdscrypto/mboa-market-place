@@ -1,4 +1,3 @@
-
 import React from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -13,9 +12,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Ad } from "@/hooks/useModerationAds";
 
 interface ModerationTableProps {
-  ads: any[];
+  ads: Ad[];
   status: "pending" | "approved" | "rejected";
   isLoading: boolean;
   onApprove?: (adId: string) => void;
@@ -29,7 +29,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   onApprove,
   onReject
 }) => {
-  const [selectedAd, setSelectedAd] = React.useState<any | null>(null);
+  const [selectedAd, setSelectedAd] = React.useState<Ad | null>(null);
   
   if (isLoading) {
     return <p className="text-center py-10">Chargement des annonces...</p>;
