@@ -22,37 +22,32 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
     <Link 
       to={`/categorie/${slug}`}
       className={cn(
-        "mboa-card flex flex-col items-center justify-center p-4 text-center gap-2 transition-all hover:shadow-md",
-        "relative overflow-hidden h-32",
+        "mboa-card flex flex-col items-center justify-end p-4 text-center gap-2 transition-all hover:shadow-md",
+        "relative overflow-hidden h-40 rounded-lg",
         className
       )}
     >
-      {/* Cover Image */}
+      {/* Cover Image with better visibility */}
       {coverImage && (
-        <div className="absolute inset-0 w-full h-full z-0 opacity-20">
+        <div className="absolute inset-0 w-full h-full z-0">
           <img 
             src={coverImage} 
             alt={name} 
             className="w-full h-full object-cover"
           />
+          {/* Overlay gradient for better text visibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10"></div>
         </div>
       )}
       
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/80 z-10"></div>
-      
       {/* Content */}
       <div className="relative z-20 flex flex-col items-center">
-        {Icon ? (
-          <div className="w-12 h-12 rounded-full bg-mboa-orange/10 flex items-center justify-center">
-            <Icon className="text-mboa-orange w-6 h-6" />
-          </div>
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-mboa-orange/10 flex items-center justify-center">
-            <i className="text-mboa-orange"></i>
+        <span className="font-medium text-white text-lg mb-1">{name}</span>
+        {Icon && (
+          <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center">
+            <Icon className="text-white w-4 h-4" />
           </div>
         )}
-        <span className="font-medium mt-2">{name}</span>
       </div>
     </Link>
   );

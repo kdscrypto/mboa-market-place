@@ -38,7 +38,7 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {categories.map((category) => (
-            <div key={category.id} className="min-w-[200px] md:min-w-[220px] p-2">
+            <div key={category.id} className="min-w-[240px] md:min-w-[280px] p-2">
               <CategoryCard
                 name={category.name}
                 slug={category.slug}
