@@ -38,14 +38,14 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
           return {
             ...ad,
             imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg',
-            is_premium: ad.plan === 'premium' // Assure que le champ is_premium est correctement défini
+            is_premium: ad.ad_type === 'premium' // Utiliser ad_type au lieu de plan
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
           return {
             ...ad,
             imageUrl: '/placeholder.svg',
-            is_premium: ad.plan === 'premium' // Assure que le champ is_premium est correctement défini
+            is_premium: ad.ad_type === 'premium' // Utiliser ad_type au lieu de plan
           };
         }
       })

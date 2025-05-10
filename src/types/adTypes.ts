@@ -13,4 +13,6 @@ export interface Ad {
   created_at: string;
   imageUrl: string;
   user_id: string;
+  is_premium?: boolean;
+  ad_type?: string;
 }
