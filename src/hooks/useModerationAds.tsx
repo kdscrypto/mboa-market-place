@@ -5,7 +5,8 @@ import { Ad } from "@/types/adTypes";
 import { fetchAdsWithStatus, updateAdStatus } from "@/services/adService";
 import { useAdRealtime } from "@/hooks/useAdRealtime";
 
-export { Ad } from "@/types/adTypes";
+// Change this re-export to use 'export type' syntax
+export type { Ad } from "@/types/adTypes";
 
 export const useModerationAds = () => {
   const { toast } = useToast();
