@@ -20,7 +20,8 @@ export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
       throw new Error("Not authenticated");
     }
     
-    // Important: Ne pas filtrer par user_id pour permettre aux modérateurs de voir toutes les annonces
+    // Fetch all ads with the specified status, without filtering by user_id
+    // This ensures moderators can see all ads from all users
     const { data: ads, error } = await supabase
       .from('ads')
       .select('*')
