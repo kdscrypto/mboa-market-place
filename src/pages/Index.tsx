@@ -72,18 +72,18 @@ const Index = () => {
         {/* Search Filters - More prominent */}
         <SearchSection onSearch={handleSearch} />
         
-        {/* Categories Section - Moved before Trending ads */}
+        {/* Categories Section */}
         <CategoriesSection categories={featuredCategories} />
         
-        {/* Features sections: How it works, Testimonials, Site Stats */}
-        <FeaturesSections />
-
-        {/* Ad Sections - Grouped together for better flow */}
+        {/* Ad Sections - Moved up after categories */}
         <AdsSection 
           recentAds={recentAds} 
           isLoading={isLoading} 
           error={error} 
         />
+        
+        {/* Features sections: How it works, Testimonials, Site Stats */}
+        <FeaturesSections />
 
         {/* CTA Section */}
         <CTASection />
