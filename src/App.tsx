@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { Toaster } from 'react-hot-toast';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 
 // Import pages
 import Index from '@/pages/Index';
@@ -19,11 +20,8 @@ import Help from "@/pages/Help";
 import TermsOfService from "@/pages/TermsOfService";
 
 // Import components
-import AuthGuard from '@/components/AuthGuard';
-import AdminGuard from '@/components/AdminGuard';
-
-// Import context
-import { AuthProvider } from '@/context/AuthContext';
+import AuthGuard from '@/components/auth/AuthGuard';
+import AdminGuard from '@/components/moderation/AdminGuard';
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -46,32 +44,30 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="App min-h-screen">
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/recherche" element={<SearchResults />} />
-              <Route path="/annonce/:id" element={<AdDetail />} />
-              <Route path="/categorie/:slug" element={<CategoryPage />} />
-              <Route path="/premium" element={<PremiumAds />} />
-              <Route path="/a-propos" element={<About />} />
-              <Route path="/aide" element={<Help />} />
-              <Route path="/conditions" element={<TermsOfService />} />
-              
-              {/* Protected routes */}
-              <Route element={<AuthGuard />}>
-                <Route path="/publier" element={<CreateAd />} />
-                <Route path="/dashboard" element={<UserDashboard />} />
-              </Route>
-              
-              {/* Admin routes */}
-              <Route element={<AdminGuard />}>
-                <Route path="/admin/moderation" element={<AdminModeration />} />
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/recherche" element={<SearchResults />} />
+            <Route path="/annonce/:id" element={<AdDetail />} />
+            <Route path="/categorie/:slug" element={<CategoryPage />} />
+            <Route path="/premium" element={<PremiumAds />} />
+            <Route path="/a-propos" element={<About />} />
+            <Route path="/aide" element={<Help />} />
+            <Route path="/conditions" element={<TermsOfService />} />
+            
+            {/* Protected routes */}
+            <Route element={<AuthGuard />}>
+              <Route path="/publier" element={<CreateAd />} />
+              <Route path="/dashboard" element={<UserDashboard />} />
+            </Route>
+            
+            {/* Admin routes */}
+            <Route element={<AdminGuard />}>
+              <Route path="/admin/moderation" element={<AdminModeration />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
           <Toaster />
         </div>
       </Router>
