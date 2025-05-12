@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
-import { Message } from "@/services/messageService";
+import { Message } from "@/services/messaging/types";
 import MessageBubble from "./MessageBubble";
 import MessageForm from "./MessageForm";
 import { Loader2 } from "lucide-react";

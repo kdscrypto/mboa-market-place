@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Conversation } from "@/services/messageService";
+import { Conversation } from "@/services/messaging/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
