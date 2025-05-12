@@ -22,16 +22,16 @@ const ContactSellerButton: React.FC<ContactSellerButtonProps> = ({ ad }) => {
   
   const handleContact = async () => {
     // Vérifier l'authentification
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data } = await supabase.auth.getSession();
     
-    if (!session) {
+    if (!data || !data.session) {
       // Rediriger vers la page de connexion avec l'URL actuelle comme destination de retour
       navigate("/connexion", { state: { from: `/annonce/${ad.id}` } });
       return;
     }
     
     // Vérifier si l'utilisateur est le vendeur
-    if (session.user.id === ad.user_id) {
+    if (data.session.user.id === ad.user_id) {
       toast.error("Vous ne pouvez pas contacter votre propre annonce.");
       return;
     }
@@ -53,11 +53,13 @@ const ContactSellerButton: React.FC<ContactSellerButtonProps> = ({ ad }) => {
       
       if (error || !conversation) {
         toast.error(error || "Erreur lors de la création de la conversation");
+        setSending(false);
         return;
       }
       
       // Fermer la boîte de dialogue et rediriger vers la conversation
       setIsOpen(false);
+      setMessage("");
       navigate(`/messages/${conversation.id}`);
       toast.success("Message envoyé avec succès");
     } catch (error) {

@@ -73,7 +73,8 @@ export const fetchUserConversations = async (): Promise<Conversation[]> => {
         }
 
         // Déterminer l'autre utilisateur (acheteur ou vendeur)
-        const currentUserId = (await supabase.auth.getUser()).data.user?.id;
+        const { data } = await supabase.auth.getUser();
+        const currentUserId = data.user?.id;
         const otherUserId = conv.buyer_id === currentUserId ? conv.seller_id : conv.buyer_id;
 
         // Enrichir la conversation avec les données récupérées
@@ -122,13 +123,13 @@ export const createConversation = async (
   initialMessage: string
 ): Promise<{ conversation: Conversation | null; error: string | null }> => {
   try {
-    const { data: user } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
     
-    if (!user || !user.user) {
+    if (!data || !data.user) {
       return { conversation: null, error: "Utilisateur non authentifié" };
     }
 
-    const buyerId = user.user.id;
+    const buyerId = data.user.id;
 
     // Vérifier si une conversation existe déjà pour cette annonce et cet acheteur
     const { data: existingConv } = await supabase
@@ -200,9 +201,9 @@ export const createConversation = async (
 // Envoyer un message dans une conversation
 export const sendMessage = async (conversationId: string, content: string): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { data: user } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
     
-    if (!user || !user.user) {
+    if (!data || !data.user) {
       return { success: false, error: "Utilisateur non authentifié" };
     }
 
@@ -210,7 +211,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       .from('messages')
       .insert({
         conversation_id: conversationId,
-        sender_id: user.user.id,
+        sender_id: data.user.id,
         content: content
       });
 
@@ -229,9 +230,9 @@ export const sendMessage = async (conversationId: string, content: string): Prom
 // Marquer les messages comme lus
 export const markMessagesAsRead = async (conversationId: string): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { data: user } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getUser();
     
-    if (!user || !user.user) {
+    if (!data || !data.user) {
       return { success: false, error: "Utilisateur non authentifié" };
     }
 
@@ -239,7 +240,7 @@ export const markMessagesAsRead = async (conversationId: string): Promise<{ succ
       .from('messages')
       .update({ read: true })
       .eq('conversation_id', conversationId)
-      .not('sender_id', 'eq', user.user.id)
+      .not('sender_id', 'eq', data.user.id)
       .eq('read', false);
 
     if (error) {

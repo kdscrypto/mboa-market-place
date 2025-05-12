@@ -27,9 +27,9 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   // Récupérer l'ID de l'utilisateur actuel
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        currentUserId.current = session.user.id;
+      const { data } = await supabase.auth.getSession();
+      if (data && data.session) {
+        currentUserId.current = data.session.user.id;
       }
     };
 

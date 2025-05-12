@@ -97,11 +97,14 @@ export const useMessaging = () => {
           setMessages(prev => [...prev, newMessage]);
           
           // Si le message n'est pas de l'utilisateur actuel, le marquer comme lu
-          supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session && session.user.id !== newMessage.sender_id) {
+          const checkAndMarkAsRead = async () => {
+            const { data } = await supabase.auth.getSession();
+            if (data && data.session && data.session.user.id !== newMessage.sender_id) {
               markMessagesAsRead(currentConversation);
             }
-          });
+          };
+          
+          checkAndMarkAsRead();
         }
       )
       .subscribe();
@@ -140,10 +143,10 @@ export const useMessaging = () => {
         },
         async (payload) => {
           const newMessage = payload.new as Message;
-          const { data: { user } } = await supabase.auth.getUser();
+          const { data } = await supabase.auth.getUser();
           
           // Si ce n'est pas la conversation actuelle et ce n'est pas un message de l'utilisateur actuel
-          if (newMessage.conversation_id !== currentConversation && newMessage.sender_id !== user?.id) {
+          if (newMessage.conversation_id !== currentConversation && newMessage.sender_id !== data?.user?.id) {
             // Recharger les conversations pour mettre à jour les compteurs
             loadConversations();
             
