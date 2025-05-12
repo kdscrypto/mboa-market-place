@@ -1,68 +1,82 @@
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { Toaster } from 'react-hot-toast';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import CreateAd from "./pages/CreateAd";
-import UserDashboard from "./pages/UserDashboard";
-import TermsOfService from "./pages/TermsOfService";
-import NotFound from "./pages/NotFound";
-import AdminModeration from "./pages/AdminModeration";
-import SearchResults from "./pages/SearchResults";
-import CategoryPage from "./pages/CategoryPage";
-import PremiumAds from "./pages/PremiumAds";
-import AdDetail from "./pages/AdDetail";
-import AuthGuard from "@/components/auth/AuthGuard";
+// Import pages
+import Index from '@/pages/Index';
+import Login from '@/pages/Login';
+import SearchResults from '@/pages/SearchResults';
+import AdDetail from '@/pages/AdDetail';
+import CategoryPage from '@/pages/CategoryPage';
+import CreateAd from '@/pages/CreateAd';
+import UserDashboard from '@/pages/UserDashboard';
+import AdminModeration from '@/pages/AdminModeration';
+import NotFound from '@/pages/NotFound';
+import PremiumAds from '@/pages/PremiumAds';
+import About from "@/pages/About";
+import Help from "@/pages/Help";
+import TermsOfService from "@/pages/TermsOfService";
 
+// Import components
+import AuthGuard from '@/components/AuthGuard';
+import AdminGuard from '@/components/AdminGuard';
+
+// Import context
+import { AuthProvider } from '@/context/AuthContext';
+
+// Create a new QueryClient instance
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/connexion" element={<Login />} />
-          <Route 
-            path="/publier-annonce" 
-            element={
-              <AuthGuard>
-                <CreateAd />
-              </AuthGuard>
-            } 
-          />
-          <Route 
-            path="/mes-annonces" 
-            element={
-              <AuthGuard>
-                <UserDashboard />
-              </AuthGuard>
-            } 
-          />
-          <Route path="/conditions-utilisation" element={<TermsOfService />} />
-          <Route 
-            path="/admin/moderation" 
-            element={
-              <AuthGuard>
-                <AdminModeration />
-              </AuthGuard>
-            } 
-          />
-          <Route path="/recherche" element={<SearchResults />} />
-          <Route path="/categorie/:slug" element={<CategoryPage />} />
-          <Route path="/annonces-premium" element={<PremiumAds />} />
-          <Route path="/annonce/:id" element={<AdDetail />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  // Authentication state (example)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Function to handle login
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  // Function to handle logout
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div className="App min-h-screen">
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/recherche" element={<SearchResults />} />
+              <Route path="/annonce/:id" element={<AdDetail />} />
+              <Route path="/categorie/:slug" element={<CategoryPage />} />
+              <Route path="/premium" element={<PremiumAds />} />
+              <Route path="/a-propos" element={<About />} />
+              <Route path="/aide" element={<Help />} />
+              <Route path="/conditions" element={<TermsOfService />} />
+              
+              {/* Protected routes */}
+              <Route element={<AuthGuard />}>
+                <Route path="/publier" element={<CreateAd />} />
+                <Route path="/dashboard" element={<UserDashboard />} />
+              </Route>
+              
+              {/* Admin routes */}
+              <Route element={<AdminGuard />}>
+                <Route path="/admin/moderation" element={<AdminModeration />} />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+          <Toaster />
+        </div>
+      </Router>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

@@ -1,7 +1,6 @@
 
 import React from "react";
 import HowItWorks from "@/components/HowItWorks";
-import TestimonialsSection from "@/components/TestimonialsSection";
 import SiteStats from "@/components/SiteStats";
 
 const FeaturesSections: React.FC = () => {
@@ -11,13 +10,6 @@ const FeaturesSections: React.FC = () => {
       <div className="bg-mboa-gray py-12 mb-12">
         <div className="mboa-container">
           <HowItWorks />
-        </div>
-      </div>
-      
-      {/* Testimonials Section */}
-      <div className="bg-mboa-gray py-12 mb-12">
-        <div className="mboa-container">
-          <TestimonialsSection />
         </div>
       </div>
       
