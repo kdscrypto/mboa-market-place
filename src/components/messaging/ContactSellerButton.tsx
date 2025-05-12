@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Loader2 } from "lucide-react";
 import { createConversation } from "@/services/messageService";
 import { Ad } from "@/types/adTypes";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ const ContactSellerButton: React.FC<ContactSellerButtonProps> = ({ ad }) => {
     
     if (!data || !data.session) {
       // Rediriger vers la page de connexion avec l'URL actuelle comme destination de retour
+      toast.error("Veuillez vous connecter pour contacter le vendeur");
       navigate("/connexion", { state: { from: `/annonce/${ad.id}` } });
       return;
     }
@@ -114,7 +115,12 @@ const ContactSellerButton: React.FC<ContactSellerButtonProps> = ({ ad }) => {
               disabled={!message.trim() || sending}
               className="bg-mboa-orange hover:bg-mboa-orange/90"
             >
-              {sending ? "Envoi en cours..." : "Envoyer"}
+              {sending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : "Envoyer"}
             </Button>
           </DialogFooter>
         </DialogContent>

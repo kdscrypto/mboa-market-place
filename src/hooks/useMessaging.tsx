@@ -11,10 +11,12 @@ export const useMessaging = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [messagesLoading, setMessagesLoading] = useState<boolean>(false);
   const [totalUnread, setTotalUnread] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
 
   // Charger les conversations de l'utilisateur
   const loadConversations = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const conversationsData = await fetchUserConversations();
       setConversations(conversationsData);
@@ -24,6 +26,7 @@ export const useMessaging = () => {
       setTotalUnread(total);
     } catch (error) {
       console.error("Erreur lors du chargement des conversations:", error);
+      setError("Impossible de charger vos conversations");
       toast.error("Impossible de charger vos conversations");
     } finally {
       setLoading(false);
@@ -32,9 +35,17 @@ export const useMessaging = () => {
 
   // Charger les messages d'une conversation
   const loadMessages = useCallback(async (conversationId: string) => {
+    if (!conversationId) {
+      console.error("ID de conversation manquant");
+      return;
+    }
+    
     setMessagesLoading(true);
+    setError(null);
     try {
+      console.log("Chargement des messages pour la conversation:", conversationId);
       const messagesData = await fetchConversationMessages(conversationId);
+      console.log("Messages récupérés:", messagesData.length);
       setMessages(messagesData);
       setCurrentConversation(conversationId);
       
@@ -49,12 +60,13 @@ export const useMessaging = () => {
       );
       
       // Recalculer le total des messages non lus
-      const updatedTotal = conversations
-        .filter(conv => conv.id !== conversationId)
-        .reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
-      setTotalUnread(updatedTotal);
+      setTotalUnread(prev => {
+        const conversationUnreadCount = conversations.find(c => c.id === conversationId)?.unread_count || 0;
+        return Math.max(0, prev - conversationUnreadCount);
+      });
     } catch (error) {
       console.error("Erreur lors du chargement des messages:", error);
+      setError("Impossible de charger les messages");
       toast.error("Impossible de charger les messages");
     } finally {
       setMessagesLoading(false);
@@ -81,6 +93,8 @@ export const useMessaging = () => {
   useEffect(() => {
     if (!currentConversation) return;
 
+    console.log("Configuration du canal pour la conversation:", currentConversation);
+
     // Canal pour les nouveaux messages dans la conversation actuelle
     const messagesChannel = supabase
       .channel('messages-changes')
@@ -92,6 +106,7 @@ export const useMessaging = () => {
           filter: `conversation_id=eq.${currentConversation}`
         },
         (payload) => {
+          console.log("Nouveau message reçu:", payload);
           // Ajouter le nouveau message à la liste
           const newMessage = payload.new as Message;
           setMessages(prev => [...prev, newMessage]);
@@ -110,12 +125,15 @@ export const useMessaging = () => {
       .subscribe();
 
     return () => {
+      console.log("Suppression du canal pour la conversation");
       supabase.removeChannel(messagesChannel);
     };
   }, [currentConversation]);
 
   // Configurer l'écoute en temps réel pour les nouvelles conversations
   useEffect(() => {
+    console.log("Configuration des canaux pour les conversations");
+    
     // Canal pour les nouvelles conversations
     const conversationsChannel = supabase
       .channel('conversations-changes')
@@ -126,6 +144,7 @@ export const useMessaging = () => {
           table: 'conversations'
         },
         () => {
+          console.log("Changement détecté dans les conversations");
           // Recharger les conversations lorsqu'une nouvelle est créée ou modifiée
           loadConversations();
         }
@@ -142,11 +161,13 @@ export const useMessaging = () => {
           table: 'messages'
         },
         async (payload) => {
+          console.log("Nouveau message détecté:", payload);
           const newMessage = payload.new as Message;
           const { data } = await supabase.auth.getUser();
           
           // Si ce n'est pas la conversation actuelle et ce n'est pas un message de l'utilisateur actuel
           if (newMessage.conversation_id !== currentConversation && newMessage.sender_id !== data?.user?.id) {
+            console.log("Message dans une autre conversation, mise à jour des compteurs");
             // Recharger les conversations pour mettre à jour les compteurs
             loadConversations();
             
@@ -170,6 +191,7 @@ export const useMessaging = () => {
     loadConversations();
 
     return () => {
+      console.log("Suppression des canaux de conversation");
       supabase.removeChannel(conversationsChannel);
       supabase.removeChannel(allMessagesChannel);
     };
@@ -182,6 +204,7 @@ export const useMessaging = () => {
     loading,
     messagesLoading,
     totalUnread,
+    error,
     loadConversations,
     loadMessages,
     sendMessage: handleSendMessage

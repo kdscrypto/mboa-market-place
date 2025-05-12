@@ -6,9 +6,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConversationList from "@/components/messaging/ConversationList";
 import ConversationView from "@/components/messaging/ConversationView";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Messages: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const Messages: React.FC = () => {
     messages,
     loading,
     messagesLoading,
+    error,
     loadConversations,
     loadMessages,
     sendMessage
@@ -29,6 +31,7 @@ const Messages: React.FC = () => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        toast.error("Vous devez être connecté pour accéder à la messagerie");
         navigate("/connexion", { 
           state: { from: `/messages${conversationId ? `/${conversationId}` : ''}` }
         });
@@ -41,12 +44,14 @@ const Messages: React.FC = () => {
   // Charger la conversation sélectionnée depuis l'URL
   useEffect(() => {
     if (conversationId) {
+      console.log("Chargement de la conversation depuis l'URL:", conversationId);
       loadMessages(conversationId);
     }
   }, [conversationId, loadMessages]);
 
   // Gérer la sélection d'une conversation
   const handleSelectConversation = (id: string) => {
+    console.log("Sélection de la conversation:", id);
     navigate(`/messages/${id}`);
   };
 
@@ -75,7 +80,21 @@ const Messages: React.FC = () => {
             
             {/* Vue de la conversation */}
             <div className="w-2/3 flex flex-col">
-              {currentConversation ? (
+              {error && (
+                <div className="flex flex-col justify-center items-center h-full text-center p-6">
+                  <AlertCircle className="h-12 w-12 text-red-500 mb-3" />
+                  <h3 className="text-lg font-medium">Une erreur est survenue</h3>
+                  <p className="text-gray-500 mt-1 mb-4">{error}</p>
+                  <Button
+                    onClick={() => currentConversation ? loadMessages(currentConversation) : loadConversations()}
+                    className="bg-mboa-orange hover:bg-mboa-orange/90"
+                  >
+                    Réessayer
+                  </Button>
+                </div>
+              )}
+
+              {!error && currentConversation ? (
                 <ConversationView
                   messages={messages}
                   onSendMessage={(content) => sendMessage(currentConversation, content)}
@@ -91,7 +110,7 @@ const Messages: React.FC = () => {
                     </div>
                   }
                 />
-              ) : (
+              ) : !error && (
                 <div className="flex flex-col justify-center items-center h-full">
                   <MessageCircle className="h-16 w-16 text-gray-300 mb-4" />
                   <h3 className="text-lg font-medium">Sélectionnez une conversation</h3>

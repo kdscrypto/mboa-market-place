@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Message } from "@/services/messageService";
 import MessageBubble from "./MessageBubble";
 import MessageForm from "./MessageForm";
@@ -22,14 +22,18 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   emptyState
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentUserId = useRef<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Récupérer l'ID de l'utilisateur actuel
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data && data.session) {
-        currentUserId.current = data.session.user.id;
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data && data.session) {
+          setCurrentUserId(data.session.user.id);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération de la session:", error);
       }
     };
 
@@ -38,7 +42,9 @@ const ConversationView: React.FC<ConversationViewProps> = ({
 
   // Faire défiler jusqu'au dernier message quand messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && messages.length > 0) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   if (loading) {
@@ -74,7 +80,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
           <MessageBubble
             key={message.id}
             message={message}
-            isSender={message.sender_id === currentUserId.current}
+            isSender={message.sender_id === currentUserId}
           />
         ))}
         <div ref={messagesEndRef} />

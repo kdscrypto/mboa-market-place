@@ -30,10 +30,20 @@ export interface Conversation {
 // Récupérer les conversations d'un utilisateur
 export const fetchUserConversations = async (): Promise<Conversation[]> => {
   try {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData || !userData.user) {
+      console.error("Utilisateur non authentifié");
+      return [];
+    }
+    
+    const currentUserId = userData.user.id;
+    
     // Récupérer les conversations où l'utilisateur est acheteur ou vendeur
     const { data: conversations, error } = await supabase
       .from('conversations')
       .select('*, ad_id(id, title)')
+      .or(`buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId}`)
       .order('last_message_at', { ascending: false });
 
     if (error) {
@@ -42,8 +52,11 @@ export const fetchUserConversations = async (): Promise<Conversation[]> => {
     }
 
     if (!conversations || conversations.length === 0) {
+      console.log("Aucune conversation trouvée");
       return [];
     }
+
+    console.log("Conversations récupérées:", conversations.length);
 
     // Enrichir les conversations avec des informations supplémentaires
     const enhancedConversations = await Promise.all(
@@ -54,7 +67,7 @@ export const fetchUserConversations = async (): Promise<Conversation[]> => {
           .select('id', { count: "exact" })
           .eq('conversation_id', conv.id)
           .eq('read', false)
-          .not('sender_id', 'eq', (await supabase.auth.getUser()).data.user?.id || '');
+          .not('sender_id', 'eq', currentUserId);
 
         if (countError) {
           console.error("Erreur lors du comptage des messages non lus:", countError);
@@ -73,8 +86,6 @@ export const fetchUserConversations = async (): Promise<Conversation[]> => {
         }
 
         // Déterminer l'autre utilisateur (acheteur ou vendeur)
-        const { data } = await supabase.auth.getUser();
-        const currentUserId = data.user?.id;
         const otherUserId = conv.buyer_id === currentUserId ? conv.seller_id : conv.buyer_id;
 
         // Enrichir la conversation avec les données récupérées
@@ -98,6 +109,26 @@ export const fetchUserConversations = async (): Promise<Conversation[]> => {
 // Récupérer les messages d'une conversation
 export const fetchConversationMessages = async (conversationId: string): Promise<Message[]> => {
   try {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData || !userData.user) {
+      console.error("Utilisateur non authentifié");
+      return [];
+    }
+    
+    // Vérifier que l'utilisateur a accès à cette conversation
+    const { data: conversationCheck, error: checkError } = await supabase
+      .from('conversations')
+      .select('id')
+      .or(`buyer_id.eq.${userData.user.id},seller_id.eq.${userData.user.id}`)
+      .eq('id', conversationId)
+      .single();
+    
+    if (checkError || !conversationCheck) {
+      console.error("Accès non autorisé à cette conversation:", checkError);
+      return [];
+    }
+    
     const { data: messages, error } = await supabase
       .from('messages')
       .select('*')
@@ -108,7 +139,8 @@ export const fetchConversationMessages = async (conversationId: string): Promise
       console.error("Erreur lors de la récupération des messages:", error);
       return [];
     }
-
+    
+    console.log("Messages récupérés:", messages?.length || 0);
     return messages || [];
   } catch (error) {
     console.error("Erreur lors du traitement des messages:", error);
@@ -132,7 +164,7 @@ export const createConversation = async (
     const buyerId = data.user.id;
 
     // Vérifier si une conversation existe déjà pour cette annonce et cet acheteur
-    const { data: existingConv } = await supabase
+    const { data: existingConv, error: existingError } = await supabase
       .from('conversations')
       .select('id')
       .eq('ad_id', adId)
@@ -140,8 +172,13 @@ export const createConversation = async (
       .eq('seller_id', sellerId)
       .maybeSingle();
 
+    if (existingError) {
+      console.error("Erreur lors de la vérification des conversations existantes:", existingError);
+    }
+
     // Si une conversation existe déjà, retourner son ID
     if (existingConv) {
+      console.log("Conversation existante trouvée, ajout du message");
       // Ajouter le message à la conversation existante
       await sendMessage(existingConv.id, initialMessage);
       
@@ -160,6 +197,7 @@ export const createConversation = async (
       };
     }
 
+    console.log("Création d'une nouvelle conversation");
     // Créer une nouvelle conversation
     const { data: newConversation, error: convError } = await supabase
       .from('conversations')
@@ -167,7 +205,8 @@ export const createConversation = async (
         ad_id: adId,
         buyer_id: buyerId,
         seller_id: sellerId,
-        status: 'active'
+        status: 'active',
+        last_message_at: new Date().toISOString()
       })
       .select()
       .single();
@@ -207,6 +246,20 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       return { success: false, error: "Utilisateur non authentifié" };
     }
 
+    // Mise à jour du last_message_at de la conversation
+    const { error: updateError } = await supabase
+      .from('conversations')
+      .update({ 
+        last_message_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', conversationId);
+      
+    if (updateError) {
+      console.error("Erreur lors de la mise à jour de la conversation:", updateError);
+    }
+    
+    // Envoi du message
     const { error } = await supabase
       .from('messages')
       .insert({
