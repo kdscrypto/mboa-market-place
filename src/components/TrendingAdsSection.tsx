@@ -17,16 +17,19 @@ import {
 const TrendingAdsSection: React.FC = () => {
   const [trendingAds, setTrendingAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
 
   useEffect(() => {
     const loadTrendingAds = async () => {
       setIsLoading(true);
+      setError(false);
       try {
         const ads = await fetchPremiumAds(12); 
         console.log("Trending ads loaded:", ads.length);
         setTrendingAds(ads);
-      } catch (error) {
-        console.error("Error loading trending ads:", error);
+      } catch (err) {
+        console.error("Error loading trending ads:", err);
+        setError(true);
       } finally {
         setIsLoading(false);
       }
@@ -41,6 +44,22 @@ const TrendingAdsSection: React.FC = () => {
         <Loader2 className="h-6 w-6 animate-spin text-mboa-orange" />
         <span className="ml-2">Chargement des tendances...</span>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold">Tendance en ce moment</h2>
+            <PremiumBadge />
+          </div>
+        </div>
+        <div className="text-center py-8 bg-gray-50 rounded-lg">
+          <p className="text-gray-500">Une erreur s'est produite lors du chargement des annonces premium.</p>
+        </div>
+      </section>
     );
   }
 

@@ -18,12 +18,17 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
     
     if (error) {
       console.error("Error retrieving premium ads:", error);
-      return []; // Retourner un tableau vide en cas d'erreur plutôt que de propager l'erreur
+      return []; // Retourner un tableau vide en cas d'erreur
+    }
+    
+    if (!ads || ads.length === 0) {
+      console.log("No premium ads found");
+      return [];
     }
     
     // Pour chaque annonce, récupérer l'image principale
     const adsWithImages = await Promise.all(
-      (ads || []).map(async (ad) => {
+      ads.map(async (ad) => {
         try {
           const { data: images, error: imageError } = await supabase
             .from('ad_images')
@@ -50,6 +55,7 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
       })
     );
     
+    console.log(`Successfully loaded ${adsWithImages.length} premium ads`);
     return adsWithImages;
   } catch (error) {
     console.error("Error fetching premium ads:", error);

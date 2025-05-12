@@ -19,7 +19,7 @@ interface RecentAdsCarouselProps {
 
 const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
   // Si aucune annonce n'est disponible, afficher un message
-  if (ads.length === 0) {
+  if (!ads || ads.length === 0) {
     return (
       <section>
         <div className="flex items-center justify-between mb-4">
