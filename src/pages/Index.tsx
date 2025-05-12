@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -29,6 +28,7 @@ const Index = () => {
       setIsLoading(true);
       setError(false);
       try {
+        console.log("Loading approved ads for homepage...");
         const ads = await fetchApprovedAds(12);
         console.log("Recent ads loaded for homepage:", ads.length);
         setRecentAds(ads);

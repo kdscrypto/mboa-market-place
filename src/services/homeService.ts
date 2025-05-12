@@ -7,7 +7,7 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
   try {
     console.log("Fetching approved ads for homepage");
     
-    // Récupérer les annonces approuvées les plus récentes
+    // Récupérer les annonces approuvées les plus récentes sans vérifier l'authentification
     const { data: ads, error } = await supabase
       .from('ads')
       .select('*')

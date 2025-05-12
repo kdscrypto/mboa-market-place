@@ -7,7 +7,7 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
   try {
     console.log("Fetching premium ads");
     
-    // Récupérer les annonces premium (tout type sauf standard)
+    // Récupérer les annonces premium (tout type sauf standard) sans vérifier l'authentification
     const { data: ads, error } = await supabase
       .from('ads')
       .select('*')

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Loader2, ArrowRight } from "lucide-react";
 import { fetchPremiumAds } from "@/services/trendingService";
@@ -27,6 +26,7 @@ const TrendingAdsSection: React.FC = () => {
       setIsLoading(true);
       setError(false);
       try {
+        console.log("Loading trending ads...");
         const ads = await fetchPremiumAds(10);
         console.log("Trending ads loaded:", ads.length);
         setTrendingAds(ads);

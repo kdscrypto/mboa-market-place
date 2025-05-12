@@ -17,6 +17,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event);
         if (session) {
           setUser(session.user);
         } else {
@@ -31,13 +32,19 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
       setLoading(true);
       
       try {
+        console.log("Checking for existing session...");
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
+          console.log("Found existing session");
           setUser(session.user);
+        } else {
+          console.log("No existing session found");
+          setUser(null);
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -59,9 +66,11 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   if (!user) {
     // Save the current location to redirect back after login
+    console.log("User not authenticated, redirecting to login page");
     return <Navigate to="/connexion" state={{ from: location.pathname }} replace />;
   }
 
+  console.log("User authenticated, rendering protected content");
   return <>{children}</>;
 };
 
