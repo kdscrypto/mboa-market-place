@@ -106,4 +106,30 @@
   .mboa-link {
     @apply text-mboa-orange hover:text-mboa-orange/80 transition-colors;
   }
+  
+  /* New animation and interaction classes */
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+  
+  .animate-fade-in {
+    @apply animate-[fade-in_0.6s_ease-out];
+  }
+  
+  .animate-slide-in {
+    @apply animate-[slide-in-right_0.4s_ease-out];
+  }
 }
+
+/* Add additional keyframes for new animations */
+@keyframes slide-in-right {
+  0% {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
