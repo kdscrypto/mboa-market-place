@@ -54,38 +54,43 @@ export const useAdSubmission = () => {
 
       // Si des images sont présentes, les télécharger et créer des références
       if (formData.images && formData.images.length > 0) {
+        // Gérer les téléchargements d'images séquentiellement pour éviter les problèmes sur mobile
         for (let i = 0; i < formData.images.length; i++) {
           const file = formData.images[i];
           const fileExt = file.name.split('.').pop();
           const fileName = `${uuidv4()}.${fileExt}`;
           const filePath = `${ad.id}/${fileName}`;
           
-          // Télécharger le fichier dans Supabase Storage
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('ad_images')
-            .upload(filePath, file);
-          
-          if (uploadError) {
-            console.error("Erreur lors du téléchargement de l'image:", uploadError);
-            continue;
-          }
-          
-          // Récupérer l'URL publique de l'image
-          const { data: { publicUrl } } = supabase.storage
-            .from('ad_images')
-            .getPublicUrl(filePath);
-          
-          // Enregistrer la référence de l'image dans la base de données
-          const { error: imageError } = await supabase
-            .from('ad_images')
-            .insert({
-              ad_id: ad.id,
-              image_url: publicUrl,
-              position: i
-            });
-          
-          if (imageError) {
-            console.error("Erreur lors de l'enregistrement de l'image:", imageError);
+          try {
+            // Télécharger le fichier dans Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('ad_images')
+              .upload(filePath, file);
+            
+            if (uploadError) {
+              console.error("Erreur lors du téléchargement de l'image:", uploadError);
+              continue;
+            }
+            
+            // Récupérer l'URL publique de l'image
+            const { data: { publicUrl } } = supabase.storage
+              .from('ad_images')
+              .getPublicUrl(filePath);
+            
+            // Enregistrer la référence de l'image dans la base de données
+            const { error: imageError } = await supabase
+              .from('ad_images')
+              .insert({
+                ad_id: ad.id,
+                image_url: publicUrl,
+                position: i
+              });
+            
+            if (imageError) {
+              console.error("Erreur lors de l'enregistrement de l'image:", imageError);
+            }
+          } catch (imgError) {
+            console.error("Erreur non gérée lors du téléchargement:", imgError);
           }
         }
       }
@@ -98,7 +103,10 @@ export const useAdSubmission = () => {
       
       setIsLoading(false);
       setShowPreview(false);
-      navigate("/mes-annonces");
+      
+      // Utilisez une promesse setTimeout pour éviter les problèmes de navigation sur iOS
+      await new Promise(resolve => setTimeout(resolve, 100));
+      navigate("/dashboard");
       
     } catch (error) {
       console.error("Erreur lors de la soumission de l'annonce:", error);

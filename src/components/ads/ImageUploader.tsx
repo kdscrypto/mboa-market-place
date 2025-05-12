@@ -1,7 +1,8 @@
 
-import React from "react";
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ImageUploaderProps {
   images: File[];
@@ -9,7 +10,7 @@ interface ImageUploaderProps {
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: (index: number) => void;
   maxImages: number;
-  error?: string; // Ajout d'une prop pour afficher les erreurs
+  error?: string;
 }
 
 const ImageUploader = ({ 
@@ -21,10 +22,12 @@ const ImageUploader = ({
   error 
 }: ImageUploaderProps) => {
   // Référence à l'input file pour pouvoir déclencher le clic programmatiquement
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   // Fonction pour déclencher le clic sur l'input file
-  const triggerFileInput = () => {
+  const triggerFileInput = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
@@ -37,23 +40,37 @@ const ImageUploader = ({
       </label>
       <div className={`border-2 border-dashed ${error ? 'border-red-500' : 'border-gray-300'} rounded-md p-4`}>
         <div className="flex items-center justify-center">
-          <div className="w-full cursor-pointer">
-            <div className="text-center py-6" onClick={triggerFileInput}>
-              <p className="text-gray-500 mb-2">
-                Cliquez ou glissez-déposez des photos
-              </p>
-              <Button 
-                type="button" 
-                variant="outline"
-                disabled={images.length >= maxImages}
-                onClick={(e) => {
-                  e.preventDefault();
-                  triggerFileInput();
-                }}
-              >
-                Sélectionner des images
-              </Button>
-            </div>
+          <div className="w-full">
+            {isMobile ? (
+              // Version simplifiée pour les appareils mobiles (surtout iOS)
+              <div className="text-center py-6">
+                <p className="text-gray-500 mb-2">
+                  Sélectionnez des photos depuis votre galerie
+                </p>
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  disabled={images.length >= maxImages}
+                  onClick={triggerFileInput}
+                >
+                  Choisir des images
+                </Button>
+              </div>
+            ) : (
+              // Version standard pour desktop
+              <div className="text-center py-6 cursor-pointer" onClick={triggerFileInput}>
+                <p className="text-gray-500 mb-2">
+                  Cliquez ou glissez-déposez des photos
+                </p>
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  disabled={images.length >= maxImages}
+                >
+                  Sélectionner des images
+                </Button>
+              </div>
+            )}
             <Input
               ref={fileInputRef}
               type="file"

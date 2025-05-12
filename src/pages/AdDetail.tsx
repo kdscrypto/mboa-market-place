@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "@/components/Header";
@@ -6,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import ContactSellerButton from "@/components/messaging/ContactSellerButton";
+import { Button } from "@/components/ui/button";
 
 const AdDetail: React.FC = () => {
   const { id } = useParams();
@@ -13,6 +15,7 @@ const AdDetail: React.FC = () => {
   const [ad, setAd] = useState<Ad | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   // Determine if the current user is the author of the ad
   const [isCurrentUserAuthor, setIsCurrentUserAuthor] = useState<boolean>(false);
@@ -69,6 +72,14 @@ const AdDetail: React.FC = () => {
     };
 
     fetchAdDetails();
+    
+    // Vérifier si l'utilisateur est connecté
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsLoggedIn(!!data.session);
+    };
+    
+    checkAuth();
   }, [id]);
 
   useEffect(() => {
@@ -81,6 +92,10 @@ const AdDetail: React.FC = () => {
     
     checkIfUserIsAuthor();
   }, [ad]);
+  
+  const handleLoginRedirect = () => {
+    navigate("/connexion", { state: { from: `/annonce/${id}` } });
+  };
 
   if (loading) {
     return (
@@ -150,23 +165,42 @@ const AdDetail: React.FC = () => {
                 <p className="text-sm"><span className="font-semibold">Lieu:</span> {ad.city}, {ad.region}</p>
                 <p className="text-sm"><span className="font-semibold">Date de publication:</span> {new Date(ad.created_at).toLocaleDateString()}</p>
               </div>
+              
               <div className="space-y-3">
-                <button className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md">
-                  Appeler {ad.phone}
-                </button>
-                {ad.whatsapp && (
-                  <a
-                    href={`https://wa.me/${ad.whatsapp}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full text-center bg-green-100 hover:bg-green-200 text-green-800 py-3 rounded-md"
-                  >
-                    WhatsApp
-                  </a>
-                )}
-                
-                {!isCurrentUserAuthor && (
-                  <ContactSellerButton ad={ad} />
+                {isLoggedIn ? (
+                  // Afficher les informations de contact si l'utilisateur est connecté
+                  <>
+                    <button className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-md">
+                      Appeler {ad.phone}
+                    </button>
+                    {ad.whatsapp && (
+                      <a
+                        href={`https://wa.me/${ad.whatsapp}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full text-center bg-green-100 hover:bg-green-200 text-green-800 py-3 rounded-md"
+                      >
+                        WhatsApp
+                      </a>
+                    )}
+                    
+                    {!isCurrentUserAuthor && (
+                      <ContactSellerButton ad={ad} />
+                    )}
+                  </>
+                ) : (
+                  // Message pour inciter à se connecter
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                    <p className="text-blue-800 mb-3">
+                      Connectez-vous pour voir les coordonnées du vendeur et le contacter
+                    </p>
+                    <Button
+                      onClick={handleLoginRedirect}
+                      className="bg-mboa-orange hover:bg-mboa-orange/90"
+                    >
+                      Se connecter / S'inscrire
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
