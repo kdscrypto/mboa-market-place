@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMessaging } from "@/hooks/useMessaging";
@@ -6,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConversationList from "@/components/messaging/ConversationList";
 import ConversationView from "@/components/messaging/ConversationView";
-import { MessageCircle, AlertCircle, Loader2 } from "lucide-react";
+import { MessageCircle, AlertCircle, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -109,7 +108,7 @@ const Messages: React.FC = () => {
         <Header />
         <main className="flex-grow mboa-container py-6">
           <div className="flex justify-center items-center h-96">
-            <Loader2 className="h-8 w-8 animate-spin text-mboa-orange" />
+            <Loader2Icon className="h-8 w-8 animate-spin text-mboa-orange" />
             <span className="ml-2">Vérification de l'authentification...</span>
           </div>
         </main>
