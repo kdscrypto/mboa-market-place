@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "@/components/Header";
@@ -6,6 +5,7 @@ import Footer from "@/components/Footer";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
+import ContactSellerButton from "@/components/messaging/ContactSellerButton";
 
 const AdDetail: React.FC = () => {
   const { id } = useParams();
@@ -13,7 +13,10 @@ const AdDetail: React.FC = () => {
   const [ad, setAd] = useState<Ad | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
+  // Determine if the current user is the author of the ad
+  const [isCurrentUserAuthor, setIsCurrentUserAuthor] = useState<boolean>(false);
+  
   useEffect(() => {
     const fetchAdDetails = async () => {
       if (!id) return;
@@ -67,6 +70,17 @@ const AdDetail: React.FC = () => {
 
     fetchAdDetails();
   }, [id]);
+
+  useEffect(() => {
+    const checkIfUserIsAuthor = async () => {
+      if (!ad) return;
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsCurrentUserAuthor(session?.user?.id === ad.user_id);
+    };
+    
+    checkIfUserIsAuthor();
+  }, [ad]);
 
   if (loading) {
     return (
@@ -149,6 +163,10 @@ const AdDetail: React.FC = () => {
                   >
                     WhatsApp
                   </a>
+                )}
+                
+                {!isCurrentUserAuthor && (
+                  <ContactSellerButton ad={ad} />
                 )}
               </div>
             </div>

@@ -1,0 +1,185 @@
+
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { Conversation, Message, fetchUserConversations, fetchConversationMessages, sendMessage, markMessagesAsRead } from '@/services/messageService';
+import { toast } from "sonner";
+
+export const useMessaging = () => {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversation, setCurrentConversation] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [messagesLoading, setMessagesLoading] = useState<boolean>(false);
+  const [totalUnread, setTotalUnread] = useState<number>(0);
+
+  // Charger les conversations de l'utilisateur
+  const loadConversations = useCallback(async () => {
+    setLoading(true);
+    try {
+      const conversationsData = await fetchUserConversations();
+      setConversations(conversationsData);
+      
+      // Calculer le nombre total de messages non lus
+      const total = conversationsData.reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
+      setTotalUnread(total);
+    } catch (error) {
+      console.error("Erreur lors du chargement des conversations:", error);
+      toast.error("Impossible de charger vos conversations");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Charger les messages d'une conversation
+  const loadMessages = useCallback(async (conversationId: string) => {
+    setMessagesLoading(true);
+    try {
+      const messagesData = await fetchConversationMessages(conversationId);
+      setMessages(messagesData);
+      setCurrentConversation(conversationId);
+      
+      // Marquer les messages comme lus
+      await markMessagesAsRead(conversationId);
+      
+      // Mettre à jour le compteur de messages non lus dans la liste des conversations
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId ? { ...conv, unread_count: 0 } : conv
+        )
+      );
+      
+      // Recalculer le total des messages non lus
+      const updatedTotal = conversations
+        .filter(conv => conv.id !== conversationId)
+        .reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
+      setTotalUnread(updatedTotal);
+    } catch (error) {
+      console.error("Erreur lors du chargement des messages:", error);
+      toast.error("Impossible de charger les messages");
+    } finally {
+      setMessagesLoading(false);
+    }
+  }, [conversations]);
+
+  // Envoyer un message
+  const handleSendMessage = useCallback(async (conversationId: string, content: string) => {
+    if (!content.trim()) return;
+    
+    try {
+      const { success, error } = await sendMessage(conversationId, content);
+      
+      if (!success) {
+        toast.error(error || "Échec de l'envoi du message");
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'envoi du message:", error);
+      toast.error("Impossible d'envoyer le message");
+    }
+  }, []);
+
+  // Configurer l'écoute en temps réel pour les changements de messages
+  useEffect(() => {
+    if (!currentConversation) return;
+
+    // Canal pour les nouveaux messages dans la conversation actuelle
+    const messagesChannel = supabase
+      .channel('messages-changes')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'messages',
+          filter: `conversation_id=eq.${currentConversation}`
+        },
+        (payload) => {
+          // Ajouter le nouveau message à la liste
+          const newMessage = payload.new as Message;
+          setMessages(prev => [...prev, newMessage]);
+          
+          // Si le message n'est pas de l'utilisateur actuel, le marquer comme lu
+          const { data: { user } } = supabase.auth.getSession();
+          if (user?.id !== newMessage.sender_id) {
+            markMessagesAsRead(currentConversation);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(messagesChannel);
+    };
+  }, [currentConversation]);
+
+  // Configurer l'écoute en temps réel pour les nouvelles conversations
+  useEffect(() => {
+    // Canal pour les nouvelles conversations
+    const conversationsChannel = supabase
+      .channel('conversations-changes')
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations'
+        },
+        () => {
+          // Recharger les conversations lorsqu'une nouvelle est créée ou modifiée
+          loadConversations();
+        }
+      )
+      .subscribe();
+
+    // Canal pour tous les nouveaux messages (pour mettre à jour les compteurs non lus)
+    const allMessagesChannel = supabase
+      .channel('all-messages-changes')
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages'
+        },
+        async (payload) => {
+          const newMessage = payload.new as Message;
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          // Si ce n'est pas la conversation actuelle et ce n'est pas un message de l'utilisateur actuel
+          if (newMessage.conversation_id !== currentConversation && newMessage.sender_id !== user?.id) {
+            // Recharger les conversations pour mettre à jour les compteurs
+            loadConversations();
+            
+            // Notification de nouveau message
+            const conversationInfo = conversations.find(c => c.id === newMessage.conversation_id);
+            if (conversationInfo) {
+              toast.info("Nouveau message", {
+                description: `Nouveau message concernant l'annonce "${conversationInfo.ad_title}"`,
+                action: {
+                  label: "Voir",
+                  onClick: () => loadMessages(newMessage.conversation_id)
+                }
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    // Charger les conversations au démarrage
+    loadConversations();
+
+    return () => {
+      supabase.removeChannel(conversationsChannel);
+      supabase.removeChannel(allMessagesChannel);
+    };
+  }, [loadConversations, loadMessages, conversations, currentConversation]);
+
+  return {
+    conversations,
+    currentConversation,
+    messages,
+    loading,
+    messagesLoading,
+    totalUnread,
+    loadConversations,
+    loadMessages,
+    sendMessage: handleSendMessage
+  };
+};

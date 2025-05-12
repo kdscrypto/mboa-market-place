@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Outlet, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -20,6 +20,7 @@ import Help from "@/pages/Help";
 import TermsOfService from "@/pages/TermsOfService";
 import Contact from "@/pages/Contact";
 import ConseilsVendeurs from "@/pages/ConseilsVendeurs";
+import Messages from "@/pages/Messages";
 
 // Import components
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -52,6 +53,8 @@ function App() {
             <Route path="/" element={<AuthGuard><Outlet /></AuthGuard>}>
               <Route path="/publier" element={<CreateAd />} />
               <Route path="/dashboard" element={<UserDashboard />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/messages/:conversationId" element={<Messages />} />
             </Route>
             
             {/* Admin routes */}
