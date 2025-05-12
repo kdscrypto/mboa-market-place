@@ -18,11 +18,16 @@ export const fetchConversationMessages = async (conversationId: string): Promise
       .select('id')
       .or(`buyer_id.eq.${userData.user.id},seller_id.eq.${userData.user.id}`)
       .eq('id', conversationId)
-      .single();
+      .maybeSingle();
     
-    if (checkError || !conversationCheck) {
-      console.error("Accès non autorisé à cette conversation:", checkError);
-      return [];
+    if (checkError) {
+      console.error("Erreur lors de la vérification de la conversation:", checkError);
+      throw new Error("Erreur lors de la vérification de l'accès à la conversation");
+    }
+    
+    if (!conversationCheck) {
+      console.error("Accès non autorisé à cette conversation");
+      throw new Error("Vous n'avez pas accès à cette conversation");
     }
     
     const { data: messages, error } = await supabase
@@ -33,14 +38,14 @@ export const fetchConversationMessages = async (conversationId: string): Promise
 
     if (error) {
       console.error("Erreur lors de la récupération des messages:", error);
-      return [];
+      throw new Error("Impossible de récupérer les messages");
     }
     
     console.log("Messages récupérés:", messages?.length || 0);
     return messages || [];
   } catch (error) {
     console.error("Erreur lors du traitement des messages:", error);
-    return [];
+    throw error;
   }
 };
 
