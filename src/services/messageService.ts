@@ -51,7 +51,7 @@ export const fetchUserConversations = async (): Promise<Conversation[]> => {
         // Récupérer le nombre de messages non lus
         const { count: unreadCount, error: countError } = await supabase
           .from('messages')
-          .select('id', { count: true })
+          .select('id', { count: "exact" })
           .eq('conversation_id', conv.id)
           .eq('read', false)
           .not('sender_id', 'eq', (await supabase.auth.getUser()).data.user?.id || '');

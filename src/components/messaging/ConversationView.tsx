@@ -4,6 +4,7 @@ import { Message } from "@/services/messageService";
 import MessageBubble from "./MessageBubble";
 import MessageForm from "./MessageForm";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConversationViewProps {
   messages: Message[];

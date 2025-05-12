@@ -97,10 +97,11 @@ export const useMessaging = () => {
           setMessages(prev => [...prev, newMessage]);
           
           // Si le message n'est pas de l'utilisateur actuel, le marquer comme lu
-          const { data: { user } } = supabase.auth.getSession();
-          if (user?.id !== newMessage.sender_id) {
-            markMessagesAsRead(currentConversation);
-          }
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session && session.user.id !== newMessage.sender_id) {
+              markMessagesAsRead(currentConversation);
+            }
+          });
         }
       )
       .subscribe();
