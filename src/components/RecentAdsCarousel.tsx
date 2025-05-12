@@ -18,7 +18,7 @@ interface RecentAdsCarouselProps {
 }
 
 const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
-  // Si aucune annonce n'est disponible, afficher un message
+  // Si aucune annonce n'est disponible ou si ads est undefined, afficher un message
   if (!ads || ads.length === 0) {
     return (
       <section>

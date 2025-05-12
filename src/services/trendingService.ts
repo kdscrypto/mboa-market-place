@@ -39,6 +39,10 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
           
           if (imageError) {
             console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
+            return {
+              ...ad,
+              imageUrl: '/placeholder.svg'
+            };
           }
           
           return {

@@ -38,6 +38,11 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
           
           if (imageError) {
             console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
+            return {
+              ...ad,
+              imageUrl: '/placeholder.svg',
+              is_premium: ad.ad_type !== 'standard'
+            };
           }
           
           return {
@@ -60,6 +65,6 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
     return adsWithImages;
   } catch (error) {
     console.error("Error fetching approved ads:", error);
-    return [];
+    return []; // Retourner un tableau vide en cas d'erreur
   }
 };
