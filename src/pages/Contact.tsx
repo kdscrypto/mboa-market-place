@@ -83,56 +83,6 @@ const Contact = () => {
                 </div>
               </div>
             </section>
-            
-            <section className="mb-8">
-              <h2 className="text-xl font-bold mb-4">Envoyez-nous un message</h2>
-              
-              <form onSubmit={handleEmailSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">Nom</Label>
-                    <Input 
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Votre nom"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input 
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Votre email"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea 
-                    id="message" 
-                    rows={6}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Votre message"
-                    required
-                  />
-                </div>
-                
-                <Button 
-                  type="submit"
-                  className="bg-mboa-orange hover:bg-mboa-orange/90 text-white flex items-center gap-2"
-                >
-                  <Send size={18} /> Envoyer par email
-                </Button>
-              </form>
-            </section>
           </div>
         </div>
       </main>
