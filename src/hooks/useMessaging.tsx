@@ -1,14 +1,6 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Conversation, 
-  Message, 
-  fetchUserConversations, 
-  fetchConversationMessages, 
-  sendMessage, 
-  markMessagesAsRead 
-} from '@/services/messaging/types';
+import { Conversation, Message } from '@/services/messaging/types';
 import { fetchUserConversations } from '@/services/messaging/conversationService';
 import { fetchConversationMessages, sendMessage, markMessagesAsRead } from '@/services/messaging/messageService';
 import { toast } from "sonner";
