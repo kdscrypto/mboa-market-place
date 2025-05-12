@@ -1,13 +1,9 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-
-  return (
-    <footer className="bg-mboa-dark text-white mt-12">
+  return <footer className="bg-mboa-dark text-white mt-12">
       <div className="mboa-container py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
@@ -82,7 +78,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-3">Contact</h3>
+            <h3 className="text-lg font-semibold mb-3"></h3>
             <ul className="space-y-2">
               <li className="text-gray-300">
                 Email: contact@mboamarket.com
@@ -103,8 +99,6 @@ const Footer = () => {
           </p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
