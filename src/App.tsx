@@ -29,27 +29,14 @@ import AdminGuard from '@/components/moderation/AdminGuard';
 const queryClient = new QueryClient();
 
 function App() {
-  // Authentication state (example)
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Function to handle login
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
-
-  // Function to handle logout
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="App min-h-screen">
           <Routes>
+            {/* Public routes - accessible without authentication */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            {/* Ajout d'une route /connexion qui redirige vers /login */}
             <Route path="/connexion" element={<Login />} />
             <Route path="/recherche" element={<SearchResults />} />
             <Route path="/annonce/:id" element={<AdDetail />} />
@@ -61,7 +48,7 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/conseils-vendeurs" element={<ConseilsVendeurs />} />
             
-            {/* Protected routes */}
+            {/* Protected routes - require authentication */}
             <Route path="/" element={<AuthGuard><Outlet /></AuthGuard>}>
               <Route path="/publier" element={<CreateAd />} />
               <Route path="/dashboard" element={<UserDashboard />} />

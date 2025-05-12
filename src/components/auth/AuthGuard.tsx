@@ -59,7 +59,6 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   if (!user) {
     // Save the current location to redirect back after login
-    // Utiliser /connexion au lieu de /login pour être cohérent
     return <Navigate to="/connexion" state={{ from: location.pathname }} replace />;
   }
 
