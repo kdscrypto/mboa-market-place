@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -17,6 +18,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
   
   // Featured categories - select first 6 or 12 categories to display
   const featuredCategories = categories.slice(0, 12);
@@ -24,11 +26,15 @@ const Index = () => {
   useEffect(() => {
     const loadApprovedAds = async () => {
       setIsLoading(true);
+      setError(false);
       try {
         const ads = await fetchApprovedAds(12); // Augmenté à 12 pour avoir plus d'annonces
+        console.log("Recent ads loaded for homepage:", ads.length);
         setRecentAds(ads);
-      } catch (error) {
-        console.error("Error loading approved ads:", error);
+      } catch (err) {
+        console.error("Error loading approved ads:", err);
+        setError(true);
+        setRecentAds([]);
       } finally {
         setIsLoading(false);
       }
@@ -107,21 +113,19 @@ const Index = () => {
               <Loader2 className="h-8 w-8 animate-spin text-mboa-orange" />
               <span className="ml-2">Chargement des annonces...</span>
             </div>
-          ) : recentAds.length > 0 ? (
-            <RecentAdsCarousel ads={recentAds} />
-          ) : (
+          ) : error ? (
             <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Aucune annonce disponible pour le moment.</p>
+              <p className="text-gray-500">Une erreur s'est produite lors du chargement des annonces.</p>
               <Button 
-                asChild 
+                onClick={() => window.location.reload()}
                 variant="outline"
                 className="mt-4"
               >
-                <Link to="/publier-annonce">
-                  Soyez le premier à publier une annonce
-                </Link>
+                Rafraîchir la page
               </Button>
             </div>
+          ) : (
+            <RecentAdsCarousel ads={recentAds} />
           )}
         </div>
 

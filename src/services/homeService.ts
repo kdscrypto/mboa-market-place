@@ -41,7 +41,7 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             return {
               ...ad,
               imageUrl: '/placeholder.svg',
-              is_premium: ad.ad_type !== 'standard'
+              is_premium: ad.ad_type !== 'standard' // Considérer tous les types sauf standard comme premium
             };
           }
           

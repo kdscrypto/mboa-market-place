@@ -38,6 +38,8 @@ const TrendingAdsSection: React.FC = () => {
     loadTrendingAds();
   }, []);
 
+  console.log("TrendingAdsSection rendering, loading:", isLoading, "ads count:", trendingAds.length);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-6">
