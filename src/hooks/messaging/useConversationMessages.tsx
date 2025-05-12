@@ -26,7 +26,14 @@ export const useConversationMessages = (
       console.log("Chargement des messages pour la conversation:", id);
       const messagesData = await fetchConversationMessages(id);
       console.log("Messages récupérés:", messagesData.length);
-      setMessages(messagesData);
+      
+      // S'assurer que le tableau de messages n'est pas vide pour éviter qu'ils disparaissent
+      if (messagesData && Array.isArray(messagesData)) {
+        setMessages(messagesData);
+      } else {
+        console.error("Messages reçus dans un format invalide:", messagesData);
+        setMessages([]);
+      }
       
       // Mark messages as read
       await markMessagesAsRead(id);
@@ -48,7 +55,7 @@ export const useConversationMessages = (
 
     // Channel for new messages in current conversation
     const messagesChannel = supabase
-      .channel('messages-changes')
+      .channel(`messages-changes-${conversationId}`)
       .on('postgres_changes', 
         { 
           event: 'INSERT', 
@@ -59,7 +66,15 @@ export const useConversationMessages = (
         (payload) => {
           console.log("Nouveau message reçu:", payload);
           const newMessage = payload.new as Message;
-          setMessages(prev => [...prev, newMessage]);
+          
+          // Mettre à jour les messages de manière sûre
+          setMessages(prev => {
+            // Vérifier que le message n'est pas déjà dans la liste (évite les doublons)
+            const messageExists = prev.some(msg => msg.id === newMessage.id);
+            if (messageExists) return prev;
+            
+            return [...prev, newMessage];
+          });
           
           // If the message is not from current user, mark as read
           const checkAndMarkAsRead = async () => {
@@ -72,7 +87,9 @@ export const useConversationMessages = (
           checkAndMarkAsRead();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Status de la souscription aux messages:", status);
+      });
 
     // Load messages when conversation changes
     if (conversationId) {

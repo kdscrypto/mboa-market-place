@@ -55,6 +55,13 @@ const Messages: React.FC = () => {
     navigate(`/messages/${id}`);
   };
 
+  // Gérer l'envoi d'un message
+  const handleSendMessage = async (content: string): Promise<void> => {
+    if (currentConversation) {
+      await sendMessage(currentConversation, content);
+    }
+  };
+
   // Obtenir les détails de la conversation actuelle
   const currentConversationDetails = conversations.find(
     conv => conv.id === currentConversation
@@ -97,7 +104,7 @@ const Messages: React.FC = () => {
               {!error && currentConversation ? (
                 <ConversationView
                   messages={messages}
-                  onSendMessage={(content) => sendMessage(currentConversation, content)}
+                  onSendMessage={handleSendMessage}
                   loading={messagesLoading}
                   adTitle={currentConversationDetails?.ad_title}
                   emptyState={

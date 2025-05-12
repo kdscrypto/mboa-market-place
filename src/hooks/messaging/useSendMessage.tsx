@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export const useSendMessage = () => {
   // Send a message
-  const sendMessage = useCallback(async (conversationId: string, content: string) => {
+  const sendMessage = useCallback(async (conversationId: string, content: string): Promise<void> => {
     if (!content.trim()) return;
     
     try {
@@ -14,11 +14,9 @@ export const useSendMessage = () => {
       if (!success) {
         toast.error(error || "Échec de l'envoi du message");
       }
-      return { success };
     } catch (error) {
       console.error("Erreur lors de l'envoi du message:", error);
       toast.error("Impossible d'envoyer le message");
-      return { success: false };
     }
   }, []);
 

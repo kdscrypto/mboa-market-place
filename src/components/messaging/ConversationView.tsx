@@ -23,6 +23,14 @@ const ConversationView: React.FC<ConversationViewProps> = ({
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [loadedMessages, setLoadedMessages] = useState<Message[]>([]);
+
+  // Pour assurer que les messages ne disparaissent pas
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      setLoadedMessages(messages);
+    }
+  }, [messages]);
 
   // Récupérer l'ID de l'utilisateur actuel
   useEffect(() => {
@@ -42,10 +50,10 @@ const ConversationView: React.FC<ConversationViewProps> = ({
 
   // Faire défiler jusqu'au dernier message quand messages change
   useEffect(() => {
-    if (messagesEndRef.current && messages.length > 0) {
+    if (messagesEndRef.current && loadedMessages.length > 0) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [loadedMessages]);
 
   if (loading) {
     return (
@@ -56,7 +64,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     );
   }
 
-  if (messages.length === 0 && emptyState) {
+  // Si pas de messages et état vide fourni
+  if (loadedMessages.length === 0 && messages.length === 0 && emptyState) {
     return (
       <div className="flex flex-col h-full">
         <div className="flex-grow flex flex-col justify-center items-center">
@@ -76,7 +85,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
       )}
       
       <div className="flex-grow overflow-y-auto px-4 py-2">
-        {messages.map((message) => (
+        {loadedMessages.map((message) => (
           <MessageBubble
             key={message.id}
             message={message}
