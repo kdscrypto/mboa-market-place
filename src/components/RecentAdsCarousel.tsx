@@ -18,6 +18,36 @@ interface RecentAdsCarouselProps {
 }
 
 const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
+  // Si aucune annonce n'est disponible, afficher un message
+  if (ads.length === 0) {
+    return (
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Annonces récentes</h2>
+          
+          <Button variant="ghost" asChild className="text-mboa-orange hover:text-mboa-orange/80">
+            <Link to="/annonces" className="flex items-center gap-1">
+              Voir toutes <ArrowRight size={16} />
+            </Link>
+          </Button>
+        </div>
+        
+        <div className="text-center py-8 bg-gray-50 rounded-lg">
+          <p className="text-gray-500">Aucune annonce disponible pour le moment.</p>
+          <Button 
+            asChild 
+            variant="outline"
+            className="mt-4"
+          >
+            <Link to="/publier-annonce">
+              Soyez le premier à publier une annonce
+            </Link>
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
   // Diviser les annonces en deux rangées
   const firstRowAds = ads.slice(0, Math.ceil(ads.length / 2));
   const secondRowAds = ads.slice(Math.ceil(ads.length / 2));

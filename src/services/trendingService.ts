@@ -18,7 +18,7 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
     
     if (error) {
       console.error("Error retrieving premium ads:", error);
-      throw error;
+      return []; // Retourner un tableau vide en cas d'erreur plutôt que de propager l'erreur
     }
     
     // Pour chaque annonce, récupérer l'image principale

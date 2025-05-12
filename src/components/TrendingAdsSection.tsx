@@ -3,11 +3,9 @@ import React, { useState, useEffect } from "react";
 import { Loader2, ArrowRight, Heart } from "lucide-react";
 import { fetchPremiumAds } from "@/services/trendingService";
 import { Ad } from "@/types/adTypes";
-import AdCard from "@/components/AdCard";
 import PremiumBadge from "@/components/PremiumBadge";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 import { 
   Carousel, 
   CarouselContent, 
@@ -19,13 +17,13 @@ import {
 const TrendingAdsSection: React.FC = () => {
   const [trendingAds, setTrendingAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const loadTrendingAds = async () => {
       setIsLoading(true);
       try {
         const ads = await fetchPremiumAds(12); 
+        console.log("Trending ads loaded:", ads.length);
         setTrendingAds(ads);
       } catch (error) {
         console.error("Error loading trending ads:", error);
@@ -47,7 +45,26 @@ const TrendingAdsSection: React.FC = () => {
   }
 
   if (trendingAds.length === 0) {
-    return null;
+    return (
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold">Tendance en ce moment</h2>
+            <PremiumBadge />
+          </div>
+          
+          <Button variant="ghost" asChild className="text-mboa-orange hover:text-mboa-orange/80">
+            <Link to="/annonces-premium" className="flex items-center gap-1">
+              Voir toutes <ArrowRight size={16} />
+            </Link>
+          </Button>
+        </div>
+        
+        <div className="text-center py-8 bg-gray-50 rounded-lg">
+          <p className="text-gray-500">Aucune annonce premium disponible pour le moment.</p>
+        </div>
+      </section>
+    );
   }
 
   return (

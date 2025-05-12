@@ -17,7 +17,7 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
     
     if (error) {
       console.error("Error retrieving approved ads:", error);
-      throw error;
+      return []; // Retourner un tableau vide en cas d'erreur plutôt que de propager l'erreur
     }
     
     // Pour chaque annonce, récupérer l'image principale
