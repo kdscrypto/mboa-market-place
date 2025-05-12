@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Send, Phone } from "lucide-react";
+import { Send, Phone, MapPin, Mail } from "lucide-react";
 
 const Contact = () => {
   const [name, setName] = useState("");
@@ -58,7 +58,8 @@ const Contact = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-50 p-6 rounded-lg">
                   <h3 className="font-semibold text-lg mb-3">Adresse</h3>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 flex items-center gap-2">
+                    <MapPin size={18} className="text-mboa-orange" />
                     Mboa Market<br />
                     123 Rue de l'Innovation<br />
                     Douala, Cameroun
@@ -67,10 +68,12 @@ const Contact = () => {
                 
                 <div className="bg-gray-50 p-6 rounded-lg">
                   <h3 className="font-semibold text-lg mb-3">Contact</h3>
-                  <p className="text-gray-700 mb-2">
+                  <p className="text-gray-700 mb-2 flex items-center gap-2">
+                    <Mail size={18} className="text-mboa-orange" />
                     <strong>Email:</strong> {siteEmail}
                   </p>
-                  <p className="text-gray-700 mb-4">
+                  <p className="text-gray-700 mb-4 flex items-center gap-2">
+                    <Phone size={18} className="text-mboa-orange" />
                     <strong>Téléphone:</strong> +237 {whatsappNumber}
                   </p>
                   
@@ -82,6 +85,49 @@ const Contact = () => {
                   </Button>
                 </div>
               </div>
+            </section>
+            
+            <section className="mb-8">
+              <h2 className="text-xl font-bold mb-4">Envoyez-nous un message</h2>
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Votre nom</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Entrez votre nom"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Votre email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Entrez votre email"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="message">Votre message</Label>
+                  <Textarea
+                    id="message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Entrez votre message"
+                    rows={6}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="bg-mboa-orange hover:bg-mboa-orange/90 flex items-center gap-2">
+                  <Send size={18} /> Envoyer le message
+                </Button>
+              </form>
             </section>
           </div>
         </div>
