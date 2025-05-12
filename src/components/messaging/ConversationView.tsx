@@ -25,14 +25,14 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loadedMessages, setLoadedMessages] = useState<Message[]>([]);
 
-  // Pour assurer que les messages ne disparaissent pas
+  // Make sure to preserve loaded messages even when props.messages is temporarily empty
   useEffect(() => {
     if (messages && messages.length > 0) {
       setLoadedMessages(messages);
     }
   }, [messages]);
 
-  // Récupérer l'ID de l'utilisateur actuel
+  // Fetch current user ID
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -48,7 +48,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     fetchCurrentUser();
   }, []);
 
-  // Faire défiler jusqu'au dernier message quand messages change
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current && loadedMessages.length > 0) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -64,7 +64,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     );
   }
 
-  // Si pas de messages et état vide fourni
+  // If no messages and empty state is provided
   if (loadedMessages.length === 0 && messages.length === 0 && emptyState) {
     return (
       <div className="flex flex-col h-full">

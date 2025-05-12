@@ -27,7 +27,7 @@ export const useConversationMessages = (
       const messagesData = await fetchConversationMessages(id);
       console.log("Messages récupérés:", messagesData.length);
       
-      // S'assurer que le tableau de messages n'est pas vide pour éviter qu'ils disparaissent
+      // Ensure the messages array is not empty to avoid messages disappearing
       if (messagesData && Array.isArray(messagesData)) {
         setMessages(messagesData);
       } else {
@@ -67,9 +67,9 @@ export const useConversationMessages = (
           console.log("Nouveau message reçu:", payload);
           const newMessage = payload.new as Message;
           
-          // Mettre à jour les messages de manière sûre
+          // Update messages safely
           setMessages(prev => {
-            // Vérifier que le message n'est pas déjà dans la liste (évite les doublons)
+            // Check if message already exists (avoid duplicates)
             const messageExists = prev.some(msg => msg.id === newMessage.id);
             if (messageExists) return prev;
             

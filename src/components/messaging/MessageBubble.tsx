@@ -1,7 +1,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Message } from "@/services/messageService";
+import { Message } from "@/services/messaging/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";

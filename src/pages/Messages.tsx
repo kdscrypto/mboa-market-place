@@ -26,7 +26,7 @@ const Messages: React.FC = () => {
     sendMessage
   } = useMessaging();
 
-  // Vérifier si l'utilisateur est connecté
+  // Check if user is authenticated
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -41,7 +41,7 @@ const Messages: React.FC = () => {
     checkAuth();
   }, [conversationId, navigate]);
 
-  // Charger la conversation sélectionnée depuis l'URL
+  // Load selected conversation from URL
   useEffect(() => {
     if (conversationId) {
       console.log("Chargement de la conversation depuis l'URL:", conversationId);
@@ -49,20 +49,20 @@ const Messages: React.FC = () => {
     }
   }, [conversationId, loadMessages]);
 
-  // Gérer la sélection d'une conversation
+  // Handle conversation selection
   const handleSelectConversation = (id: string) => {
     console.log("Sélection de la conversation:", id);
     navigate(`/messages/${id}`);
   };
 
-  // Gérer l'envoi d'un message
+  // Handle sending a message
   const handleSendMessage = async (content: string): Promise<void> => {
     if (currentConversation) {
       await sendMessage(currentConversation, content);
     }
   };
 
-  // Obtenir les détails de la conversation actuelle
+  // Get current conversation details
   const currentConversationDetails = conversations.find(
     conv => conv.id === currentConversation
   );
@@ -75,7 +75,7 @@ const Messages: React.FC = () => {
           <h2 className="text-xl font-bold p-4 border-b">Messagerie</h2>
           
           <div className="flex h-[600px] max-h-[70vh]">
-            {/* Liste des conversations */}
+            {/* Conversation list */}
             <div className="w-1/3 border-r">
               <ConversationList
                 conversations={conversations}
@@ -85,7 +85,7 @@ const Messages: React.FC = () => {
               />
             </div>
             
-            {/* Vue de la conversation */}
+            {/* Conversation view */}
             <div className="w-2/3 flex flex-col">
               {error && (
                 <div className="flex flex-col justify-center items-center h-full text-center p-6">
