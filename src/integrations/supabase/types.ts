@@ -52,6 +52,7 @@ export type Database = {
           phone: string
           price: number
           region: string
+          reject_reason: string | null
           status: string
           title: string
           updated_at: string
@@ -68,6 +69,7 @@ export type Database = {
           phone: string
           price: number
           region: string
+          reject_reason?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -84,6 +86,7 @@ export type Database = {
           phone?: string
           price?: number
           region?: string
+          reject_reason?: string | null
           status?: string
           title?: string
           updated_at?: string

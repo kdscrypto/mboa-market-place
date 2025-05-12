@@ -15,4 +15,5 @@ export interface Ad {
   user_id: string;
   is_premium?: boolean;
   ad_type?: string;
+  reject_reason?: string;
 }

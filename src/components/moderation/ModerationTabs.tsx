@@ -10,7 +10,7 @@ interface ModerationTabsProps {
   rejectedAds: Ad[];
   isLoading: boolean;
   onApprove: (adId: string) => void;
-  onReject: (adId: string) => void;
+  onReject: (adId: string, message?: string) => void;
 }
 
 const ModerationTabs: React.FC<ModerationTabsProps> = ({

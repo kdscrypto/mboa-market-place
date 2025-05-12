@@ -3,7 +3,7 @@ import React from "react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Ad } from "@/hooks/useModerationAds";
+import { Ad } from "@/types/adTypes";
 
 interface AdPreviewDialogProps {
   ad: Ad | null;
