@@ -8,7 +8,8 @@ interface AdActionButtonsProps {
   status: "pending" | "approved" | "rejected";
   onViewClick: () => void;
   onApprove?: (adId: string) => void;
-  onReject?: (adId: string) => void;
+  onReject?: (adId: string, message?: string) => void;
+  onRejectClick?: () => void; // Nouveau prop pour ouvrir la boîte de dialogue de rejet
 }
 
 const AdActionButtons: React.FC<AdActionButtonsProps> = ({
@@ -16,8 +17,21 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
   status,
   onViewClick,
   onApprove,
-  onReject
+  onReject,
+  onRejectClick
 }) => {
+  const handleApprove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onApprove) onApprove(adId);
+  };
+  
+  const handleRejectClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onRejectClick) onRejectClick();
+  };
+  
   return (
     <div className="flex justify-end gap-2">
       <Button 
@@ -35,7 +49,7 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
             variant="outline" 
             size="sm" 
             className="text-green-600 border-green-600 hover:bg-green-50"
-            onClick={() => onApprove && onApprove(adId)}
+            onClick={handleApprove}
           >
             <Check className="h-4 w-4" />
             <span className="sr-only">Approuver</span>
@@ -45,7 +59,7 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
             variant="outline" 
             size="sm" 
             className="text-red-600 border-red-600 hover:bg-red-50"
-            onClick={() => onReject && onReject(adId)}
+            onClick={handleRejectClick}
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Rejeter</span>

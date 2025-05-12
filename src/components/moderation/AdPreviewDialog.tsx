@@ -22,6 +22,23 @@ const AdPreviewDialog: React.FC<AdPreviewDialogProps> = ({
 }) => {
   if (!ad) return null;
   
+  const handleApprove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onApprove && ad) {
+      onApprove(ad.id);
+      onClose();
+    }
+  };
+  
+  const handleReject = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onReject && ad) {
+      onReject(ad.id);
+    }
+  };
+  
   return (
     <Dialog open={!!ad} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
@@ -67,13 +84,18 @@ const AdPreviewDialog: React.FC<AdPreviewDialogProps> = ({
                 {ad.whatsapp && <p className="text-sm text-gray-600">WhatsApp: {ad.whatsapp}</p>}
               </div>
               
+              {ad.status === "rejected" && ad.reject_reason && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <h4 className="font-medium text-red-700">Motif du rejet</h4>
+                  <p className="text-sm text-red-600 whitespace-pre-line">{ad.reject_reason}</p>
+                </div>
+              )}
+              
               <div className="pt-4">
                 {status === "pending" && (
                   <div className="flex gap-3">
                     <Button 
-                      onClick={() => {
-                        onApprove && onApprove(ad.id);
-                      }}
+                      onClick={handleApprove}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <Check className="mr-2 h-4 w-4" />
@@ -81,9 +103,7 @@ const AdPreviewDialog: React.FC<AdPreviewDialogProps> = ({
                     </Button>
                     
                     <Button 
-                      onClick={() => {
-                        onReject && onReject(ad.id);
-                      }}
+                      onClick={handleReject}
                       variant="destructive"
                     >
                       <X className="mr-2 h-4 w-4" />

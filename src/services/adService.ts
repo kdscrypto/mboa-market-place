@@ -72,7 +72,11 @@ export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
 };
 
 // Fonction pour mettre à jour le statut d'une annonce avec vérification d'authentification
-export const updateAdStatus = async (adId: string, status: 'approved' | 'rejected'): Promise<boolean> => {
+export const updateAdStatus = async (
+  adId: string, 
+  status: 'approved' | 'rejected', 
+  rejectMessage?: string
+): Promise<boolean> => {
   try {
     console.log(`Updating ad ${adId} to status: ${status}`);
     
@@ -84,10 +88,18 @@ export const updateAdStatus = async (adId: string, status: 'approved' | 'rejecte
       throw new Error("Authentication required");
     }
     
+    // Préparer les données à mettre à jour
+    const updateData: any = { status };
+    
+    // Ajouter le message de rejet si fourni
+    if (status === 'rejected' && rejectMessage) {
+      updateData.reject_reason = rejectMessage;
+    }
+    
     // Let Row Level Security handle permission checks
     const { error } = await supabase
       .from('ads')
-      .update({ status })
+      .update(updateData)
       .eq('id', adId);
     
     if (error) {

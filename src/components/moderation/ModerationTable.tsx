@@ -14,13 +14,14 @@ import { Ad } from "@/types/adTypes";
 import AdStatusBadge from "./AdStatusBadge";
 import AdActionButtons from "./AdActionButtons";
 import AdPreviewDialog from "./AdPreviewDialog";
+import RejectAdDialog from "./RejectAdDialog";
 
 interface ModerationTableProps {
   ads: Ad[];
   status: "pending" | "approved" | "rejected";
   isLoading: boolean;
   onApprove?: (adId: string) => void;
-  onReject?: (adId: string) => void;
+  onReject?: (adId: string, message?: string) => void;
 }
 
 const ModerationTable: React.FC<ModerationTableProps> = ({ 
@@ -31,6 +32,8 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   onReject
 }) => {
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
+  const [rejectAdId, setRejectAdId] = useState<string | null>(null);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
   
   // Add debug logging
   useEffect(() => {
@@ -39,6 +42,17 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
       isLoading
     });
   }, [ads, status, isLoading]);
+  
+  const handleRejectClick = (adId: string) => {
+    setRejectAdId(adId);
+    setShowRejectDialog(true);
+  };
+  
+  const handleRejectConfirm = (adId: string, message: string) => {
+    if (onReject) onReject(adId, message);
+    setShowRejectDialog(false);
+    setRejectAdId(null);
+  };
   
   if (isLoading) {
     return <p className="text-center py-10">Chargement des annonces...</p>;
@@ -106,7 +120,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
                     status={status}
                     onViewClick={() => setSelectedAd(ad)}
                     onApprove={onApprove}
-                    onReject={onReject}
+                    onRejectClick={() => handleRejectClick(ad.id)}
                   />
                 </TableCell>
               </TableRow>
@@ -120,8 +134,17 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
         status={status}
         onClose={() => setSelectedAd(null)}
         onApprove={onApprove}
-        onReject={onReject}
+        onReject={(adId) => handleRejectClick(adId)}
       />
+      
+      {rejectAdId && (
+        <RejectAdDialog
+          adId={rejectAdId}
+          open={showRejectDialog}
+          onClose={() => setShowRejectDialog(false)}
+          onReject={handleRejectConfirm}
+        />
+      )}
     </>
   );
 };

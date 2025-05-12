@@ -71,7 +71,7 @@ export const useAdActions = (
   };
 
   // Fonction pour rejeter une annonce
-  const handleRejectAd = async (adId: string) => {
+  const handleRejectAd = async (adId: string, rejectMessage?: string) => {
     if (!isAuthenticated || !isAdmin) {
       toast({
         title: "Accès refusé",
@@ -82,9 +82,9 @@ export const useAdActions = (
     }
     
     try {
-      console.log("Rejecting ad:", adId);
+      console.log("Rejecting ad:", adId, "with message:", rejectMessage);
       
-      const success = await updateAdStatus(adId, 'rejected');
+      const success = await updateAdStatus(adId, 'rejected', rejectMessage);
       
       if (!success) throw new Error("Failed to reject ad");
       
@@ -98,7 +98,7 @@ export const useAdActions = (
       setPendingAds(prev => prev.filter(ad => ad.id !== adId));
       const rejectedAd = pendingAds.find(ad => ad.id === adId);
       if (rejectedAd) {
-        setRejectedAds(prev => [{ ...rejectedAd, status: 'rejected' }, ...prev]);
+        setRejectedAds(prev => [{ ...rejectedAd, status: 'rejected', reject_reason: rejectMessage }, ...prev]);
       }
     } catch (error) {
       console.error("Error rejecting ad:", error);
