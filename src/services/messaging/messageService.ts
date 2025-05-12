@@ -1,0 +1,116 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import { Message } from "./types";
+
+// Récupérer les messages d'une conversation
+export const fetchConversationMessages = async (conversationId: string): Promise<Message[]> => {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData || !userData.user) {
+      console.error("Utilisateur non authentifié");
+      return [];
+    }
+    
+    // Vérifier que l'utilisateur a accès à cette conversation
+    const { data: conversationCheck, error: checkError } = await supabase
+      .from('conversations')
+      .select('id')
+      .or(`buyer_id.eq.${userData.user.id},seller_id.eq.${userData.user.id}`)
+      .eq('id', conversationId)
+      .single();
+    
+    if (checkError || !conversationCheck) {
+      console.error("Accès non autorisé à cette conversation:", checkError);
+      return [];
+    }
+    
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error("Erreur lors de la récupération des messages:", error);
+      return [];
+    }
+    
+    console.log("Messages récupérés:", messages?.length || 0);
+    return messages || [];
+  } catch (error) {
+    console.error("Erreur lors du traitement des messages:", error);
+    return [];
+  }
+};
+
+// Envoyer un message dans une conversation
+export const sendMessage = async (conversationId: string, content: string): Promise<{ success: boolean; error: string | null }> => {
+  try {
+    const { data } = await supabase.auth.getUser();
+    
+    if (!data || !data.user) {
+      return { success: false, error: "Utilisateur non authentifié" };
+    }
+
+    // Mise à jour du last_message_at de la conversation
+    const { error: updateError } = await supabase
+      .from('conversations')
+      .update({ 
+        last_message_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', conversationId);
+      
+    if (updateError) {
+      console.error("Erreur lors de la mise à jour de la conversation:", updateError);
+    }
+    
+    // Envoi du message
+    const { error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: data.user.id,
+        content: content
+      });
+
+    if (error) {
+      console.error("Erreur lors de l'envoi du message:", error);
+      return { success: false, error: "Erreur lors de l'envoi du message" };
+    }
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error("Erreur lors de l'envoi du message:", error);
+    return { success: false, error: "Une erreur s'est produite" };
+  }
+};
+
+// Marquer les messages comme lus
+export const markMessagesAsRead = async (conversationId: string): Promise<{ success: boolean; error: string | null }> => {
+  try {
+    const { data } = await supabase.auth.getUser();
+    
+    if (!data || !data.user) {
+      return { success: false, error: "Utilisateur non authentifié" };
+    }
+
+    const { error } = await supabase
+      .from('messages')
+      .update({ read: true })
+      .eq('conversation_id', conversationId)
+      .not('sender_id', 'eq', data.user.id)
+      .eq('read', false);
+
+    if (error) {
+      console.error("Erreur lors du marquage des messages comme lus:", error);
+      return { success: false, error: "Erreur lors du marquage des messages comme lus" };
+    }
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error("Erreur lors du marquage des messages comme lus:", error);
+    return { success: false, error: "Une erreur s'est produite" };
+  }
+};

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { MessageCircle, Loader2 } from "lucide-react";
-import { createConversation } from "@/services/messageService";
+import { createConversation } from "@/services/messaging/conversationService";
 import { Ad } from "@/types/adTypes";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
