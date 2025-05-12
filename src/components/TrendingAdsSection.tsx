@@ -88,7 +88,7 @@ const TrendingAdsSection: React.FC = () => {
         </div>
         
         <Button variant="ghost" asChild className="text-mboa-orange hover:text-mboa-orange/80">
-          <Link to="/annonces-premium" className="flex items-center gap-1">
+          <Link to="/premium" className="flex items-center gap-1">
             Voir toutes <ArrowRight size={16} />
           </Link>
         </Button>

@@ -40,7 +40,7 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
         <h2 className="text-xl font-bold">Annonces récentes</h2>
         
         <Button variant="ghost" asChild className="text-mboa-orange hover:text-mboa-orange/80">
-          <Link to="/annonces" className="flex items-center gap-1">
+          <Link to="/recherche" className="flex items-center gap-1">
             Voir toutes <ArrowRight size={16} />
           </Link>
         </Button>
