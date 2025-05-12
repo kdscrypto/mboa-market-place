@@ -133,21 +133,6 @@ const Contact = () => {
                 </Button>
               </form>
             </section>
-            
-            <section>
-              <h2 className="text-xl font-bold mb-4">Horaires d'ouverture</h2>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <p className="text-gray-700 mb-2">
-                  <strong>Lundi - Vendredi:</strong> 9h - 17h
-                </p>
-                <p className="text-gray-700 mb-2">
-                  <strong>Samedi:</strong> 10h - 15h
-                </p>
-                <p className="text-gray-700">
-                  <strong>Dimanche:</strong> Fermé
-                </p>
-              </div>
-            </section>
           </div>
         </div>
       </main>
