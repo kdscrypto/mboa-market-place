@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 
@@ -56,13 +56,13 @@ function App() {
             <Route path="/conditions" element={<TermsOfService />} />
             
             {/* Protected routes */}
-            <Route element={<AuthGuard />}>
+            <Route path="/" element={<AuthGuard><Outlet /></AuthGuard>}>
               <Route path="/publier" element={<CreateAd />} />
               <Route path="/dashboard" element={<UserDashboard />} />
             </Route>
             
             {/* Admin routes */}
-            <Route element={<AdminGuard />}>
+            <Route path="/" element={<AdminGuard><Outlet /></AdminGuard>}>
               <Route path="/admin/moderation" element={<AdminModeration />} />
             </Route>
             
