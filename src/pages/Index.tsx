@@ -64,14 +64,6 @@ const Index = () => {
     navigate(`/recherche?${searchParams.toString()}`);
   };
 
-  // Popular search shortcuts
-  const popularSearches = [
-    { name: "Immobilier", category: "immobilier" },
-    { name: "Voitures", category: "vehicules" },
-    { name: "Téléphones", category: "electronique" },
-    { name: "Emploi", category: "emploi" },
-  ];
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -97,21 +89,6 @@ const Index = () => {
                   Publier une annonce gratuitement
                 </Link>
               </Button>
-              
-              {/* Popular search shortcuts */}
-              <div className="mt-8 flex flex-wrap justify-center gap-2">
-                {popularSearches.map((search) => (
-                  <Button 
-                    key={search.category}
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => navigate(`/recherche?category=${search.category}`)}
-                    className="bg-white/30 backdrop-blur-sm text-white border-white/40 hover:bg-white/40"
-                  >
-                    {search.name}
-                  </Button>
-                ))}
-              </div>
             </div>
           </div>
           
