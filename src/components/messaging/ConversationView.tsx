@@ -29,19 +29,29 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loadedMessages, setLoadedMessages] = useState<Message[]>([]);
+  const previousLoadingState = useRef<boolean>(loading);
+  const previousErrorState = useRef<string | null>(error);
+  const previousMessagesLength = useRef<number>(messages.length);
 
   // Make sure to preserve loaded messages even when props.messages is temporarily empty
   useEffect(() => {
+    // Only update loaded messages when we have new messages or when coming out of loading state with messages
     if (messages && messages.length > 0) {
+      console.log("Updating loaded messages with new messages:", messages.length);
       setLoadedMessages(messages);
-    }
-  }, [messages]);
+      previousMessagesLength.current = messages.length;
+    } 
+    // Track loading state changes
+    previousLoadingState.current = loading;
+    previousErrorState.current = error;
+  }, [messages, loading, error]);
 
   // Fetch current user ID
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getUser();
+        if (error) throw error;
         if (data && data.session) {
           setCurrentUserId(data.session.user.id);
         }
@@ -63,8 +73,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   // Handle error state first
   if (error) {
     return (
-      <div className="flex flex-col h-full justify-center items-center text-center">
-        <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
+      <div className="flex flex-col h-full justify-center items-center text-center p-4">
+        <AlertCircle className="h-10 w-10 text-red-500 mb-3" />
         <p className="text-sm text-gray-700 mb-4">{error}</p>
         {onRetry && (
           <Button 
@@ -82,8 +92,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   if (loading) {
     return (
       <div className="flex flex-col h-full justify-center items-center">
-        <Loader2 className="h-8 w-8 animate-spin text-mboa-orange" />
-        <p className="mt-2 text-sm text-gray-500">Chargement des messages...</p>
+        <Loader2 className="h-10 w-10 animate-spin text-mboa-orange" />
+        <p className="mt-3 text-sm text-gray-500">Chargement des messages...</p>
       </div>
     );
   }

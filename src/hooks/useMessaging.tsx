@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useConversations } from './messaging/useConversations';
 import { useConversationMessages } from './messaging/useConversationMessages';
 import { useMessageNotifications } from './messaging/useMessageNotifications';
@@ -25,13 +25,33 @@ export const useMessaging = () => {
     messages,
     loading: messagesLoading,
     error: messagesError,
-    loadMessages: loadMessagesInternal
+    loadMessages: loadMessagesInternal,
+    retryLoading
   } = useConversationMessages(currentConversation, handleMarkAsRead);
 
+  // Enhanced load messages handler with error handling
   const loadMessages = useCallback((conversationId: string) => {
-    setCurrentConversation(conversationId);
-    loadMessagesInternal(conversationId);
+    try {
+      if (!conversationId) {
+        console.error("ID de conversation manquant");
+        return;
+      }
+      
+      setCurrentConversation(conversationId);
+      loadMessagesInternal(conversationId);
+    } catch (error) {
+      console.error("Erreur lors du chargement des messages:", error);
+    }
   }, [loadMessagesInternal]);
+
+  // Enhanced retry functionality that uses the retryLoading from useConversationMessages
+  const retryLoadMessages = useCallback(() => {
+    if (retryLoading) {
+      retryLoading();
+    } else if (currentConversation) {
+      loadMessages(currentConversation);
+    }
+  }, [currentConversation, loadMessages, retryLoading]);
 
   const { sendMessage } = useSendMessage();
 
@@ -43,6 +63,9 @@ export const useMessaging = () => {
     loadMessages
   );
 
+  // Determine the final error state to show
+  const error = messagesError || conversationsError;
+
   return {
     conversations,
     currentConversation,
@@ -50,9 +73,10 @@ export const useMessaging = () => {
     loading,
     messagesLoading,
     totalUnread,
-    error: messagesError || conversationsError,
+    error,
     loadConversations,
     loadMessages,
-    sendMessage
+    sendMessage,
+    retryLoadMessages
   };
 };

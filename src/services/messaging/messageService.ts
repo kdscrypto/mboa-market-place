@@ -5,18 +5,25 @@ import { Message } from "./types";
 // Récupérer les messages d'une conversation
 export const fetchConversationMessages = async (conversationId: string): Promise<Message[]> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error("Erreur d'authentification:", authError);
+      throw new Error("Erreur d'authentification. Veuillez vous reconnecter.");
+    }
     
     if (!userData || !userData.user) {
       console.error("Utilisateur non authentifié");
-      return [];
+      throw new Error("Vous devez être connecté pour accéder à cette conversation");
     }
+    
+    const currentUserId = userData.user.id;
     
     // Vérifier que l'utilisateur a accès à cette conversation
     const { data: conversationCheck, error: checkError } = await supabase
       .from('conversations')
       .select('id')
-      .or(`buyer_id.eq.${userData.user.id},seller_id.eq.${userData.user.id}`)
+      .or(`buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId}`)
       .eq('id', conversationId)
       .maybeSingle();
     
@@ -30,6 +37,7 @@ export const fetchConversationMessages = async (conversationId: string): Promise
       throw new Error("Vous n'avez pas accès à cette conversation");
     }
     
+    // Une fois l'accès vérifié, récupérer les messages
     const { data: messages, error } = await supabase
       .from('messages')
       .select('*')
@@ -42,17 +50,23 @@ export const fetchConversationMessages = async (conversationId: string): Promise
     }
     
     console.log("Messages récupérés:", messages?.length || 0);
+    
+    // Garantir que nous renvoyons toujours un tableau
     return messages || [];
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur lors du traitement des messages:", error);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 };
 
 // Envoyer un message dans une conversation
 export const sendMessage = async (conversationId: string, content: string): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { data } = await supabase.auth.getUser();
+    const { data, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      return { success: false, error: "Erreur d'authentification. Veuillez vous reconnecter." };
+    }
     
     if (!data || !data.user) {
       return { success: false, error: "Utilisateur non authentifié" };
@@ -69,6 +83,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       
     if (updateError) {
       console.error("Erreur lors de la mise à jour de la conversation:", updateError);
+      return { success: false, error: "Erreur lors de la mise à jour de la conversation" };
     }
     
     // Envoi du message
@@ -86,7 +101,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     }
 
     return { success: true, error: null };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur lors de l'envoi du message:", error);
     return { success: false, error: "Une erreur s'est produite" };
   }
@@ -95,7 +110,11 @@ export const sendMessage = async (conversationId: string, content: string): Prom
 // Marquer les messages comme lus
 export const markMessagesAsRead = async (conversationId: string): Promise<{ success: boolean; error: string | null }> => {
   try {
-    const { data } = await supabase.auth.getUser();
+    const { data, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      return { success: false, error: "Erreur d'authentification" };
+    }
     
     if (!data || !data.user) {
       return { success: false, error: "Utilisateur non authentifié" };
@@ -114,7 +133,7 @@ export const markMessagesAsRead = async (conversationId: string): Promise<{ succ
     }
 
     return { success: true, error: null };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur lors du marquage des messages comme lus:", error);
     return { success: false, error: "Une erreur s'est produite" };
   }
