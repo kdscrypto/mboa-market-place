@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Message } from "@/services/messaging/types";
 import MessageBubble from "./MessageBubble";
 import MessageForm from "./MessageForm";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2Icon, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -52,8 +52,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({
       try {
         const { data, error } = await supabase.auth.getUser();
         if (error) throw error;
-        if (data && data.session) {
-          setCurrentUserId(data.session.user.id);
+        if (data && data.user) {
+          setCurrentUserId(data.user.id);
         }
       } catch (error) {
         console.error("Erreur lors de la récupération de la session:", error);
@@ -92,7 +92,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   if (loading) {
     return (
       <div className="flex flex-col h-full justify-center items-center">
-        <Loader2 className="h-10 w-10 animate-spin text-mboa-orange" />
+        <Loader2Icon className="h-10 w-10 animate-spin text-mboa-orange" />
         <p className="mt-3 text-sm text-gray-500">Chargement des messages...</p>
       </div>
     );

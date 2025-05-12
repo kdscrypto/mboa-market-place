@@ -124,7 +124,7 @@ export const useConversationMessages = (
             const checkAndMarkAsRead = async () => {
               try {
                 const { data } = await supabase.auth.getUser();
-                if (data && data.session && data.session.user.id !== newMessage.sender_id) {
+                if (data && data.user && data.user.id !== newMessage.sender_id) {
                   await markMessagesAsRead(conversationId);
                   onMarkAsRead(conversationId);
                 }
