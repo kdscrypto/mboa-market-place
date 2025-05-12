@@ -18,6 +18,8 @@ import PremiumAds from '@/pages/PremiumAds';
 import About from "@/pages/About";
 import Help from "@/pages/Help";
 import TermsOfService from "@/pages/TermsOfService";
+import Contact from "@/pages/Contact";
+import ConseilsVendeurs from "@/pages/ConseilsVendeurs";
 
 // Import components
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -54,6 +56,8 @@ function App() {
             <Route path="/a-propos" element={<About />} />
             <Route path="/aide" element={<Help />} />
             <Route path="/conditions" element={<TermsOfService />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/conseils-vendeurs" element={<ConseilsVendeurs />} />
             
             {/* Protected routes */}
             <Route path="/" element={<AuthGuard><Outlet /></AuthGuard>}>
