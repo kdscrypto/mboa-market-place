@@ -9,7 +9,7 @@ interface AdActionButtonsProps {
   onViewClick: () => void;
   onApprove?: (adId: string) => void;
   onReject?: (adId: string, message?: string) => void;
-  onRejectClick?: () => void; // Nouveau prop pour ouvrir la boîte de dialogue de rejet
+  onRejectClick?: () => void; // Prop pour ouvrir la boîte de dialogue de rejet
 }
 
 const AdActionButtons: React.FC<AdActionButtonsProps> = ({
