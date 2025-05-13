@@ -8,7 +8,7 @@ interface AdActionButtonsProps {
   status: "pending" | "approved" | "rejected";
   onViewClick: () => void;
   onApprove?: (adId: string) => void;
-  onReject?: (adId: string, message?: string) => void;
+  onReject?: (adId: string) => void;
   onRejectClick?: () => void; // Prop pour ouvrir la boîte de dialogue de rejet
 }
 
@@ -23,13 +23,19 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
   const handleApprove = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (onApprove) onApprove(adId);
+    if (onApprove) {
+      console.log("AdActionButtons: handleApprove called for ad", adId);
+      onApprove(adId);
+    }
   };
   
   const handleRejectClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (onRejectClick) onRejectClick();
+    if (onRejectClick) {
+      console.log("AdActionButtons: handleRejectClick called for ad", adId);
+      onRejectClick();
+    }
   };
   
   return (
@@ -37,7 +43,11 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={onViewClick}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onViewClick();
+        }}
       >
         <Eye className="h-4 w-4" />
         <span className="sr-only">Voir</span>

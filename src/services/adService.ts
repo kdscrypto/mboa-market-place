@@ -1,6 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
+import { sendAdRejectionNotification } from "./messaging/notificationService";
 
 // Fonction pour récupérer toutes les annonces avec leurs images principales
 export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
@@ -88,6 +88,18 @@ export const updateAdStatus = async (
       throw new Error("Authentication required");
     }
     
+    // Récupérer les détails de l'annonce pour obtenir user_id et title
+    const { data: ad, error: adError } = await supabase
+      .from('ads')
+      .select('user_id, title')
+      .eq('id', adId)
+      .single();
+    
+    if (adError || !ad) {
+      console.error(`Error fetching ad ${adId}:`, adError);
+      return false;
+    }
+    
     // Préparer les données à mettre à jour
     const updateData: any = { status };
     
@@ -108,6 +120,11 @@ export const updateAdStatus = async (
         throw new Error("Permission denied: You don't have the required privileges");
       }
       throw error;
+    }
+    
+    // Si l'annonce est rejetée et qu'un message est fourni, envoyer une notification
+    if (status === 'rejected' && rejectMessage && ad.user_id) {
+      await sendAdRejectionNotification(ad.user_id, adId, ad.title, rejectMessage);
     }
     
     return true;

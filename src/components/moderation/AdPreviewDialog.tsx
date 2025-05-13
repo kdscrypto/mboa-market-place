@@ -22,19 +22,17 @@ const AdPreviewDialog: React.FC<AdPreviewDialogProps> = ({
 }) => {
   if (!ad) return null;
   
-  const handleApprove = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleApprove = () => {
     if (onApprove && ad) {
+      console.log("AdPreviewDialog: handleApprove called for ad", ad.id);
       onApprove(ad.id);
       onClose();
     }
   };
   
-  const handleReject = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleReject = () => {
     if (onReject && ad) {
+      console.log("AdPreviewDialog: handleReject called for ad", ad.id);
       onReject(ad.id);
     }
   };

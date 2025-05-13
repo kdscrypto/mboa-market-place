@@ -44,12 +44,16 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   }, [ads, status, isLoading]);
   
   const handleRejectClick = (adId: string) => {
+    console.log("Opening reject dialog for ad:", adId);
     setRejectAdId(adId);
     setShowRejectDialog(true);
   };
   
   const handleRejectConfirm = (adId: string, message: string) => {
-    if (onReject) onReject(adId, message);
+    console.log("Confirming rejection for ad:", adId, "with message:", message);
+    if (onReject) {
+      onReject(adId, message);
+    }
     setShowRejectDialog(false);
     setRejectAdId(null);
   };
@@ -141,7 +145,11 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
         <RejectAdDialog
           adId={rejectAdId}
           open={showRejectDialog}
-          onClose={() => setShowRejectDialog(false)}
+          onClose={() => {
+            console.log("Closing reject dialog");
+            setShowRejectDialog(false);
+            setRejectAdId(null);
+          }}
           onReject={handleRejectConfirm}
         />
       )}

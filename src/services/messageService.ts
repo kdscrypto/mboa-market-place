@@ -3,3 +3,4 @@
 export * from "./messaging/types";
 export * from "./messaging/conversationService";
 export * from "./messaging/messageService";
+export * from "./messaging/notificationService";

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import {
   AlertDialog,
@@ -27,11 +27,17 @@ const RejectAdDialog: React.FC<RejectAdDialogProps> = ({
   onReject,
 }) => {
   const [rejectMessage, setRejectMessage] = useState("");
+  
+  // Reset le message quand le dialog s'ouvre
+  useEffect(() => {
+    if (open) {
+      setRejectMessage("");
+    }
+  }, [open]);
 
   const handleReject = () => {
+    console.log("RejectAdDialog: Rejecting ad with message:", rejectMessage);
     onReject(adId, rejectMessage);
-    setRejectMessage("");
-    onClose();
   };
 
   const handleCancel = () => {
@@ -45,7 +51,7 @@ const RejectAdDialog: React.FC<RejectAdDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Rejeter cette annonce</AlertDialogTitle>
           <AlertDialogDescription>
-            Veuillez indiquer les raisons du rejet. Ce message sera visible uniquement par l'auteur de l'annonce.
+            Veuillez indiquer les raisons du rejet. Ce message sera envoyé à l'auteur de l'annonce.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

@@ -42,7 +42,7 @@ export const useAdActions = (
     }
     
     try {
-      console.log("Approving ad:", adId);
+      console.log("useAdActions: Approving ad:", adId);
       
       const success = await updateAdStatus(adId, 'approved');
       
@@ -82,7 +82,16 @@ export const useAdActions = (
     }
     
     try {
-      console.log("Rejecting ad:", adId, "with message:", rejectMessage);
+      console.log("useAdActions: Rejecting ad:", adId, "with message:", rejectMessage);
+      
+      if (!rejectMessage || rejectMessage.trim() === '') {
+        toast({
+          title: "Message requis",
+          description: "Veuillez fournir un message expliquant le rejet",
+          variant: "destructive"
+        });
+        return;
+      }
       
       const success = await updateAdStatus(adId, 'rejected', rejectMessage);
       
@@ -90,7 +99,7 @@ export const useAdActions = (
       
       toast({
         title: "Annonce rejetée",
-        description: "L'annonce a été rejetée avec succès",
+        description: "L'annonce a été rejetée et le vendeur a été notifié",
         duration: 3000
       });
       
