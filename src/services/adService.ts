@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import { sendAdRejectionNotification } from "./messaging/notificationService";
@@ -78,7 +79,7 @@ export const updateAdStatus = async (
   rejectMessage?: string
 ): Promise<boolean> => {
   try {
-    console.log(`Updating ad ${adId} to status: ${status}`);
+    console.log(`Updating ad ${adId} to status: ${status}`, rejectMessage ? `with message: ${rejectMessage}` : '');
     
     // Check authentication before proceeding
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -99,6 +100,8 @@ export const updateAdStatus = async (
       console.error(`Error fetching ad ${adId}:`, adError);
       return false;
     }
+    
+    console.log("Ad details:", ad);
     
     // Préparer les données à mettre à jour
     const updateData: any = { status };
@@ -122,9 +125,13 @@ export const updateAdStatus = async (
       throw error;
     }
     
+    console.log(`Successfully updated ad ${adId} to ${status}`);
+    
     // Si l'annonce est rejetée et qu'un message est fourni, envoyer une notification
     if (status === 'rejected' && rejectMessage && ad.user_id) {
-      await sendAdRejectionNotification(ad.user_id, adId, ad.title, rejectMessage);
+      console.log("Sending rejection notification...");
+      const notificationSent = await sendAdRejectionNotification(ad.user_id, adId, ad.title, rejectMessage);
+      console.log("Notification sent:", notificationSent);
     }
     
     return true;

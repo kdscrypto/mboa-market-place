@@ -17,7 +17,6 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
   status,
   onViewClick,
   onApprove,
-  onReject,
   onRejectClick
 }) => {
   const handleApprove = (e: React.MouseEvent) => {
@@ -60,6 +59,7 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
             size="sm" 
             className="text-green-600 border-green-600 hover:bg-green-50"
             onClick={handleApprove}
+            type="button"
           >
             <Check className="h-4 w-4" />
             <span className="sr-only">Approuver</span>
@@ -70,6 +70,7 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
             size="sm" 
             className="text-red-600 border-red-600 hover:bg-red-50"
             onClick={handleRejectClick}
+            type="button"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Rejeter</span>

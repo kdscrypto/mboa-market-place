@@ -6,6 +6,7 @@ import { Conversation, Message } from "./types";
  * Envoie une notification système à un utilisateur concernant le rejet de son annonce
  * @param userId ID de l'utilisateur à notifier
  * @param adId ID de l'annonce rejetée
+ * @param adTitle Titre de l'annonce rejetée
  * @param rejectReason Raison du rejet de l'annonce
  * @returns Un booléen indiquant si l'envoi a réussi
  */

@@ -57,6 +57,13 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
     setShowRejectDialog(false);
     setRejectAdId(null);
   };
+
+  const handleApproveClick = (adId: string) => {
+    console.log("ModerationTable: handleApproveClick called for ad", adId);
+    if (onApprove) {
+      onApprove(adId);
+    }
+  };
   
   if (isLoading) {
     return <p className="text-center py-10">Chargement des annonces...</p>;
@@ -123,7 +130,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
                     adId={ad.id}
                     status={status}
                     onViewClick={() => setSelectedAd(ad)}
-                    onApprove={onApprove}
+                    onApprove={() => handleApproveClick(ad.id)}
                     onRejectClick={() => handleRejectClick(ad.id)}
                   />
                 </TableCell>
@@ -137,7 +144,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
         ad={selectedAd}
         status={status}
         onClose={() => setSelectedAd(null)}
-        onApprove={onApprove}
+        onApprove={onApprove ? handleApproveClick : undefined}
         onReject={(adId) => handleRejectClick(adId)}
       />
       

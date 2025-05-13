@@ -35,7 +35,10 @@ const RejectAdDialog: React.FC<RejectAdDialogProps> = ({
     }
   }, [open]);
 
-  const handleReject = () => {
+  const handleReject = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     console.log("RejectAdDialog: Rejecting ad with message:", rejectMessage);
     onReject(adId, rejectMessage);
   };
@@ -65,11 +68,12 @@ const RejectAdDialog: React.FC<RejectAdDialogProps> = ({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel onClick={handleCancel} type="button">Annuler</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleReject}
             className="bg-red-600 hover:bg-red-700 text-white"
             disabled={!rejectMessage.trim()}
+            type="button"
           >
             <X className="mr-2 h-4 w-4" />
             Rejeter

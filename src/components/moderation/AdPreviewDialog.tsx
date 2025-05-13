@@ -22,7 +22,10 @@ const AdPreviewDialog: React.FC<AdPreviewDialogProps> = ({
 }) => {
   if (!ad) return null;
   
-  const handleApprove = () => {
+  const handleApprove = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (onApprove && ad) {
       console.log("AdPreviewDialog: handleApprove called for ad", ad.id);
       onApprove(ad.id);
@@ -30,7 +33,10 @@ const AdPreviewDialog: React.FC<AdPreviewDialogProps> = ({
     }
   };
   
-  const handleReject = () => {
+  const handleReject = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (onReject && ad) {
       console.log("AdPreviewDialog: handleReject called for ad", ad.id);
       onReject(ad.id);
@@ -95,6 +101,7 @@ const AdPreviewDialog: React.FC<AdPreviewDialogProps> = ({
                     <Button 
                       onClick={handleApprove}
                       className="bg-green-600 hover:bg-green-700"
+                      type="button"
                     >
                       <Check className="mr-2 h-4 w-4" />
                       Approuver
@@ -103,6 +110,7 @@ const AdPreviewDialog: React.FC<AdPreviewDialogProps> = ({
                     <Button 
                       onClick={handleReject}
                       variant="destructive"
+                      type="button"
                     >
                       <X className="mr-2 h-4 w-4" />
                       Rejeter
