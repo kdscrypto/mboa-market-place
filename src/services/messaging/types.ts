@@ -8,6 +8,11 @@ export interface Conversation {
   created_at: string;
   updated_at: string;
   last_message_at: string;
+  // Extended properties added from the API/database
+  ad_title?: string;
+  ad_image?: string;
+  unread_count?: number;
+  other_user_id?: string;
 }
 
 export interface Message {

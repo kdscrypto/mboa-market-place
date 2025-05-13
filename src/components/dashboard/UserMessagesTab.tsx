@@ -84,8 +84,8 @@ const UserMessagesTab = () => {
                   <div className="flex-shrink-0 h-10 w-10">
                     <img
                       className="h-10 w-10 rounded-md object-cover"
-                      src={conversation.ad_image}
-                      alt={conversation.ad_title}
+                      src={conversation.ad_image || "/placeholder.svg"}
+                      alt={conversation.ad_title || "Annonce"}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/placeholder.svg';
                       }}
@@ -93,7 +93,7 @@ const UserMessagesTab = () => {
                   </div>
                   <div className="ml-4">
                     <div className="text-sm font-medium text-gray-900">
-                      {conversation.ad_title}
+                      {conversation.ad_title || "Annonce sans titre"}
                     </div>
                   </div>
                 </div>
@@ -105,12 +105,12 @@ const UserMessagesTab = () => {
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                  {conversation.unread_count > 0 && (
+                  {(conversation.unread_count || 0) > 0 && (
                     <Badge className="bg-mboa-orange">
                       {conversation.unread_count} non lu(s)
                     </Badge>
                   )}
-                  {conversation.unread_count === 0 && (
+                  {(conversation.unread_count || 0) === 0 && (
                     <span className="text-sm text-gray-500">Lu</span>
                   )}
                 </div>

@@ -38,7 +38,7 @@ export const useMessageNotifications = (
             
             // Notification for new message
             const conversationInfo = conversations.find(c => c.id === newMessage.conversation_id);
-            if (conversationInfo) {
+            if (conversationInfo && conversationInfo.ad_title) {
               toast.info("Nouveau message", {
                 description: `Nouveau message concernant l'annonce "${conversationInfo.ad_title}"`,
                 action: {

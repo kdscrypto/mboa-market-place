@@ -20,7 +20,7 @@ export const useConversations = () => {
       setConversations(conversationsData);
       
       // Calculate total unread messages
-      const total = conversationsData.reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
+      const total = conversationsData.reduce((acc, conv) => acc + ((conv.unread_count || 0)), 0);
       setTotalUnread(total);
     } catch (error) {
       console.error("Erreur lors du chargement des conversations:", error);

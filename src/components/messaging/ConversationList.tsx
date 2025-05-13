@@ -60,7 +60,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
             <div className="flex-shrink-0 mr-3">
               <img
                 src={conversation.ad_image || "/placeholder.svg"}
-                alt={conversation.ad_title}
+                alt={conversation.ad_title || "Annonce"}
                 className="h-14 w-14 object-cover rounded-md"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "/placeholder.svg";
@@ -73,7 +73,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                   "text-sm font-medium line-clamp-1",
                   hasUnread && "font-bold"
                 )}>
-                  {conversation.ad_title}
+                  {conversation.ad_title || "Annonce sans titre"}
                 </h3>
                 <span className="text-xs text-gray-500">{formattedDate}</span>
               </div>

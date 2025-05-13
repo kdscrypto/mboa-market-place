@@ -158,7 +158,7 @@ const Messages: React.FC = () => {
                   loading={messagesLoading}
                   error={error}
                   onRetry={handleGlobalRetry}
-                  adTitle={currentConversationDetails?.ad_title}
+                  adTitle={currentConversationDetails?.ad_title || "Conversation"}
                   emptyState={
                     <div className="text-center p-6">
                       <MessageCircle className="mx-auto h-12 w-12 text-gray-300 mb-3" />
