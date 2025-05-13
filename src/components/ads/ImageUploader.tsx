@@ -42,7 +42,7 @@ const ImageUploader = ({
         <div className="flex items-center justify-center">
           <div className="w-full">
             {isMobile ? (
-              // Version simplifiée pour les appareils mobiles (surtout iOS)
+              // Simplified version for mobile devices (especially iOS)
               <div className="text-center py-6">
                 <p className="text-gray-500 mb-2">
                   Sélectionnez des photos depuis votre galerie
@@ -57,7 +57,7 @@ const ImageUploader = ({
                 </Button>
               </div>
             ) : (
-              // Version standard pour desktop
+              // Standard version for desktop
               <div className="text-center py-6 cursor-pointer" onClick={triggerFileInput}>
                 <p className="text-gray-500 mb-2">
                   Cliquez ou glissez-déposez des photos

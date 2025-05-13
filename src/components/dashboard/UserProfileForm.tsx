@@ -36,7 +36,7 @@ const UserProfileForm = ({ user }: UserProfileFormProps) => {
     setIsLoading(true);
     
     try {
-      // Mettre à jour les métadonnées de l'utilisateur
+      // Update user metadata
       const { data, error } = await supabase.auth.updateUser({
         data: {
           username: formData.username,
