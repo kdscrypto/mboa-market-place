@@ -25,7 +25,7 @@ export const sendAdRejectionNotification = async (
       .insert({
         ad_id: adId,
         seller_id: userId,
-        buyer_id: userId, // Dans ce cas spécial, l'utilisateur est à la fois vendeur et acheteur pour une notification système
+        buyer_id: null, // Utiliser null pour une notification système
         status: 'system_notification'
       })
       .select('id')
@@ -36,23 +36,29 @@ export const sendAdRejectionNotification = async (
       return false;
     }
     
+    console.log("Conversation created for notification:", conversation.id);
+    
     // Créer le message de notification
     const messageContent = `Votre annonce "${adTitle}" a été rejetée par notre équipe de modération.\n\nRaison: ${rejectReason}\n\nVous pouvez modifier votre annonce et la soumettre à nouveau.`;
     
-    const { error: msgError } = await supabase
+    // Pour une notification système, l'expéditeur est null
+    const { data: message, error: msgError } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversation.id,
-        sender_id: userId, // Le système est considéré comme l'expéditeur pour une meilleure UX
+        sender_id: null, // Message système sans expéditeur spécifique
         content: messageContent,
         is_system_message: true
-      });
+      })
+      .select()
+      .single();
     
     if (msgError) {
       console.error("Error creating rejection message:", msgError);
       return false;
     }
     
+    console.log("Rejection message created:", message);
     console.log("Rejection notification sent successfully");
     return true;
   } catch (error) {

@@ -145,7 +145,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
         status={status}
         onClose={() => setSelectedAd(null)}
         onApprove={onApprove ? handleApproveClick : undefined}
-        onReject={(adId) => handleRejectClick(adId)}
+        onReject={handleRejectClick}
       />
       
       {rejectAdId && (

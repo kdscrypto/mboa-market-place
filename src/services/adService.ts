@@ -130,8 +130,17 @@ export const updateAdStatus = async (
     // Si l'annonce est rejetée et qu'un message est fourni, envoyer une notification
     if (status === 'rejected' && rejectMessage && ad.user_id) {
       console.log("Sending rejection notification...");
-      const notificationSent = await sendAdRejectionNotification(ad.user_id, adId, ad.title, rejectMessage);
-      console.log("Notification sent:", notificationSent);
+      try {
+        const notificationSent = await sendAdRejectionNotification(ad.user_id, adId, ad.title, rejectMessage);
+        console.log("Notification sent:", notificationSent);
+        
+        if (!notificationSent) {
+          console.error("Failed to send notification, but ad status was updated");
+        }
+      } catch (notifError) {
+        console.error("Error sending notification:", notifError);
+        // Nous continuons même si la notification échoue, car le statut a été mis à jour
+      }
     }
     
     return true;

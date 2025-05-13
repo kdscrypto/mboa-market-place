@@ -22,8 +22,8 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
   const handleApprove = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    console.log("AdActionButtons: handleApprove called for ad", adId);
     if (onApprove) {
-      console.log("AdActionButtons: handleApprove called for ad", adId);
       onApprove(adId);
     }
   };
@@ -31,8 +31,8 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
   const handleRejectClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    console.log("AdActionButtons: handleRejectClick called for ad", adId);
     if (onRejectClick) {
-      console.log("AdActionButtons: handleRejectClick called for ad", adId);
       onRejectClick();
     }
   };
@@ -47,6 +47,7 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
           e.preventDefault();
           onViewClick();
         }}
+        type="button"
       >
         <Eye className="h-4 w-4" />
         <span className="sr-only">Voir</span>
