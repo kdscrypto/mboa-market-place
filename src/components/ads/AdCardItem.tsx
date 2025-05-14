@@ -6,6 +6,7 @@ import { Ad } from '@/types/adTypes';
 import PremiumBadge from '@/components/PremiumBadge';
 import { toast } from '@/components/ui/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface AdCardItemProps {
   ad: Ad;
@@ -46,6 +47,7 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
       
       const img = new Image();
       img.src = newUrl;
+      img.crossOrigin = "anonymous"; // Add CORS attribute to preload image
       
       img.onload = () => {
         setImageError(false);
@@ -60,23 +62,41 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
       };
       
       img.onerror = () => {
+        console.error(`Retry failed for ad: ${ad.id}, URL: ${newUrl}`);
         setImageError(true);
         setImageLoaded(true);
         setIsRetrying(false);
       };
     } else {
+      console.warn(`Max retries reached for ad: ${ad.id}, using placeholder`);
       setImageError(true);
       setImageLoaded(true);
     }
   };
   
   const handleImageLoaded = () => {
+    console.log(`Image loaded successfully for ad: ${ad.id}`);
     setImageLoaded(true);
     setImageError(false);
   };
   
+  // Process image URL before rendering
+  const processImageUrl = (url: string | undefined): string => {
+    if (!url || typeof url !== 'string' || url.trim() === '') {
+      return defaultPlaceholder;
+    }
+    
+    // If it's a Supabase URL, add cache busting parameter
+    if (url.includes('supabase.co/storage/v1/object/public')) {
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}t=${new Date().getTime()}`;
+    }
+    
+    return url;
+  };
+  
   // Determine the correct image URL to use
-  const imageUrl = imageError ? defaultPlaceholder : (ad.imageUrl || defaultPlaceholder);
+  const imageUrl = imageError ? defaultPlaceholder : processImageUrl(ad.imageUrl);
   
   // Apply specific fix for desktop browsers with proper types
   const imageStyle: CSSProperties = isMobile ? {} : { 
@@ -100,9 +120,10 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
           <img
             src={imageUrl}
             alt={ad.title}
-            className={`object-cover w-full h-full transition-transform duration-300 hover:scale-105 ${
-              !imageLoaded ? 'opacity-0' : 'opacity-100'
-            }`}
+            className={cn(
+              "transition-transform duration-300 hover:scale-105",
+              !imageLoaded ? "opacity-0" : "opacity-100"
+            )}
             style={imageStyle}
             onError={handleImageError}
             onLoad={handleImageLoaded}

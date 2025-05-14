@@ -25,6 +25,19 @@ export const isValidImageUrl = (url: string | null | undefined): boolean => {
   }
 };
 
+// Preload image to test if it's actually accessible
+export const testImageLoading = async (url: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+    
+    // Set a timeout in case the image hangs
+    setTimeout(() => resolve(false), 5000);
+  });
+};
+
 // Function to retrieve premium ads
 export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
   try {
@@ -81,17 +94,13 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
             const originalUrl = images[0].image_url.trim();
             
             if (isValidImageUrl(originalUrl)) {
-              // For Supabase storage URLs, ensure we have proper CORS access
-              if (originalUrl.includes('supabase.co/storage/v1/object/public')) {
-                // Add a random query parameter to bypass cache issues on some browsers
-                const cacheBuster = `?t=${Date.now()}`;
-                imageUrl = originalUrl + cacheBuster;
-              } else {
-                imageUrl = originalUrl;
-              }
+              // For Supabase storage URLs, ensure proper formatting
+              imageUrl = originalUrl;
             } else {
               console.warn(`Invalid image URL format for ad ${ad.id}:`, originalUrl);
             }
+          } else {
+            console.warn(`No image found for ad ${ad.id}`);
           }
           
           return {

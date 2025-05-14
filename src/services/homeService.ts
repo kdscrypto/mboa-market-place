@@ -59,17 +59,17 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             const originalUrl = images[0].image_url.trim();
             
             if (isValidImageUrl(originalUrl)) {
-              // For Supabase storage URLs, ensure we have proper CORS access
+              // For Supabase storage URLs, ensure proper formatting
               if (originalUrl.includes('supabase.co/storage/v1/object/public')) {
-                // Add a random query parameter to bypass cache issues on some browsers
-                const cacheBuster = `?t=${Date.now()}`;
-                imageUrl = originalUrl + cacheBuster;
+                imageUrl = originalUrl;
               } else {
                 imageUrl = originalUrl;
               }
             } else {
               console.warn(`Invalid image URL format for ad ${ad.id}:`, originalUrl);
             }
+          } else {
+            console.warn(`No image found for ad ${ad.id}`);
           }
           
           return {
