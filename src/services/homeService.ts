@@ -45,9 +45,16 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             };
           }
           
+          // Vérifier si l'URL de l'image est valide
+          let imageUrl = '/placeholder.svg';
+          
+          if (images && images.length > 0 && images[0].image_url) {
+            imageUrl = images[0].image_url;
+          }
+          
           return {
             ...ad,
-            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg',
+            imageUrl,
             is_premium: ad.ad_type !== 'standard' // Considérer tous les types sauf standard comme premium
           };
         } catch (err) {

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Ad } from '@/types/adTypes';
@@ -10,6 +10,15 @@ interface AdCardItemProps {
 }
 
 const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  const handleImageError = () => {
+    console.log("Image error for ad:", ad.id);
+    setImageError(true);
+  };
+  
+  const imageUrl = imageError ? '/placeholder.svg' : ad.imageUrl || '/placeholder.svg';
+  
   return (
     <div className="relative h-full">
       <Link 
@@ -18,13 +27,11 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
       >
         <div className="relative aspect-square overflow-hidden rounded-t-md">
           <img
-            src={ad.imageUrl || '/placeholder.svg'}
+            src={imageUrl}
             alt={ad.title}
             className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = '/placeholder.svg';
-            }}
+            onError={handleImageError}
+            loading="lazy"
           />
           <button 
             className="absolute top-2 right-2 bg-white p-1.5 rounded-full hover:bg-gray-100 transition-colors"
