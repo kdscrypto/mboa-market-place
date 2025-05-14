@@ -21,7 +21,7 @@ const HeroSection: React.FC = () => {
             size="lg" 
             className="bg-white text-mboa-orange hover:bg-gray-100 hover-scale"
           >
-            <Link to="/publier-annonce">
+            <Link to="/publier">
               Publier une annonce gratuitement
             </Link>
           </Button>
