@@ -3,11 +3,20 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import ContactSellerButton from "@/components/messaging/ContactSellerButton";
 import { Button } from "@/components/ui/button";
+import { 
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious
+} from "@/components/ui/carousel";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { toast } from "@/components/ui/use-toast";
 
 const AdDetail: React.FC = () => {
   const { id } = useParams();
@@ -16,6 +25,7 @@ const AdDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
   
   // Determine if the current user is the author of the ad
   const [isCurrentUserAuthor, setIsCurrentUserAuthor] = useState<boolean>(false);
@@ -47,19 +57,30 @@ const AdDetail: React.FC = () => {
           return;
         }
 
-        // Fetch the first image for this ad
-        const { data: imageData } = await supabase
+        // Fetch all images for this ad
+        const { data: imagesData, error: imagesError } = await supabase
           .from('ad_images')
           .select('image_url')
           .eq('ad_id', id)
-          .order('position', { ascending: true })
-          .limit(1)
-          .single();
+          .order('position', { ascending: true });
 
-        // Create a complete ad object with image
+        if (imagesError) {
+          console.error("Error fetching ad images:", imagesError);
+          toast({
+            title: "Erreur",
+            description: "Impossible de charger les images de l'annonce",
+            variant: "destructive",
+          });
+        }
+
+        // Get all image URLs
+        const imageUrls = imagesData?.map(img => img.image_url) || [];
+        setImages(imageUrls.length > 0 ? imageUrls : ['/placeholder.svg']);
+
+        // Create a complete ad object with the first image
         const adWithImage: Ad = {
           ...data,
-          imageUrl: imageData?.image_url || '/placeholder.svg'
+          imageUrl: imageUrls.length > 0 ? imageUrls[0] : '/placeholder.svg'
         };
 
         setAd(adWithImage);
@@ -136,14 +157,42 @@ const AdDetail: React.FC = () => {
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="md:flex">
             <div className="md:w-1/2">
-              <img 
-                src={ad.imageUrl} 
-                alt={ad.title} 
-                className="w-full h-64 md:h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/placeholder.svg';
-                }}
-              />
+              {images.length > 0 && (
+                <div className="relative">
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {images.map((image, index) => (
+                        <CarouselItem key={index}>
+                          <AspectRatio ratio={1/1}>
+                            <img 
+                              src={image} 
+                              alt={`${ad.title} - Photo ${index + 1}`} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder.svg';
+                              }}
+                            />
+                          </AspectRatio>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    
+                    {images.length > 1 && (
+                      <>
+                        <CarouselPrevious className="left-2 bg-white/70" />
+                        <CarouselNext className="right-2 bg-white/70" />
+                      </>
+                    )}
+                  </Carousel>
+                  
+                  {/* Image counter indicator */}
+                  {images.length > 1 && (
+                    <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
+                      Photo 1/{images.length}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="p-6 md:w-1/2">
               <div className="flex justify-between items-start mb-4">
