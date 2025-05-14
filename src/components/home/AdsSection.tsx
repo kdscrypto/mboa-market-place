@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useState } from "react";
 import TrendingAdsSection from "@/components/TrendingAdsSection";
 import RecentAdsCarousel from "@/components/RecentAdsCarousel";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Ad } from "@/types/adTypes";
+import { toast } from "@/components/ui/use-toast";
 
 interface AdsSectionProps {
   recentAds: Ad[];
@@ -13,6 +14,25 @@ interface AdsSectionProps {
 }
 
 const AdsSection: React.FC<AdsSectionProps> = ({ recentAds, isLoading, error }) => {
+  const [retrying, setRetrying] = useState(false);
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    try {
+      window.location.reload();
+    } catch (err) {
+      console.error("Error refreshing page:", err);
+      toast({
+        title: "Erreur",
+        description: "Impossible de rafraîchir la page",
+        variant: "destructive",
+      });
+    } finally {
+      // Reset après un délai pour éviter des clicks multiples
+      setTimeout(() => setRetrying(false), 2000);
+    }
+  };
+
   return (
     <div className="mboa-container mb-12">
       {/* Trending Ads Section */}
@@ -29,11 +49,22 @@ const AdsSection: React.FC<AdsSectionProps> = ({ recentAds, isLoading, error }) 
           <div className="text-center py-8 bg-gray-50 rounded-lg">
             <p className="text-gray-500">Une erreur s'est produite lors du chargement des annonces.</p>
             <Button 
-              onClick={() => window.location.reload()}
+              onClick={handleRetry}
               variant="outline"
-              className="mt-4"
+              className="mt-4 flex items-center gap-2"
+              disabled={retrying}
             >
-              Rafraîchir la page
+              {retrying ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Rafraîchissement...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4" />
+                  Rafraîchir la page
+                </>
+              )}
             </Button>
           </div>
         ) : (

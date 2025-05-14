@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Ad } from '@/types/adTypes';
 import PremiumBadge from '@/components/PremiumBadge';
+import { toast } from '@/components/ui/use-toast';
 
 interface AdCardItemProps {
   ad: Ad;
@@ -11,13 +12,49 @@ interface AdCardItemProps {
 
 const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageAttempts, setImageAttempts] = useState(0);
+  
+  // Utiliser un placeholder par défaut
+  const defaultPlaceholder = '/placeholder.svg';
+  
+  // Reset l'état d'erreur si l'URL de l'image change
+  useEffect(() => {
+    setImageError(false);
+    setImageLoaded(false);
+    setImageAttempts(0);
+  }, [ad.imageUrl]);
   
   const handleImageError = () => {
     console.log("Image error for ad:", ad.id);
-    setImageError(true);
+    // Limiter les tentatives de rechargement
+    if (imageAttempts < 2) {
+      setImageAttempts(prev => prev + 1);
+      // Tentative avec un timestamp pour éviter le cache
+      const timestamp = new Date().getTime();
+      const newUrl = `${ad.imageUrl}?t=${timestamp}`;
+      const img = new Image();
+      img.src = newUrl;
+      img.onload = () => {
+        setImageError(false);
+        setImageLoaded(true);
+      };
+      img.onerror = () => {
+        setImageError(true);
+        setImageLoaded(true);
+      };
+    } else {
+      setImageError(true);
+      setImageLoaded(true);
+    }
   };
   
-  const imageUrl = imageError ? '/placeholder.svg' : ad.imageUrl || '/placeholder.svg';
+  const handleImageLoaded = () => {
+    setImageLoaded(true);
+    setImageError(false);
+  };
+  
+  const imageUrl = imageError ? defaultPlaceholder : (ad.imageUrl || defaultPlaceholder);
   
   return (
     <div className="relative h-full">
@@ -26,11 +63,19 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
         className="h-full block"
       >
         <div className="relative aspect-square overflow-hidden rounded-t-md">
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+              <span className="sr-only">Chargement de l'image...</span>
+            </div>
+          )}
           <img
             src={imageUrl}
             alt={ad.title}
-            className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+            className={`object-cover w-full h-full transition-transform duration-300 hover:scale-105 ${
+              !imageLoaded ? 'opacity-0' : 'opacity-100'
+            }`}
             onError={handleImageError}
+            onLoad={handleImageLoaded}
             loading="lazy"
           />
           <button 
@@ -38,6 +83,9 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
             onClick={(e) => {
               e.preventDefault();
               console.log("Favorite clicked for:", ad.id);
+              toast({
+                description: "Fonctionnalité à venir",
+              });
             }}
           >
             <Heart className="h-4 w-4 text-gray-600" />

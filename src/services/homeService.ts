@@ -1,6 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
+import { toast } from "@/components/ui/use-toast";
+
+// Fonction pour vérifier si une URL d'image est valide
+export const isValidImageUrl = (url: string): boolean => {
+  if (!url) return false;
+  // Vérifier si l'URL est valide (débute par http:// ou https:// ou est un chemin relatif commençant par /)
+  return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
+};
 
 // Fonction pour récupérer les annonces approuvées récentes
 export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
@@ -17,6 +25,11 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
     
     if (error) {
       console.error("Error retrieving approved ads:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les annonces récentes",
+        variant: "destructive",
+      });
       return []; // Retourner un tableau vide en cas d'erreur
     }
     
@@ -48,8 +61,15 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
           // Vérifier si l'URL de l'image est valide
           let imageUrl = '/placeholder.svg';
           
-          if (images && images.length > 0 && images[0].image_url) {
-            imageUrl = images[0].image_url;
+          if (images && images.length > 0) {
+            // Vérifier si l'URL est définie et non vide
+            if (images[0].image_url && images[0].image_url.trim() !== '') {
+              if (isValidImageUrl(images[0].image_url)) {
+                imageUrl = images[0].image_url;
+              } else {
+                console.warn(`Invalid image URL format for ad ${ad.id}:`, images[0].image_url);
+              }
+            }
           }
           
           return {
@@ -72,6 +92,11 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
     return adsWithImages;
   } catch (error) {
     console.error("Error fetching approved ads:", error);
+    toast({
+      title: "Erreur",
+      description: "Impossible de charger les annonces récentes",
+      variant: "destructive",
+    });
     return []; // Retourner un tableau vide en cas d'erreur
   }
 };

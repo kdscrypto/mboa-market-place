@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
 import { Ad } from "@/types/adTypes";
 import { Button } from "@/components/ui/button";
@@ -20,14 +20,32 @@ interface RecentAdsCarouselProps {
 }
 
 const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
-  console.log("RecentAdsCarousel rendering with ads:", ads ? ads.length : 0);
-  
-  // Track active slide
+  const [adsWithValidData, setAdsWithValidData] = useState<Ad[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   
+  // Filtrer les annonces pour s'assurer qu'elles ont toutes les données requises
+  useEffect(() => {
+    if (!ads) {
+      setAdsWithValidData([]);
+      return;
+    }
+    
+    console.log("RecentAdsCarousel rendering with ads:", ads.length);
+    
+    // S'assurer que toutes les annonces ont un titre, un prix, etc.
+    const validAds = ads.filter(ad => 
+      ad && typeof ad.title === 'string' && 
+      ad.title.trim() !== '' && 
+      typeof ad.price === 'number' && 
+      !isNaN(ad.price)
+    );
+    
+    setAdsWithValidData(validAds);
+  }, [ads]);
+  
   // Update the current slide when the carousel moves
-  React.useEffect(() => {
+  useEffect(() => {
     if (!carouselApi) return;
     
     const onChange = () => {
@@ -41,7 +59,7 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
   }, [carouselApi]);
   
   // Si aucune annonce n'est disponible ou si ads est undefined, afficher un message
-  if (!ads || ads.length === 0) {
+  if (!adsWithValidData || adsWithValidData.length === 0) {
     return (
       <EmptyState 
         title="Annonces récentes"
@@ -53,7 +71,7 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
   }
 
   // Calculate the number of pages
-  const totalSlides = Math.min(5, ads.length);
+  const totalSlides = Math.ceil(adsWithValidData.length / 5);
 
   return (
     <section className="animate-fade-in">
@@ -70,23 +88,25 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
       <Carousel
         opts={{
           align: "start",
-          loop: true,
+          loop: adsWithValidData.length > 5,
           slidesToScroll: 1,
         }}
         className="w-full relative"
         setApi={setCarouselApi}
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {ads.map((ad) => (
+          {adsWithValidData.map((ad) => (
             <CarouselItem key={ad.id} className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
               <AdCardItem ad={ad} />
             </CarouselItem>
           ))}
         </CarouselContent>
-        <div className="hidden sm:block">
-          <CarouselPrevious className="-left-4 bg-white border-gray-200" />
-          <CarouselNext className="-right-4 bg-white border-gray-200" />
-        </div>
+        {adsWithValidData.length > 5 && (
+          <div className="hidden sm:block">
+            <CarouselPrevious className="-left-4 bg-white border-gray-200" />
+            <CarouselNext className="-right-4 bg-white border-gray-200" />
+          </div>
+        )}
       </Carousel>
       
       {/* Pagination indicators */}
