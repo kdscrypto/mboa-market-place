@@ -26,48 +26,57 @@ import Messages from "@/pages/Messages";
 import AuthGuard from '@/components/auth/AuthGuard';
 import AdminGuard from '@/components/moderation/AdminGuard';
 
-// Create a new QueryClient instance
-const queryClient = new QueryClient();
+// Create the QueryClient instance outside of the component to prevent re-creation
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="App min-h-screen">
-          <Routes>
-            {/* Public routes - accessible without authentication */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/connexion" element={<Login />} />
-            <Route path="/recherche" element={<SearchResults />} />
-            <Route path="/annonce/:id" element={<AdDetail />} />
-            <Route path="/categorie/:slug" element={<CategoryPage />} />
-            <Route path="/premium" element={<PremiumAds />} />
-            <Route path="/a-propos" element={<About />} />
-            <Route path="/aide" element={<Help />} />
-            <Route path="/conditions" element={<TermsOfService />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/conseils-vendeurs" element={<ConseilsVendeurs />} />
-            
-            {/* Protected routes - require authentication */}
-            <Route path="/" element={<AuthGuard><Outlet /></AuthGuard>}>
-              <Route path="/publier" element={<CreateAd />} />
-              <Route path="/dashboard" element={<UserDashboard />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/messages/:conversationId" element={<Messages />} />
-            </Route>
-            
-            {/* Admin routes */}
-            <Route path="/" element={<AdminGuard><Outlet /></AdminGuard>}>
-              <Route path="/admin/moderation" element={<AdminModeration />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-        </div>
-      </Router>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <div className="App min-h-screen">
+            <Routes>
+              {/* Public routes - accessible without authentication */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/connexion" element={<Login />} />
+              <Route path="/recherche" element={<SearchResults />} />
+              <Route path="/annonce/:id" element={<AdDetail />} />
+              <Route path="/categorie/:slug" element={<CategoryPage />} />
+              <Route path="/premium" element={<PremiumAds />} />
+              <Route path="/a-propos" element={<About />} />
+              <Route path="/aide" element={<Help />} />
+              <Route path="/conditions" element={<TermsOfService />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/conseils-vendeurs" element={<ConseilsVendeurs />} />
+              
+              {/* Protected routes - require authentication */}
+              <Route path="/" element={<AuthGuard><Outlet /></AuthGuard>}>
+                <Route path="/publier" element={<CreateAd />} />
+                <Route path="/dashboard" element={<UserDashboard />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/messages/:conversationId" element={<Messages />} />
+              </Route>
+              
+              {/* Admin routes */}
+              <Route path="/" element={<AdminGuard><Outlet /></AdminGuard>}>
+                <Route path="/admin/moderation" element={<AdminModeration />} />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+          </div>
+        </Router>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 }
 
