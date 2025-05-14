@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, CSSProperties } from 'react';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Ad } from '@/types/adTypes';
@@ -78,9 +78,9 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
   // Determine the correct image URL to use
   const imageUrl = imageError ? defaultPlaceholder : (ad.imageUrl || defaultPlaceholder);
   
-  // Apply specific fix for desktop browsers
-  const imageStyle = isMobile ? {} : { 
-    objectFit: 'cover', 
+  // Apply specific fix for desktop browsers with proper types
+  const imageStyle: CSSProperties = isMobile ? {} : { 
+    objectFit: 'cover' as 'cover', 
     width: '100%', 
     height: '100%',
   };
