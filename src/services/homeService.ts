@@ -59,11 +59,17 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             const originalUrl = images[0].image_url.trim();
             
             if (isValidImageUrl(originalUrl)) {
-              // For Supabase storage URLs, ensure proper formatting
-              if (originalUrl.includes('supabase.co/storage/v1/object/public')) {
-                imageUrl = originalUrl;
-              } else {
-                imageUrl = originalUrl;
+              imageUrl = originalUrl;
+              
+              // Test if the image can be loaded
+              try {
+                const response = await fetch(originalUrl, { method: 'HEAD' });
+                if (!response.ok) {
+                  console.warn(`Image URL returns ${response.status} for ad ${ad.id}:`, originalUrl);
+                  imageUrl = '/placeholder.svg';
+                }
+              } catch (err) {
+                console.warn(`Failed to validate image URL for ad ${ad.id}:`, err);
               }
             } else {
               console.warn(`Invalid image URL format for ad ${ad.id}:`, originalUrl);

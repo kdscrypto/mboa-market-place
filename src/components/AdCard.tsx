@@ -6,6 +6,7 @@ import { fr } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface AdCardProps {
   id: string;
@@ -40,11 +41,11 @@ const AdCard: React.FC<AdCardProps> = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   
-  // Process image URL to handle cache issues
+  // Process image URL to handle cache issues and ensure consistency across devices
   const processImageUrl = (url: string): string => {
     if (!url || url === '/placeholder.svg') return '/placeholder.svg';
     
-    // If it's a Supabase URL, add cache busting parameter
+    // For Supabase URLs, add cache busting and ensure proper formatting
     if (url.includes('supabase.co/storage/v1/object/public')) {
       const separator = url.includes('?') ? '&' : '?';
       return `${url}${separator}t=${new Date().getTime()}`;
@@ -53,33 +54,45 @@ const AdCard: React.FC<AdCardProps> = ({
     return url;
   };
 
+  // The processed image URL with cache busting
+  const finalImageUrl = imageError ? '/placeholder.svg' : processImageUrl(imageUrl);
+
   return (
-    <Link to={`/annonce/${id}`}>
+    <Link to={`/annonce/${id}`} className="block h-full">
       <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
-        <div className="aspect-square relative overflow-hidden">
-          {!imageLoaded && !imageError && (
-            <div className="absolute inset-0 bg-gray-200 animate-pulse">
-              <span className="sr-only">Chargement de l'image...</span>
-            </div>
-          )}
-          
-          <img
-            src={imageError ? '/placeholder.svg' : processImageUrl(imageUrl)}
-            alt={title}
-            className={cn(
-              "object-cover w-full h-full",
-              !imageLoaded && !imageError ? "opacity-0" : "opacity-100"
+        <div className="relative">
+          <AspectRatio ratio={1/1} className="bg-gray-100">
+            {/* Loading skeleton */}
+            {!imageLoaded && !imageError && (
+              <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+                <span className="sr-only">Chargement de l'image...</span>
+              </div>
             )}
-            onError={(e) => {
-              console.error(`Image error for ad: ${id}, URL: ${imageUrl}`);
-              const target = e.target as HTMLImageElement;
-              target.src = '/placeholder.svg';
-              setImageError(true);
-            }}
-            onLoad={() => setImageLoaded(true)}
-            loading="lazy"
-            crossOrigin="anonymous"
-          />
+            
+            {/* Actual image */}
+            <img
+              src={finalImageUrl}
+              alt={title}
+              className={cn(
+                "object-cover w-full h-full transition-opacity duration-200",
+                imageLoaded && !imageError ? "opacity-100" : "opacity-0"
+              )}
+              style={{
+                objectFit: 'cover',
+              }}
+              onError={(e) => {
+                console.error(`Image error for ad: ${id}, URL: ${imageUrl}`);
+                setImageError(true);
+                setImageLoaded(true);
+              }}
+              onLoad={() => {
+                console.log(`Image loaded successfully for ad: ${id}`);
+                setImageLoaded(true);
+              }}
+              loading="lazy"
+              crossOrigin="anonymous"
+            />
+          </AspectRatio>
         </div>
         
         <CardContent className="p-2">

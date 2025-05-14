@@ -29,6 +29,7 @@ export const isValidImageUrl = (url: string | null | undefined): boolean => {
 export const testImageLoading = async (url: string): Promise<boolean> => {
   return new Promise((resolve) => {
     const img = new Image();
+    img.crossOrigin = "anonymous"; // Add CORS attribute
     img.onload = () => resolve(true);
     img.onerror = () => resolve(false);
     img.src = url;
@@ -96,6 +97,13 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
             if (isValidImageUrl(originalUrl)) {
               // For Supabase storage URLs, ensure proper formatting
               imageUrl = originalUrl;
+              
+              // Optionally test if image loads
+              const imageLoads = await testImageLoading(imageUrl);
+              if (!imageLoads) {
+                console.warn(`Image failed to load for ad ${ad.id}:`, imageUrl);
+                imageUrl = '/placeholder.svg';
+              }
             } else {
               console.warn(`Invalid image URL format for ad ${ad.id}:`, originalUrl);
             }

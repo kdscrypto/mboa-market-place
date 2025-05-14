@@ -1,12 +1,11 @@
 
-import React, { useState, useEffect, useRef, CSSProperties } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Ad } from '@/types/adTypes';
 import PremiumBadge from '@/components/PremiumBadge';
 import { toast } from '@/components/ui/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface AdCardItemProps {
   ad: Ad;
@@ -16,10 +15,9 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-  const retryCount = useRef(0);
-  const isMobile = useIsMobile();
+  const retryCount = React.useRef(0);
   
-  // Placeholder that will be shown when image fails to load
+  // Default placeholder that will be shown when image fails to load
   const defaultPlaceholder = '/placeholder.svg';
   
   // Reset the state when the ad changes
@@ -97,14 +95,7 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
   
   // Determine the correct image URL to use
   const imageUrl = imageError ? defaultPlaceholder : processImageUrl(ad.imageUrl);
-  
-  // Apply specific fix for desktop browsers with proper types
-  const imageStyle: CSSProperties = isMobile ? {} : { 
-    objectFit: 'cover' as 'cover', 
-    width: '100%', 
-    height: '100%',
-  };
-  
+
   return (
     <div className="relative h-full">
       <Link 
@@ -112,25 +103,25 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
         className="h-full block"
       >
         <div className="relative aspect-square overflow-hidden rounded-t-md">
-          {!imageLoaded && (
-            <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
-              <span className="sr-only">Chargement de l'image...</span>
-            </div>
-          )}
-          <img
-            src={imageUrl}
-            alt={ad.title}
-            className={cn(
-              "transition-transform duration-300 hover:scale-105",
-              !imageLoaded ? "opacity-0" : "opacity-100"
+          <AspectRatio ratio={1/1} className="bg-gray-100">
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+                <span className="sr-only">Chargement de l'image...</span>
+              </div>
             )}
-            style={imageStyle}
-            onError={handleImageError}
-            onLoad={handleImageLoaded}
-            loading="lazy"
-            crossOrigin="anonymous"
-            data-ad-id={ad.id}
-          />
+            <img
+              src={imageUrl}
+              alt={ad.title}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${
+                !imageLoaded ? "opacity-0" : "opacity-100"
+              }`}
+              onError={handleImageError}
+              onLoad={handleImageLoaded}
+              loading="lazy"
+              crossOrigin="anonymous"
+              data-ad-id={ad.id}
+            />
+          </AspectRatio>
           <button 
             className="absolute top-2 right-2 bg-white p-1.5 rounded-full hover:bg-gray-100 transition-colors"
             onClick={(e) => {
