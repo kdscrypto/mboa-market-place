@@ -2,14 +2,35 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import { toast } from "@/components/ui/use-toast";
-import { isValidImageUrl } from "@/services/homeService";
 
-// Fonction pour récupérer les annonces premium
+// Helper function to validate image URLs
+export const isValidImageUrl = (url: string | null | undefined): boolean => {
+  if (!url || typeof url !== 'string' || url.trim() === '') return false;
+  
+  try {
+    // Check if URL is valid (starts with http://, https://, or is a relative path)
+    const isValidPattern = url.startsWith('http://') || 
+                           url.startsWith('https://') || 
+                           url.startsWith('/');
+    
+    // Try to construct a URL object to further validate (will throw for malformed URLs)
+    if (isValidPattern && (url.startsWith('http://') || url.startsWith('https://'))) {
+      new URL(url);
+    }
+    
+    return isValidPattern;
+  } catch (e) {
+    console.error("Invalid URL format:", url, e);
+    return false;
+  }
+};
+
+// Function to retrieve premium ads
 export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
   try {
     console.log("Fetching premium ads");
     
-    // Récupérer les annonces premium (tout type sauf standard) sans vérifier l'authentification
+    // Fetch premium ads (any type except standard)
     const { data: ads, error } = await supabase
       .from('ads')
       .select('*')
@@ -25,7 +46,7 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
         description: "Impossible de charger les annonces premium",
         variant: "destructive",
       });
-      return []; // Retourner un tableau vide en cas d'erreur
+      return []; // Return empty array on error
     }
     
     if (!ads || ads.length === 0) {
@@ -33,7 +54,7 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
       return [];
     }
     
-    // Pour chaque annonce, récupérer l'image principale
+    // For each ad, retrieve the main image
     const adsWithImages = await Promise.all(
       ads.map(async (ad) => {
         try {
@@ -53,17 +74,23 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
             };
           }
           
-          // Vérifier si l'URL de l'image est valide
+          // Check if image URL is valid
           let imageUrl = '/placeholder.svg';
           
-          if (images && images.length > 0) {
-            // Vérifier si l'URL est définie et non vide
-            if (images[0].image_url && images[0].image_url.trim() !== '') {
-              if (isValidImageUrl(images[0].image_url)) {
-                imageUrl = images[0].image_url;
+          if (images && images.length > 0 && images[0].image_url) {
+            const originalUrl = images[0].image_url.trim();
+            
+            if (isValidImageUrl(originalUrl)) {
+              // For Supabase storage URLs, ensure we have proper CORS access
+              if (originalUrl.includes('supabase.co/storage/v1/object/public')) {
+                // Add a random query parameter to bypass cache issues on some browsers
+                const cacheBuster = `?t=${Date.now()}`;
+                imageUrl = originalUrl + cacheBuster;
               } else {
-                console.warn(`Invalid image URL format for ad ${ad.id}:`, images[0].image_url);
+                imageUrl = originalUrl;
               }
+            } else {
+              console.warn(`Invalid image URL format for ad ${ad.id}:`, originalUrl);
             }
           }
           

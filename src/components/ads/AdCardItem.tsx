@@ -1,10 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Ad } from '@/types/adTypes';
 import PremiumBadge from '@/components/PremiumBadge';
 import { toast } from '@/components/ui/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AdCardItemProps {
   ad: Ad;
@@ -13,35 +14,55 @@ interface AdCardItemProps {
 const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageAttempts, setImageAttempts] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const retryCount = useRef(0);
+  const isMobile = useIsMobile();
   
-  // Utiliser un placeholder par défaut
+  // Placeholder that will be shown when image fails to load
   const defaultPlaceholder = '/placeholder.svg';
   
-  // Reset l'état d'erreur si l'URL de l'image change
+  // Reset the state when the ad changes
   useEffect(() => {
     setImageError(false);
     setImageLoaded(false);
-    setImageAttempts(0);
-  }, [ad.imageUrl]);
+    retryCount.current = 0;
+    setIsRetrying(false);
+  }, [ad.id, ad.imageUrl]);
   
   const handleImageError = () => {
-    console.log("Image error for ad:", ad.id);
-    // Limiter les tentatives de rechargement
-    if (imageAttempts < 2) {
-      setImageAttempts(prev => prev + 1);
-      // Tentative avec un timestamp pour éviter le cache
+    // If we're already retrying, don't trigger another retry
+    if (isRetrying) return;
+    
+    console.error(`Image error for ad: ${ad.id}, URL: ${ad.imageUrl || 'undefined'}`);
+    
+    // Limit retries to prevent infinite loops
+    if (retryCount.current < 2) {
+      setIsRetrying(true);
+      retryCount.current += 1;
+      
+      // Try again with a cache-busting parameter
       const timestamp = new Date().getTime();
-      const newUrl = `${ad.imageUrl}?t=${timestamp}`;
+      const newUrl = ad.imageUrl ? `${ad.imageUrl}?t=${timestamp}` : defaultPlaceholder;
+      
       const img = new Image();
       img.src = newUrl;
+      
       img.onload = () => {
         setImageError(false);
         setImageLoaded(true);
+        setIsRetrying(false);
+        
+        // Force a re-render with the new URL
+        const imgElement = document.querySelector(`img[data-ad-id="${ad.id}"]`) as HTMLImageElement;
+        if (imgElement) {
+          imgElement.src = newUrl;
+        }
       };
+      
       img.onerror = () => {
         setImageError(true);
         setImageLoaded(true);
+        setIsRetrying(false);
       };
     } else {
       setImageError(true);
@@ -54,7 +75,15 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
     setImageError(false);
   };
   
+  // Determine the correct image URL to use
   const imageUrl = imageError ? defaultPlaceholder : (ad.imageUrl || defaultPlaceholder);
+  
+  // Apply specific fix for desktop browsers
+  const imageStyle = isMobile ? {} : { 
+    objectFit: 'cover', 
+    width: '100%', 
+    height: '100%',
+  };
   
   return (
     <div className="relative h-full">
@@ -74,15 +103,17 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
             className={`object-cover w-full h-full transition-transform duration-300 hover:scale-105 ${
               !imageLoaded ? 'opacity-0' : 'opacity-100'
             }`}
+            style={imageStyle}
             onError={handleImageError}
             onLoad={handleImageLoaded}
             loading="lazy"
+            crossOrigin="anonymous"
+            data-ad-id={ad.id}
           />
           <button 
             className="absolute top-2 right-2 bg-white p-1.5 rounded-full hover:bg-gray-100 transition-colors"
             onClick={(e) => {
               e.preventDefault();
-              console.log("Favorite clicked for:", ad.id);
               toast({
                 description: "Fonctionnalité à venir",
               });

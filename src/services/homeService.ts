@@ -2,20 +2,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import { toast } from "@/components/ui/use-toast";
+import { isValidImageUrl } from "@/services/trendingService";
 
-// Fonction pour vérifier si une URL d'image est valide
-export const isValidImageUrl = (url: string): boolean => {
-  if (!url) return false;
-  // Vérifier si l'URL est valide (débute par http:// ou https:// ou est un chemin relatif commençant par /)
-  return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
-};
-
-// Fonction pour récupérer les annonces approuvées récentes
+// Function to retrieve approved ads
 export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
   try {
     console.log("Fetching approved ads for homepage");
     
-    // Récupérer les annonces approuvées les plus récentes sans vérifier l'authentification
+    // Retrieve the most recent approved ads without checking authentication
     const { data: ads, error } = await supabase
       .from('ads')
       .select('*')
@@ -30,7 +24,7 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
         description: "Impossible de charger les annonces récentes",
         variant: "destructive",
       });
-      return []; // Retourner un tableau vide en cas d'erreur
+      return []; // Return empty array on error
     }
     
     if (!ads || ads.length === 0) {
@@ -38,7 +32,7 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
       return [];
     }
     
-    // Pour chaque annonce, récupérer l'image principale
+    // For each ad, retrieve the main image
     const adsWithImages = await Promise.all(
       ads.map(async (ad) => {
         try {
@@ -54,28 +48,34 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             return {
               ...ad,
               imageUrl: '/placeholder.svg',
-              is_premium: ad.ad_type !== 'standard' // Considérer tous les types sauf standard comme premium
+              is_premium: ad.ad_type !== 'standard' // Consider all types except standard as premium
             };
           }
           
-          // Vérifier si l'URL de l'image est valide
+          // Check if image URL is valid
           let imageUrl = '/placeholder.svg';
           
-          if (images && images.length > 0) {
-            // Vérifier si l'URL est définie et non vide
-            if (images[0].image_url && images[0].image_url.trim() !== '') {
-              if (isValidImageUrl(images[0].image_url)) {
-                imageUrl = images[0].image_url;
+          if (images && images.length > 0 && images[0].image_url) {
+            const originalUrl = images[0].image_url.trim();
+            
+            if (isValidImageUrl(originalUrl)) {
+              // For Supabase storage URLs, ensure we have proper CORS access
+              if (originalUrl.includes('supabase.co/storage/v1/object/public')) {
+                // Add a random query parameter to bypass cache issues on some browsers
+                const cacheBuster = `?t=${Date.now()}`;
+                imageUrl = originalUrl + cacheBuster;
               } else {
-                console.warn(`Invalid image URL format for ad ${ad.id}:`, images[0].image_url);
+                imageUrl = originalUrl;
               }
+            } else {
+              console.warn(`Invalid image URL format for ad ${ad.id}:`, originalUrl);
             }
           }
           
           return {
             ...ad,
             imageUrl,
-            is_premium: ad.ad_type !== 'standard' // Considérer tous les types sauf standard comme premium
+            is_premium: ad.ad_type !== 'standard' // Consider all types except standard as premium
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
@@ -97,6 +97,6 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
       description: "Impossible de charger les annonces récentes",
       variant: "destructive",
     });
-    return []; // Retourner un tableau vide en cas d'erreur
+    return []; // Return empty array on error
   }
 };
