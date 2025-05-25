@@ -29,7 +29,7 @@ export const useMessaging = () => {
     retryLoading
   } = useConversationMessages(currentConversation, handleMarkAsRead);
 
-  // Enhanced load messages handler with error handling
+  // Enhanced load messages handler with proper error handling
   const loadMessages = useCallback((conversationId: string) => {
     try {
       if (!conversationId) {
@@ -37,14 +37,14 @@ export const useMessaging = () => {
         return;
       }
       
+      console.log("Sélection de la conversation:", conversationId);
       setCurrentConversation(conversationId);
-      loadMessagesInternal(conversationId);
     } catch (error) {
       console.error("Erreur lors du chargement des messages:", error);
     }
-  }, [loadMessagesInternal]);
+  }, []);
 
-  // Enhanced retry functionality that uses the retryLoading from useConversationMessages
+  // Enhanced retry functionality
   const retryLoadMessages = useCallback(() => {
     if (retryLoading) {
       retryLoading();

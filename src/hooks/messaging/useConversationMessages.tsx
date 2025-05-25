@@ -15,37 +15,57 @@ export const useConversationMessages = (
   const [channelSubscribed, setChannelSubscribed] = useState<boolean>(false);
   const messagesChannelRef = useRef<any>(null);
   const isMountedRef = useRef<boolean>(true);
-  const attemptCountRef = useRef<number>(0);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load messages for a specific conversation
   const loadMessages = useCallback(async (id: string) => {
     if (!id) {
       console.error("ID de conversation manquant");
+      setLoading(false);
       return;
     }
     
-    attemptCountRef.current += 1;
-    const currentAttempt = attemptCountRef.current;
+    // Clear any existing loading timeout
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
     
     setLoading(true);
     setError(null);
+    
+    // Set a timeout to stop loading after 10 seconds
+    loadingTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        console.error("Timeout lors du chargement des messages");
+        setLoading(false);
+        setError("Délai d'attente dépassé lors du chargement des messages");
+      }
+    }, 10000);
+    
     try {
-      console.log(`Chargement des messages pour la conversation: ${id}, tentative: ${currentAttempt}`);
+      console.log(`Chargement des messages pour la conversation: ${id}`);
       const messagesData = await fetchConversationMessages(id);
-      console.log(`Messages récupérés (${currentAttempt}):`, messagesData.length);
+      console.log(`Messages récupérés:`, messagesData.length);
+      
+      // Clear timeout on success
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
       
       // Ensure component is still mounted before updating state
       if (!isMountedRef.current) return;
       
       if (messagesData && Array.isArray(messagesData)) {
         setMessages(messagesData);
+        setError(null);
         
         // Mark messages as read
         try {
           await markMessagesAsRead(id);
           onMarkAsRead(id);
-        } catch (error) {
-          console.error("Erreur lors du marquage des messages:", error);
+        } catch (markError) {
+          console.error("Erreur lors du marquage des messages:", markError);
           // Non-critical error, don't display to user
         }
       } else {
@@ -53,18 +73,21 @@ export const useConversationMessages = (
         setError("Format de messages invalide");
       }
     } catch (error: any) {
+      // Clear timeout on error
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+      
       // Only update if component still mounted
       if (!isMountedRef.current) return;
       
       console.error("Erreur lors du chargement des messages:", error);
-      setError(error?.message || "Impossible de charger les messages");
-      
-      // Avoid multiple toast shows for the same error
-      if (currentAttempt === attemptCountRef.current) {
-        toast.error("Impossible de charger les messages");
-      }
+      const errorMessage = error?.message || "Impossible de charger les messages";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
-      // Only update if component still mounted
+      // Always stop loading if component is still mounted
       if (isMountedRef.current) {
         setLoading(false);
       }
@@ -74,15 +97,23 @@ export const useConversationMessages = (
   // Setup realtime listening for new messages in this conversation
   useEffect(() => {
     isMountedRef.current = true;
-    attemptCountRef.current = 0;
     
     return () => {
       isMountedRef.current = false;
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
     };
   }, []);
 
   useEffect(() => {
-    if (!conversationId) return;
+    // Clear messages when conversation changes
+    if (!conversationId) {
+      setMessages([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
     // Clear previous channel if exists
     if (messagesChannelRef.current) {
@@ -147,9 +178,7 @@ export const useConversationMessages = (
     setupChannel();
 
     // Load messages when conversation changes
-    if (conversationId) {
-      loadMessages(conversationId);
-    }
+    loadMessages(conversationId);
 
     return () => {
       console.log("Suppression du canal pour la conversation");
@@ -157,7 +186,6 @@ export const useConversationMessages = (
         supabase.removeChannel(messagesChannelRef.current);
         messagesChannelRef.current = null;
       }
-      isMountedRef.current = false;
     };
   }, [conversationId, loadMessages, onMarkAsRead]);
 

@@ -5,6 +5,8 @@ import { Message } from "./types";
 // Récupérer les messages d'une conversation
 export const fetchConversationMessages = async (conversationId: string): Promise<Message[]> => {
   try {
+    console.log("Début de fetchConversationMessages pour:", conversationId);
+    
     const { data: userData, error: authError } = await supabase.auth.getUser();
     
     if (authError) {
@@ -18,6 +20,7 @@ export const fetchConversationMessages = async (conversationId: string): Promise
     }
     
     const currentUserId = userData.user.id;
+    console.log("Utilisateur authentifié:", currentUserId);
     
     // Vérifier que l'utilisateur a accès à cette conversation
     const { data: conversationCheck, error: checkError } = await supabase
@@ -37,6 +40,8 @@ export const fetchConversationMessages = async (conversationId: string): Promise
       throw new Error("Vous n'avez pas accès à cette conversation");
     }
     
+    console.log("Accès à la conversation vérifié");
+    
     // Une fois l'accès vérifié, récupérer les messages
     const { data: messages, error } = await supabase
       .from('messages')
@@ -46,10 +51,10 @@ export const fetchConversationMessages = async (conversationId: string): Promise
 
     if (error) {
       console.error("Erreur lors de la récupération des messages:", error);
-      throw new Error("Impossible de récupérer les messages");
+      throw new Error(`Impossible de récupérer les messages: ${error.message}`);
     }
     
-    console.log("Messages récupérés:", messages?.length || 0);
+    console.log("Messages récupérés avec succès:", messages?.length || 0);
     
     // Garantir que nous renvoyons toujours un tableau
     return messages || [];
