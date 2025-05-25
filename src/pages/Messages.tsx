@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMessaging } from "@/hooks/useMessaging";
@@ -29,15 +30,29 @@ const Messages: React.FC = () => {
     retryLoadMessages
   } = useMessaging();
 
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log(`[MESSAGES PAGE DEBUG] State update:`, {
+      conversationId,
+      currentConversation,
+      messagesCount: messages.length,
+      messagesLoading,
+      isAuthenticated,
+      error
+    });
+  }, [conversationId, currentConversation, messages.length, messagesLoading, isAuthenticated, error]);
+
   // Check if user is authenticated
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log("[MESSAGES PAGE DEBUG] Checking authentication");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) throw error;
         
         if (!data.session) {
+          console.log("[MESSAGES PAGE DEBUG] No session found, redirecting to login");
           setIsAuthenticated(false);
           toast.error("Vous devez être connecté pour accéder à la messagerie");
           navigate("/connexion", { 
@@ -46,9 +61,10 @@ const Messages: React.FC = () => {
           return;
         }
         
+        console.log("[MESSAGES PAGE DEBUG] User authenticated:", data.session.user.id);
         setIsAuthenticated(true);
       } catch (error) {
-        console.error("Erreur lors de la vérification de l'authentification:", error);
+        console.error("[MESSAGES PAGE DEBUG] Auth check error:", error);
         toast.error("Erreur de vérification de l'authentification");
         setIsAuthenticated(false);
       }
@@ -60,41 +76,55 @@ const Messages: React.FC = () => {
   // Load selected conversation from URL
   useEffect(() => {
     if (isAuthenticated && conversationId) {
-      console.log("Chargement de la conversation depuis l'URL:", conversationId);
-      loadMessages(conversationId);
+      console.log(`[MESSAGES PAGE DEBUG] Loading conversation from URL: ${conversationId}`);
+      console.log(`[MESSAGES PAGE DEBUG] Current conversation: ${currentConversation}`);
+      
+      if (currentConversation !== conversationId) {
+        console.log(`[MESSAGES PAGE DEBUG] Conversation changed, calling loadMessages`);
+        loadMessages(conversationId);
+      } else {
+        console.log(`[MESSAGES PAGE DEBUG] Same conversation already loaded`);
+      }
+    } else {
+      console.log(`[MESSAGES PAGE DEBUG] Not loading conversation - auth: ${isAuthenticated}, conversationId: ${conversationId}`);
     }
-  }, [conversationId, loadMessages, isAuthenticated]);
+  }, [conversationId, loadMessages, isAuthenticated, currentConversation]);
 
   // Handle conversation selection
   const handleSelectConversation = useCallback((id: string) => {
-    console.log("Sélection de la conversation:", id);
+    console.log(`[MESSAGES PAGE DEBUG] Conversation selected: ${id}`);
     navigate(`/messages/${id}`);
   }, [navigate]);
 
   // Handle sending a message
   const handleSendMessage = useCallback(async (content: string): Promise<void> => {
     if (!currentConversation) {
+      console.error("[MESSAGES PAGE DEBUG] No current conversation for sending message");
       toast.error("Aucune conversation sélectionnée");
       return;
     }
     
     try {
+      console.log(`[MESSAGES PAGE DEBUG] Sending message to conversation: ${currentConversation}`);
       await sendMessage(currentConversation, content);
+      console.log(`[MESSAGES PAGE DEBUG] Message sent successfully`);
     } catch (error) {
-      console.error("Erreur lors de l'envoi du message:", error);
+      console.error("[MESSAGES PAGE DEBUG] Error sending message:", error);
       toast.error("Erreur lors de l'envoi du message");
     }
   }, [currentConversation, sendMessage]);
 
   // Global retry handler - increments counter to force full reload of dependencies
   const handleGlobalRetry = useCallback(() => {
+    console.log(`[MESSAGES PAGE DEBUG] Global retry triggered`);
     setGlobalRetryCount(prev => prev + 1);
     loadConversations();
     
     if (currentConversation) {
-      loadMessages(currentConversation);
+      console.log(`[MESSAGES PAGE DEBUG] Retrying messages for current conversation: ${currentConversation}`);
+      retryLoadMessages();
     }
-  }, [currentConversation, loadConversations, loadMessages]);
+  }, [currentConversation, loadConversations, retryLoadMessages]);
 
   // Get current conversation details
   const currentConversationDetails = conversations.find(

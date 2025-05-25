@@ -5,44 +5,63 @@ import { Message } from "./types";
 // Récupérer les messages d'une conversation
 export const fetchConversationMessages = async (conversationId: string): Promise<Message[]> => {
   try {
-    console.log("Début de fetchConversationMessages pour:", conversationId);
+    console.log(`[SERVICE DEBUG] fetchConversationMessages starting for: ${conversationId}`);
+    
+    if (!conversationId || typeof conversationId !== 'string') {
+      console.error("[SERVICE DEBUG] Invalid conversation ID:", conversationId);
+      throw new Error("ID de conversation invalide");
+    }
     
     const { data: userData, error: authError } = await supabase.auth.getUser();
     
     if (authError) {
-      console.error("Erreur d'authentification:", authError);
+      console.error("[SERVICE DEBUG] Auth error:", authError);
       throw new Error("Erreur d'authentification. Veuillez vous reconnecter.");
     }
     
     if (!userData || !userData.user) {
-      console.error("Utilisateur non authentifié");
+      console.error("[SERVICE DEBUG] No authenticated user");
       throw new Error("Vous devez être connecté pour accéder à cette conversation");
     }
     
     const currentUserId = userData.user.id;
-    console.log("Utilisateur authentifié:", currentUserId);
+    console.log(`[SERVICE DEBUG] Authenticated user: ${currentUserId}`);
     
     // Vérifier que l'utilisateur a accès à cette conversation
+    console.log(`[SERVICE DEBUG] Checking conversation access for user ${currentUserId} to conversation ${conversationId}`);
+    
     const { data: conversationCheck, error: checkError } = await supabase
       .from('conversations')
-      .select('id')
-      .or(`buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId}`)
+      .select('id, buyer_id, seller_id')
       .eq('id', conversationId)
       .maybeSingle();
     
     if (checkError) {
-      console.error("Erreur lors de la vérification de la conversation:", checkError);
+      console.error("[SERVICE DEBUG] Conversation check error:", checkError);
       throw new Error("Erreur lors de la vérification de l'accès à la conversation");
     }
     
     if (!conversationCheck) {
-      console.error("Accès non autorisé à cette conversation");
+      console.error("[SERVICE DEBUG] Conversation not found:", conversationId);
+      throw new Error("Conversation non trouvée");
+    }
+    
+    console.log(`[SERVICE DEBUG] Conversation found:`, conversationCheck);
+    
+    // Check if user is participant
+    const isParticipant = conversationCheck.buyer_id === currentUserId || conversationCheck.seller_id === currentUserId;
+    
+    if (!isParticipant) {
+      console.error(`[SERVICE DEBUG] User ${currentUserId} is not a participant in conversation ${conversationId}`);
+      console.error(`[SERVICE DEBUG] Buyer: ${conversationCheck.buyer_id}, Seller: ${conversationCheck.seller_id}`);
       throw new Error("Vous n'avez pas accès à cette conversation");
     }
     
-    console.log("Accès à la conversation vérifié");
+    console.log(`[SERVICE DEBUG] Access verified for user ${currentUserId} to conversation ${conversationId}`);
     
     // Une fois l'accès vérifié, récupérer les messages
+    console.log(`[SERVICE DEBUG] Fetching messages for conversation: ${conversationId}`);
+    
     const { data: messages, error } = await supabase
       .from('messages')
       .select('*')
@@ -50,16 +69,20 @@ export const fetchConversationMessages = async (conversationId: string): Promise
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error("Erreur lors de la récupération des messages:", error);
+      console.error("[SERVICE DEBUG] Messages fetch error:", error);
       throw new Error(`Impossible de récupérer les messages: ${error.message}`);
     }
     
-    console.log("Messages récupérés avec succès:", messages?.length || 0);
+    console.log(`[SERVICE DEBUG] Successfully fetched ${messages?.length || 0} messages for conversation ${conversationId}`);
+    console.log(`[SERVICE DEBUG] Messages data:`, messages);
     
     // Garantir que nous renvoyons toujours un tableau
-    return messages || [];
+    const result = messages || [];
+    console.log(`[SERVICE DEBUG] Returning ${result.length} messages`);
+    return result;
   } catch (error: any) {
-    console.error("Erreur lors du traitement des messages:", error);
+    console.error("[SERVICE DEBUG] fetchConversationMessages error:", error);
+    console.error("[SERVICE DEBUG] Error stack:", error.stack);
     throw error instanceof Error ? error : new Error(String(error));
   }
 };

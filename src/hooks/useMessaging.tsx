@@ -18,6 +18,7 @@ export const useMessaging = () => {
   } = useConversations();
 
   const handleMarkAsRead = useCallback((conversationId: string) => {
+    console.log(`[MESSAGING DEBUG] Marking conversation as read: ${conversationId}`);
     updateConversationUnreadCount(conversationId, 0);
   }, [updateConversationUnreadCount]);
 
@@ -33,23 +34,39 @@ export const useMessaging = () => {
   const loadMessages = useCallback((conversationId: string) => {
     try {
       if (!conversationId) {
-        console.error("ID de conversation manquant");
+        console.error("[MESSAGING DEBUG] No conversation ID provided to loadMessages");
         return;
       }
       
-      console.log("Sélection de la conversation:", conversationId);
+      console.log(`[MESSAGING DEBUG] loadMessages called with: ${conversationId}`);
+      console.log(`[MESSAGING DEBUG] Current conversation: ${currentConversation}`);
+      
+      if (currentConversation === conversationId) {
+        console.log(`[MESSAGING DEBUG] Same conversation already selected, skipping: ${conversationId}`);
+        return;
+      }
+      
+      console.log(`[MESSAGING DEBUG] Setting current conversation to: ${conversationId}`);
       setCurrentConversation(conversationId);
     } catch (error) {
-      console.error("Erreur lors du chargement des messages:", error);
+      console.error("[MESSAGING DEBUG] Error in loadMessages:", error);
     }
-  }, []);
+  }, [currentConversation]);
 
   // Enhanced retry functionality
   const retryLoadMessages = useCallback(() => {
+    console.log(`[MESSAGING DEBUG] retryLoadMessages called`);
+    console.log(`[MESSAGING DEBUG] Current conversation: ${currentConversation}`);
+    console.log(`[MESSAGING DEBUG] retryLoading function available: ${!!retryLoading}`);
+    
     if (retryLoading) {
+      console.log(`[MESSAGING DEBUG] Calling retryLoading function`);
       retryLoading();
     } else if (currentConversation) {
+      console.log(`[MESSAGING DEBUG] Calling loadMessages for retry`);
       loadMessages(currentConversation);
+    } else {
+      console.log(`[MESSAGING DEBUG] No current conversation or retry function available`);
     }
   }, [currentConversation, loadMessages, retryLoading]);
 
@@ -65,6 +82,17 @@ export const useMessaging = () => {
 
   // Determine the final error state to show
   const error = messagesError || conversationsError;
+
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log(`[MESSAGING DEBUG] State update:`, {
+      currentConversation,
+      messagesCount: messages.length,
+      messagesLoading,
+      messagesError,
+      conversationsError
+    });
+  }, [currentConversation, messages.length, messagesLoading, messagesError, conversationsError]);
 
   return {
     conversations,
