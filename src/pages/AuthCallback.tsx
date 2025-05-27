@@ -11,18 +11,28 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      const type = searchParams.get('type');
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      const error = searchParams.get('error');
+      // Vérifier les paramètres d'URL et le hash
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.substring(1));
+      
+      const type = searchParams.get('type') || hashParams.get('type');
+      const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
+      const error = searchParams.get('error') || hashParams.get('error');
+      const errorDescription = searchParams.get('error_description') || hashParams.get('error_description');
 
-      console.log("AuthCallback - Type:", type, "Tokens:", { accessToken: !!accessToken, refreshToken: !!refreshToken });
+      console.log("AuthCallback - Type:", type, "Tokens:", { 
+        accessToken: !!accessToken, 
+        refreshToken: !!refreshToken,
+        error,
+        source: accessToken ? (searchParams.get('access_token') ? 'searchParams' : 'hash') : 'none'
+      });
 
       if (error) {
-        console.error("Erreur d'authentification:", error);
+        console.error("Erreur d'authentification:", error, errorDescription);
         toast({
           title: "Erreur",
-          description: "Une erreur s'est produite lors de l'authentification.",
+          description: errorDescription || "Une erreur s'est produite lors de l'authentification.",
           duration: 3000
         });
         navigate("/connexion");
@@ -30,8 +40,8 @@ const AuthCallback = () => {
       }
 
       if (type === 'recovery' && accessToken && refreshToken) {
-        // Rediriger vers la page de réinitialisation avec les tokens
-        const resetUrl = `/reset-password?access_token=${accessToken}&refresh_token=${refreshToken}&type=recovery`;
+        // Pour les liens de récupération, rediriger vers reset-password avec les tokens en paramètres
+        const resetUrl = `/reset-password?access_token=${encodeURIComponent(accessToken)}&refresh_token=${encodeURIComponent(refreshToken)}&type=recovery`;
         console.log("Redirection vers:", resetUrl);
         navigate(resetUrl);
       } else {

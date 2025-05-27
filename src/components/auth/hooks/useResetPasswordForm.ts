@@ -18,31 +18,62 @@ export const useResetPasswordForm = () => {
   useEffect(() => {
     const handlePasswordReset = async () => {
       console.log("Paramètres URL actuels:", Object.fromEntries(searchParams.entries()));
+      console.log("Hash de l'URL:", window.location.hash);
       
-      // Vérifier tous les paramètres possibles
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      const type = searchParams.get('type');
+      // Vérifier s'il y a une erreur dans l'URL ou le hash
       const errorParam = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
       
-      console.log("Tokens détectés:", { accessToken: !!accessToken, refreshToken: !!refreshToken, type, errorParam });
-
-      if (errorParam) {
-        console.error("Erreur dans l'URL:", errorParam, errorDescription);
+      // Vérifier aussi dans le hash pour les erreurs
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.substring(1));
+      const hashError = hashParams.get('error');
+      const hashErrorDescription = hashParams.get('error_description');
+      
+      const finalError = errorParam || hashError;
+      const finalErrorDescription = errorDescription || hashErrorDescription;
+      
+      if (finalError) {
+        console.error("Erreur détectée:", finalError, finalErrorDescription);
         setIsValidToken(false);
         setIsCheckingToken(false);
-        toast({
-          title: "Lien invalide",
-          description: errorDescription || "Ce lien de réinitialisation est invalide ou a expiré.",
-          duration: 5000
-        });
+        
+        if (finalError === 'access_denied' && finalErrorDescription?.includes('expired')) {
+          toast({
+            title: "Lien expiré",
+            description: "Ce lien de réinitialisation a expiré. Veuillez demander un nouveau lien.",
+            duration: 5000
+          });
+        } else {
+          toast({
+            title: "Lien invalide",
+            description: finalErrorDescription || "Ce lien de réinitialisation est invalide.",
+            duration: 5000
+          });
+        }
         return;
       }
+
+      // Vérifier les tokens dans les paramètres normaux et dans le hash
+      const accessToken = searchParams.get('access_token') || hashParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token') || hashParams.get('refresh_token');
+      const type = searchParams.get('type') || hashParams.get('type');
+      
+      console.log("Tokens détectés:", { 
+        accessToken: !!accessToken, 
+        refreshToken: !!refreshToken, 
+        type,
+        source: accessToken ? (searchParams.get('access_token') ? 'searchParams' : 'hash') : 'none'
+      });
 
       if (type === 'recovery' && accessToken && refreshToken) {
         try {
           console.log("Tentative de définition de la session...");
+          
+          // Nettoyer l'URL en supprimant le hash s'il existe
+          if (window.location.hash) {
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+          }
           
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -77,19 +108,18 @@ export const useResetPasswordForm = () => {
         }
       } else {
         console.log("Paramètres manquants ou incorrects pour la réinitialisation");
+        console.log("Redirection vers la page de mot de passe oublié...");
         setIsValidToken(false);
-        toast({
-          title: "Lien invalide",
-          description: "Ce lien de réinitialisation est invalide. Veuillez demander un nouveau lien.",
-          duration: 5000
-        });
+        // Ne pas afficher de toast ici, rediriger directement
+        navigate("/mot-de-passe-oublie");
+        return;
       }
       
       setIsCheckingToken(false);
     };
 
     handlePasswordReset();
-  }, [searchParams, toast]);
+  }, [searchParams, toast, navigate]);
 
   const handleResetPassword = async (values: ResetPasswordFormValues) => {
     if (!isValidToken) {
