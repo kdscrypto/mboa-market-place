@@ -13,6 +13,15 @@ const AuthCallback = () => {
       try {
         console.log("AuthCallback: Gestion du callback d'authentification");
         console.log("URL complète:", window.location.href);
+        console.log("Search params:", window.location.search);
+        console.log("Hash:", window.location.hash);
+        
+        // Nettoyer l'URL en retirant le # final si présent
+        const cleanUrl = window.location.href.replace(/#$/, '');
+        if (cleanUrl !== window.location.href) {
+          console.log("URL nettoyée:", cleanUrl);
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
         
         // Extraire les paramètres des query params ET du fragment URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -54,7 +63,7 @@ const AuthCallback = () => {
 
         // Si c'est un recovery et qu'on a les tokens, les utiliser
         if (type === 'recovery' && accessToken && refreshToken) {
-          console.log("Traitement du recovery avec tokens");
+          console.log("Traitement du recovery avec tokens explicites");
           
           const { data, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -79,57 +88,65 @@ const AuthCallback = () => {
               description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
               duration: 3000
             });
-            
-            // Nettoyer l'URL et rediriger
-            window.history.replaceState({}, document.title, "/reset-password");
             navigate("/reset-password");
             return;
           }
         }
 
-        // Si c'est un recovery mais sans tokens explicites, laisser Supabase gérer automatiquement
+        // Si c'est un recovery mais sans tokens explicites, vérifier la session
         if (type === 'recovery') {
           console.log("Recovery détecté, vérification de la session...");
           
-          // Attendre un peu pour que Supabase traite la redirection
+          // Attendre un peu pour que Supabase traite automatiquement
           setTimeout(async () => {
-            const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
-            
-            if (getSessionError) {
-              console.error("Erreur lors de la récupération de la session:", getSessionError);
+            try {
+              const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
+              
+              if (getSessionError) {
+                console.error("Erreur lors de la récupération de la session:", getSessionError);
+                toast({
+                  title: "Erreur",
+                  description: "Une erreur s'est produite lors de l'authentification.",
+                  duration: 3000
+                });
+                navigate("/mot-de-passe-oublie");
+                return;
+              }
+
+              if (session && session.user) {
+                console.log("Session de recovery trouvée:", session.user.email);
+                toast({
+                  title: "Lien valide",
+                  description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
+                  duration: 3000
+                });
+                navigate("/reset-password");
+                return;
+              }
+
+              console.log("Aucune session de recovery trouvée");
+              toast({
+                title: "Lien invalide", 
+                description: "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
+                duration: 5000
+              });
+              navigate("/mot-de-passe-oublie");
+            } catch (error) {
+              console.error("Erreur lors de la vérification de session:", error);
               toast({
                 title: "Erreur",
                 description: "Une erreur s'est produite lors de l'authentification.",
                 duration: 3000
               });
               navigate("/mot-de-passe-oublie");
-              return;
             }
-
-            if (session) {
-              console.log("Session de recovery trouvée, redirection vers reset-password");
-              toast({
-                title: "Lien valide",
-                description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
-                duration: 3000
-              });
-              navigate("/reset-password");
-              return;
-            }
-
-            console.log("Aucune session de recovery trouvée");
-            toast({
-              title: "Lien invalide",
-              description: "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
-              duration: 5000
-            });
-            navigate("/mot-de-passe-oublie");
           }, 1000);
           
           return;
         }
 
-        // Traitement standard pour les autres cas (connexion normale, confirmation email, etc.)
+        // Si aucun type spécifique n'est détecté, essayer de récupérer une session normale
+        console.log("Pas de type de recovery détecté, vérification session normale...");
         const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
         
         if (getSessionError) {
@@ -154,7 +171,7 @@ const AuthCallback = () => {
           return;
         }
 
-        // Si aucune session et pas de recovery, rediriger vers la connexion
+        // Si aucune session n'est trouvée, rediriger vers la connexion
         console.log("Aucune session trouvée, redirection vers connexion");
         navigate("/connexion");
         
@@ -177,6 +194,9 @@ const AuthCallback = () => {
       <div className="text-center">
         <h2 className="text-2xl font-semibold mb-4">Traitement en cours...</h2>
         <p className="text-gray-600">Veuillez patienter pendant que nous vous redirigeons.</p>
+        <div className="mt-4 text-sm text-gray-500">
+          Si cette page persiste, vérifiez la console pour plus d'informations.
+        </div>
       </div>
     </div>
   );
