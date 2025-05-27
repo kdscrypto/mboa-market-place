@@ -15,7 +15,7 @@ export const useForgotPasswordForm = () => {
       console.log("Envoi de l'email de réinitialisation pour:", values.email);
         
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`
+        redirectTo: `${window.location.origin}/auth/callback`
       });
       
       if (error) {
