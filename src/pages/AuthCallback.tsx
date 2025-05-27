@@ -12,104 +12,100 @@ const AuthCallback = () => {
     const handleAuthCallback = async () => {
       try {
         console.log("AuthCallback: Traitement du callback d'authentification");
-        console.log("URL actuelle:", window.location.href);
+        console.log("URL complète:", window.location.href);
+        console.log("Search params:", window.location.search);
+        console.log("Hash:", window.location.hash);
         
-        // Extraire les paramètres de l'URL (query params et fragment)
-        const urlParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        // Attendre que Supabase traite automatiquement les tokens dans l'URL
+        // Supabase gère automatiquement les tokens dans le hash fragment
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        const type = urlParams.get('type') || hashParams.get('type');
-        const error = urlParams.get('error') || hashParams.get('error');
-        const errorDescription = urlParams.get('error_description') || hashParams.get('error_description');
+        // Vérifier la session après le traitement automatique
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        console.log("Type détecté:", type);
-        console.log("Erreur:", error);
+        console.log("Session récupérée:", session);
+        console.log("Erreur de session:", sessionError);
         
-        // Gérer les erreurs d'authentification
-        if (error) {
-          console.error("Erreur d'authentification:", error);
-          let errorMessage = "Une erreur s'est produite lors de l'authentification.";
-          
-          if (error === 'access_denied') {
-            errorMessage = "Accès refusé. Le lien pourrait être invalide ou expiré.";
-          } else if (error === 'otp_expired') {
-            errorMessage = "Le lien a expiré. Veuillez demander un nouveau lien de réinitialisation.";
-          }
-          
+        if (sessionError) {
+          console.error("Erreur lors de la récupération de session:", sessionError);
           toast({
-            title: "Erreur d'authentification",
-            description: errorMessage,
+            title: "Erreur de session",
+            description: "Impossible de traiter le lien d'authentification.",
             duration: 5000
           });
           navigate("/mot-de-passe-oublie");
           return;
         }
 
-        // Si c'est un recovery, rediriger vers reset-password
-        if (type === 'recovery') {
-          console.log("Recovery détecté, redirection vers reset-password");
+        if (session && session.user) {
+          console.log("Session valide trouvée pour:", session.user.email);
           
-          // Vérifier la session après un court délai
-          setTimeout(async () => {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            
-            if (sessionError) {
-              console.error("Erreur de session:", sessionError);
-              toast({
-                title: "Erreur",
-                description: "Problème avec le lien de réinitialisation.",
-                duration: 3000
-              });
-              navigate("/mot-de-passe-oublie");
-              return;
-            }
-
-            if (session) {
-              console.log("Session de recovery valide trouvée");
-              toast({
-                title: "Lien valide",
-                description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
-                duration: 3000
-              });
-              navigate("/reset-password");
-            } else {
-              console.log("Aucune session de recovery trouvée");
-              toast({
-                title: "Lien invalide",
-                description: "Ce lien de réinitialisation est invalide ou a expiré.",
-                duration: 5000
-              });
-              navigate("/mot-de-passe-oublie");
-            }
-          }, 500);
+          // Vérifier si c'est un recovery token (pour reset password)
+          const isRecovery = session.user.recovery_sent_at || 
+                           window.location.hash.includes('type=recovery') ||
+                           window.location.search.includes('type=recovery');
           
-          return;
-        }
-
-        // Pour les autres types d'authentification (connexion normale)
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          console.log("Session normale trouvée");
-          toast({
-            title: "Connexion réussie",
-            description: "Vous êtes maintenant connecté.",
-            duration: 3000
-          });
-          navigate("/");
+          if (isRecovery) {
+            console.log("Session de recovery détectée, redirection vers reset-password");
+            toast({
+              title: "Lien de réinitialisation valide",
+              description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
+              duration: 3000
+            });
+            navigate("/reset-password");
+          } else {
+            console.log("Session de connexion normale");
+            toast({
+              title: "Connexion réussie",
+              description: "Vous êtes maintenant connecté.",
+              duration: 3000
+            });
+            navigate("/");
+          }
         } else {
-          console.log("Aucune session trouvée, redirection vers connexion");
-          navigate("/connexion");
+          console.log("Aucune session trouvée après traitement");
+          
+          // Vérifier s'il y a des paramètres d'erreur
+          const urlParams = new URLSearchParams(window.location.search);
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          
+          const error = urlParams.get('error') || hashParams.get('error');
+          const errorDescription = urlParams.get('error_description') || hashParams.get('error_description');
+          
+          if (error) {
+            console.error("Erreur d'authentification:", error, errorDescription);
+            let errorMessage = "Une erreur s'est produite lors de l'authentification.";
+            
+            if (error === 'access_denied') {
+              errorMessage = "Accès refusé. Le lien pourrait être invalide ou expiré.";
+            } else if (error === 'otp_expired') {
+              errorMessage = "Le lien a expiré. Veuillez demander un nouveau lien de réinitialisation.";
+            }
+            
+            toast({
+              title: "Erreur d'authentification",
+              description: errorMessage,
+              duration: 5000
+            });
+          } else {
+            toast({
+              title: "Lien invalide",
+              description: "Ce lien d'authentification est invalide ou a expiré.",
+              duration: 5000
+            });
+          }
+          
+          navigate("/mot-de-passe-oublie");
         }
         
       } catch (error) {
         console.error("Erreur dans handleAuthCallback:", error);
         toast({
           title: "Erreur",
-          description: "Une erreur s'est produite lors de l'authentification.",
+          description: "Une erreur s'est produite lors du traitement de l'authentification.",
           duration: 3000
         });
-        navigate("/connexion");
+        navigate("/mot-de-passe-oublie");
       }
     };
 

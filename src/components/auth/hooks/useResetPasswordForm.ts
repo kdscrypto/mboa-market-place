@@ -17,6 +17,9 @@ export const useResetPasswordForm = () => {
       try {
         console.log("Vérification de la session pour reset password...");
         
+        // Attendre un peu pour laisser le temps à Supabase de traiter les tokens
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Vérifier s'il y a une session active
         const { data: { session }, error } = await supabase.auth.getSession();
         
