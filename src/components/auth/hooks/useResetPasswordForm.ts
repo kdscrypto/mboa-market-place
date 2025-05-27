@@ -15,7 +15,7 @@ export const useResetPasswordForm = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        console.log("Vérification de la session utilisateur...");
+        console.log("Vérification de la session pour reset password...");
         
         // Vérifier s'il y a une session active
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -32,20 +32,20 @@ export const useResetPasswordForm = () => {
         }
 
         if (!session || !session.user) {
-          console.log("Aucune session active, redirection vers mot de passe oublié");
+          console.log("Aucune session active trouvée");
           toast({
-            title: "Lien invalide",
-            description: "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
+            title: "Session expirée",
+            description: "Votre session a expiré. Veuillez demander un nouveau lien de réinitialisation.",
             duration: 5000
           });
           navigate("/mot-de-passe-oublie");
           return;
         }
 
-        console.log("Session valide trouvée:", session.user.email);
+        console.log("Session valide trouvée pour:", session.user.email);
         setIsReady(true);
         toast({
-          title: "Lien valide",
+          title: "Prêt pour la réinitialisation",
           description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
           duration: 3000
         });

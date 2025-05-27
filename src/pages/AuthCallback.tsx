@@ -1,19 +1,63 @@
 
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
         console.log("AuthCallback: Gestion du callback d'authentification");
+        console.log("URL actuelle:", window.location.href);
+        console.log("Search params:", searchParams.toString());
         
-        // Récupérer la session actuelle depuis Supabase
+        // Extraire tous les paramètres de l'URL
+        const type = searchParams.get('type');
+        const accessToken = searchParams.get('access_token');
+        const refreshToken = searchParams.get('refresh_token');
+        
+        console.log("Type détecté:", type);
+        console.log("Access token présent:", !!accessToken);
+        console.log("Refresh token présent:", !!refreshToken);
+
+        // Si c'est un recovery et qu'on a les tokens, les traiter
+        if (type === 'recovery' && accessToken && refreshToken) {
+          console.log("Traitement du recovery avec tokens");
+          
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            console.error("Erreur lors de la définition de la session:", error);
+            toast({
+              title: "Lien invalide",
+              description: "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
+              duration: 5000
+            });
+            navigate("/mot-de-passe-oublie");
+            return;
+          }
+          
+          if (data.session) {
+            console.log("Session établie avec succès, redirection vers reset-password");
+            toast({
+              title: "Lien valide",
+              description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
+              duration: 3000
+            });
+            navigate("/reset-password");
+            return;
+          }
+        }
+
+        // Traitement standard pour les autres cas
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -33,20 +77,8 @@ const AuthCallback = () => {
           return;
         }
 
-        // Si nous avons une session, vérifier le type d'événement
-        // Pour le reset de mot de passe, rediriger vers reset-password
-        const url = new URL(window.location.href);
-        const type = url.searchParams.get('type') || url.hash.includes('type=recovery') ? 'recovery' : null;
-        
-        console.log("Type d'authentification détecté:", type);
-        
-        if (type === 'recovery') {
-          console.log("Redirection vers reset-password pour recovery");
-          navigate("/reset-password");
-        } else {
-          console.log("Redirection vers la page principale");
-          navigate("/");
-        }
+        console.log("Session trouvée, redirection vers la page principale");
+        navigate("/");
         
       } catch (error) {
         console.error("Erreur dans handleAuthCallback:", error);
@@ -60,7 +92,7 @@ const AuthCallback = () => {
     };
 
     handleAuthCallback();
-  }, [navigate, toast]);
+  }, [navigate, toast, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
