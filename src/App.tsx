@@ -7,6 +7,8 @@ import { Toaster } from 'sonner';
 // Import pages
 import Index from '@/pages/Index';
 import Login from '@/pages/Login';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 import SearchResults from '@/pages/SearchResults';
 import AdDetail from '@/pages/AdDetail';
 import CategoryPage from '@/pages/CategoryPage';
@@ -47,6 +49,8 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/connexion" element={<Login />} />
+              <Route path="/mot-de-passe-oublie" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/recherche" element={<SearchResults />} />
               <Route path="/annonce/:id" element={<AdDetail />} />
               <Route path="/categorie/:slug" element={<CategoryPage />} />
