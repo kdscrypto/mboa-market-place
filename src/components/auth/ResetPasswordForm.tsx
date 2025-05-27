@@ -12,8 +12,23 @@ import { useResetPasswordForm } from "./hooks/useResetPasswordForm";
 import ResetPasswordFormContent from "./forms/ResetPasswordFormContent";
 
 const ResetPasswordForm: React.FC = () => {
-  const { handleResetPassword, isLoading, isSuccess, isValidToken } = useResetPasswordForm();
+  const { handleResetPassword, isLoading, isSuccess, isValidToken, isCheckingToken } = useResetPasswordForm();
 
+  // Affichage pendant la vérification du token
+  if (isCheckingToken) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Vérification...</CardTitle>
+          <CardDescription>
+            Vérification du lien de réinitialisation en cours...
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  // Affichage si le token est invalide
   if (!isValidToken) {
     return (
       <Card>
@@ -34,6 +49,7 @@ const ResetPasswordForm: React.FC = () => {
     );
   }
 
+  // Affichage après succès
   if (isSuccess) {
     return (
       <Card>
@@ -47,6 +63,7 @@ const ResetPasswordForm: React.FC = () => {
     );
   }
 
+  // Formulaire de réinitialisation
   return (
     <Card>
       <CardHeader>

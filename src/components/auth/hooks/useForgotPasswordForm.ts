@@ -12,16 +12,18 @@ export const useForgotPasswordForm = () => {
   const handleForgotPassword = async (values: ForgotPasswordFormValues) => {
     setIsLoading(true);
     try {
-      // Use the correct Lovable URL instead of localhost for development
-      const redirectUrl = window.location.origin.includes('localhost') 
-        ? 'https://mboa-market-place.lovable.app/reset-password'
-        : `${window.location.origin}/reset-password`;
+      // Utiliser l'URL complète de l'application actuelle
+      const currentUrl = window.location.origin;
+      const redirectUrl = `${currentUrl}/reset-password`;
+      
+      console.log("Envoi de l'email de réinitialisation avec redirectTo:", redirectUrl);
         
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
         redirectTo: redirectUrl
       });
       
       if (error) {
+        console.error("Erreur Supabase:", error);
         toast({
           title: "Erreur",
           description: error.message,
