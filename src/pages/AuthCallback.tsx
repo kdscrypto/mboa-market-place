@@ -14,16 +14,16 @@ const AuthCallback = () => {
         console.log("AuthCallback: Gestion du callback d'authentification");
         console.log("URL complète:", window.location.href);
         
-        // Extraire les paramètres du fragment URL (après #)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        // Extraire les paramètres des query params ET du fragment URL
         const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
         
-        // Vérifier d'abord les paramètres dans le fragment (cas typique de Supabase)
-        const accessToken = hashParams.get('access_token') || urlParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token') || urlParams.get('refresh_token');
-        const type = hashParams.get('type') || urlParams.get('type');
-        const error = hashParams.get('error') || urlParams.get('error');
-        const errorDescription = hashParams.get('error_description') || urlParams.get('error_description');
+        // Vérifier d'abord les paramètres dans les query params (nouveau comportement Supabase)
+        const accessToken = urlParams.get('access_token') || hashParams.get('access_token');
+        const refreshToken = urlParams.get('refresh_token') || hashParams.get('refresh_token');
+        const type = urlParams.get('type') || hashParams.get('type');
+        const error = urlParams.get('error') || hashParams.get('error');
+        const errorDescription = urlParams.get('error_description') || hashParams.get('error_description');
         
         console.log("Paramètres extraits:");
         console.log("- Type:", type);
@@ -52,7 +52,7 @@ const AuthCallback = () => {
           return;
         }
 
-        // Cas de récupération de mot de passe avec tokens
+        // Si c'est un recovery et qu'on a les tokens, les utiliser
         if (type === 'recovery' && accessToken && refreshToken) {
           console.log("Traitement du recovery avec tokens");
           
@@ -85,6 +85,48 @@ const AuthCallback = () => {
             navigate("/reset-password");
             return;
           }
+        }
+
+        // Si c'est un recovery mais sans tokens explicites, laisser Supabase gérer automatiquement
+        if (type === 'recovery') {
+          console.log("Recovery détecté, vérification de la session...");
+          
+          // Attendre un peu pour que Supabase traite la redirection
+          setTimeout(async () => {
+            const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
+            
+            if (getSessionError) {
+              console.error("Erreur lors de la récupération de la session:", getSessionError);
+              toast({
+                title: "Erreur",
+                description: "Une erreur s'est produite lors de l'authentification.",
+                duration: 3000
+              });
+              navigate("/mot-de-passe-oublie");
+              return;
+            }
+
+            if (session) {
+              console.log("Session de recovery trouvée, redirection vers reset-password");
+              toast({
+                title: "Lien valide",
+                description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
+                duration: 3000
+              });
+              navigate("/reset-password");
+              return;
+            }
+
+            console.log("Aucune session de recovery trouvée");
+            toast({
+              title: "Lien invalide",
+              description: "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
+              duration: 5000
+            });
+            navigate("/mot-de-passe-oublie");
+          }, 1000);
+          
+          return;
         }
 
         // Traitement standard pour les autres cas (connexion normale, confirmation email, etc.)
