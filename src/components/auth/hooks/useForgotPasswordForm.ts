@@ -14,9 +14,9 @@ export const useForgotPasswordForm = () => {
     try {
       console.log("Envoi de l'email de réinitialisation pour:", values.email);
       
-      // Construire l'URL de redirection avec un timestamp pour éviter le cache
-      const timestamp = Date.now();
-      const redirectUrl = `${window.location.origin}/auth/callback?t=${timestamp}`;
+      // Utiliser l'URL complète avec /auth/callback explicitement
+      const baseUrl = window.location.origin;
+      const redirectUrl = `${baseUrl}/auth/callback`;
       console.log("URL de redirection configurée:", redirectUrl);
         
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
