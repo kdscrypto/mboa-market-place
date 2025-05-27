@@ -12,14 +12,10 @@ export const useForgotPasswordForm = () => {
   const handleForgotPassword = async (values: ForgotPasswordFormValues) => {
     setIsLoading(true);
     try {
-      // Utiliser l'URL actuelle de l'application pour la redirection
-      const currentUrl = window.location.origin;
-      const redirectUrl = `${currentUrl}/reset-password`;
-      
-      console.log("Envoi de l'email de réinitialisation avec redirectTo:", redirectUrl);
+      console.log("Envoi de l'email de réinitialisation pour:", values.email);
         
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: redirectUrl
+        redirectTo: `${window.location.origin}/reset-password`
       });
       
       if (error) {
@@ -35,7 +31,7 @@ export const useForgotPasswordForm = () => {
       setIsSuccess(true);
       toast({
         title: "Email envoyé",
-        description: "Si cette adresse email est associée à un compte, vous recevrez un lien de réinitialisation. Le lien est valide pendant 1 heure.",
+        description: "Si cette adresse email est associée à un compte, vous recevrez un lien de réinitialisation. Vérifiez vos emails et cliquez sur le lien pour continuer.",
         duration: 5000
       });
     } catch (error) {
