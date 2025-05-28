@@ -16,7 +16,27 @@ export const useResetPasswordForm = () => {
   useEffect(() => {
     let hasHandledAuth = false;
 
-    // Set up auth state change listener to handle PASSWORD_RECOVERY event
+    // Check initial session first
+    const checkInitialSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user && !hasHandledAuth) {
+          console.log("Session existante trouvée lors de l'initialisation");
+          hasHandledAuth = true;
+          setIsReady(true);
+          setIsChecking(false);
+          toast({
+            title: "Lien valide",
+            description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
+            duration: 3000
+          });
+        }
+      } catch (error) {
+        console.error("Erreur lors de la vérification de la session:", error);
+      }
+    };
+
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state change event:", event);
       console.log("Session présente:", !!session);
@@ -33,32 +53,24 @@ export const useResetPasswordForm = () => {
           description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
           duration: 3000
         });
-      } else if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
-        // Check if we have a session that allows password updates
+      } else if (event === 'SIGNED_IN' && session) {
+        // User signed in normally - check if this is a password recovery session
         if (session && session.user) {
-          console.log("Session existante trouvée lors de l'initialisation");
+          console.log("SIGNED_IN event avec session valide");
           hasHandledAuth = true;
           setIsReady(true);
           setIsChecking(false);
         }
-      } else if (event === 'SIGNED_OUT' || (!session && (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED'))) {
-        // Only redirect if we've finished checking and there's definitely no valid session
-        if (!hasHandledAuth && !isChecking) {
-          console.log("Aucune session valide, redirection vers mot-de-passe-oublie");
-          toast({
-            title: "Accès non autorisé",
-            description: "Vous devez cliquer sur le lien de réinitialisation reçu par email pour accéder à cette page.",
-            duration: 5000
-          });
-          navigate("/mot-de-passe-oublie");
-        }
       }
     });
 
-    // Set a timeout to check if no auth event was received
+    // Check initial session
+    checkInitialSession();
+
+    // Set a timeout to check if no valid session was found
     const timeoutId = setTimeout(() => {
       if (!hasHandledAuth) {
-        console.log("Timeout: aucun événement d'authentification reçu");
+        console.log("Timeout: aucune session valide trouvée");
         setIsChecking(false);
         toast({
           title: "Lien invalide",
