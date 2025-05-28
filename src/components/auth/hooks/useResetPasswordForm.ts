@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ResetPasswordFormValues } from "../validation/authSchemas";
@@ -8,45 +8,75 @@ import { ResetPasswordFormValues } from "../validation/authSchemas";
 export const useResetPasswordForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const checkSession = async () => {
+    const handleAuthSession = async () => {
       try {
         console.log("Vérification de la session pour reset password...");
+        console.log("URL params:", window.location.href);
         
-        // Attendre un peu pour laisser le temps à Supabase de traiter les tokens
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Vérifier s'il y a des tokens dans l'URL
+        const accessToken = searchParams.get('access_token');
+        const refreshToken = searchParams.get('refresh_token');
+        const type = searchParams.get('type');
         
-        // Vérifier s'il y a une session active
-        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log("Tokens détectés:", { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
         
-        if (error) {
-          console.error("Erreur lors de la vérification de session:", error);
-          toast({
-            title: "Erreur de session",
-            description: "Impossible de vérifier votre session. Veuillez demander un nouveau lien.",
-            duration: 5000
+        if (accessToken && refreshToken && type === 'recovery') {
+          console.log("Tokens de récupération détectés, établissement de la session...");
+          
+          // Établir la session avec les tokens
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
           });
-          navigate("/mot-de-passe-oublie");
-          return;
-        }
+          
+          if (error) {
+            console.error("Erreur lors de l'établissement de la session:", error);
+            toast({
+              title: "Lien invalide",
+              description: "Ce lien de réinitialisation est invalide ou a expiré.",
+              duration: 5000
+            });
+            navigate("/mot-de-passe-oublie");
+            return;
+          }
+          
+          console.log("Session établie avec succès:", data.session?.user?.email);
+          setIsReady(true);
+        } else {
+          // Vérifier s'il y a une session existante
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error("Erreur lors de la vérification de session:", error);
+            toast({
+              title: "Erreur de session",
+              description: "Impossible de vérifier votre session. Veuillez demander un nouveau lien.",
+              duration: 5000
+            });
+            navigate("/mot-de-passe-oublie");
+            return;
+          }
 
-        if (!session || !session.user) {
-          console.log("Aucune session active trouvée");
-          toast({
-            title: "Session requise",
-            description: "Vous devez cliquer sur le lien de réinitialisation reçu par email pour accéder à cette page.",
-            duration: 5000
-          });
-          navigate("/mot-de-passe-oublie");
-          return;
-        }
+          if (!session || !session.user) {
+            console.log("Aucune session valide trouvée");
+            toast({
+              title: "Accès non autorisé",
+              description: "Vous devez cliquer sur le lien de réinitialisation reçu par email pour accéder à cette page.",
+              duration: 5000
+            });
+            navigate("/mot-de-passe-oublie");
+            return;
+          }
 
-        console.log("Session valide trouvée pour:", session.user.email);
-        setIsReady(true);
+          console.log("Session existante trouvée pour:", session.user.email);
+          setIsReady(true);
+        }
 
       } catch (error) {
         console.error("Erreur lors de la vérification:", error);
@@ -59,8 +89,8 @@ export const useResetPasswordForm = () => {
       }
     };
 
-    checkSession();
-  }, [toast, navigate]);
+    handleAuthSession();
+  }, [toast, navigate, searchParams]);
 
   const handleResetPassword = async (values: ResetPasswordFormValues) => {
     if (!isReady) {

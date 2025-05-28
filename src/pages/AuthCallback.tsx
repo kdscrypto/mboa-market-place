@@ -12,12 +12,8 @@ const AuthCallback = () => {
     const handleAuthCallback = async () => {
       try {
         console.log("AuthCallback: Traitement du callback d'authentification");
-        console.log("URL complète:", window.location.href);
-        console.log("Search params:", window.location.search);
-        console.log("Hash:", window.location.hash);
         
         // Attendre que Supabase traite automatiquement les tokens dans l'URL
-        // Supabase gère automatiquement les tokens dans le hash fragment
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Vérifier la session après le traitement automatique
@@ -33,69 +29,26 @@ const AuthCallback = () => {
             description: "Impossible de traiter le lien d'authentification.",
             duration: 5000
           });
-          navigate("/mot-de-passe-oublie");
+          navigate("/connexion");
           return;
         }
 
         if (session && session.user) {
           console.log("Session valide trouvée pour:", session.user.email);
-          
-          // Vérifier si c'est un recovery token (pour reset password)
-          const isRecovery = session.user.recovery_sent_at || 
-                           window.location.hash.includes('type=recovery') ||
-                           window.location.search.includes('type=recovery');
-          
-          if (isRecovery) {
-            console.log("Session de recovery détectée, redirection vers reset-password");
-            toast({
-              title: "Lien de réinitialisation valide",
-              description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
-              duration: 3000
-            });
-            navigate("/reset-password");
-          } else {
-            console.log("Session de connexion normale");
-            toast({
-              title: "Connexion réussie",
-              description: "Vous êtes maintenant connecté.",
-              duration: 3000
-            });
-            navigate("/");
-          }
+          toast({
+            title: "Connexion réussie",
+            description: "Vous êtes maintenant connecté.",
+            duration: 3000
+          });
+          navigate("/");
         } else {
           console.log("Aucune session trouvée après traitement");
-          
-          // Vérifier s'il y a des paramètres d'erreur
-          const urlParams = new URLSearchParams(window.location.search);
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          
-          const error = urlParams.get('error') || hashParams.get('error');
-          const errorDescription = urlParams.get('error_description') || hashParams.get('error_description');
-          
-          if (error) {
-            console.error("Erreur d'authentification:", error, errorDescription);
-            let errorMessage = "Une erreur s'est produite lors de l'authentification.";
-            
-            if (error === 'access_denied') {
-              errorMessage = "Accès refusé. Le lien pourrait être invalide ou expiré.";
-            } else if (error === 'otp_expired') {
-              errorMessage = "Le lien a expiré. Veuillez demander un nouveau lien de réinitialisation.";
-            }
-            
-            toast({
-              title: "Erreur d'authentification",
-              description: errorMessage,
-              duration: 5000
-            });
-          } else {
-            toast({
-              title: "Lien invalide",
-              description: "Ce lien d'authentification est invalide ou a expiré.",
-              duration: 5000
-            });
-          }
-          
-          navigate("/mot-de-passe-oublie");
+          toast({
+            title: "Lien invalide",
+            description: "Ce lien d'authentification est invalide ou a expiré.",
+            duration: 5000
+          });
+          navigate("/connexion");
         }
         
       } catch (error) {
@@ -105,7 +58,7 @@ const AuthCallback = () => {
           description: "Une erreur s'est produite lors du traitement de l'authentification.",
           duration: 3000
         });
-        navigate("/mot-de-passe-oublie");
+        navigate("/connexion");
       }
     };
 
