@@ -14,15 +14,29 @@ export const useResetPasswordForm = () => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    let hasHandledAuth = false;
+    console.log("[RESET_PASSWORD_FORM] Hook initialized");
+    let hasValidSession = false;
 
-    // Check initial session first
-    const checkInitialSession = async () => {
+    const validatePasswordRecoverySession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && session.user && !hasHandledAuth) {
-          console.log("Session existante trouvée lors de l'initialisation");
-          hasHandledAuth = true;
+        console.log("[RESET_PASSWORD_FORM] Checking initial session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("[RESET_PASSWORD_FORM] Error getting session:", error);
+          return false;
+        }
+
+        console.log("[RESET_PASSWORD_FORM] Initial session check:", {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userAud: session?.user?.aud
+        });
+
+        // Pour la récupération de mot de passe, on accepte tout utilisateur avec une session
+        if (session && session.user) {
+          console.log("[RESET_PASSWORD_FORM] Valid session found for password recovery");
+          hasValidSession = true;
           setIsReady(true);
           setIsChecking(false);
           toast({
@@ -30,22 +44,29 @@ export const useResetPasswordForm = () => {
             description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
             duration: 3000
           });
+          return true;
         }
+
+        return false;
       } catch (error) {
-        console.error("Erreur lors de la vérification de la session:", error);
+        console.error("[RESET_PASSWORD_FORM] Exception during session check:", error);
+        return false;
       }
     };
 
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change event:", event);
-      console.log("Session présente:", !!session);
+      console.log("[RESET_PASSWORD_FORM] Auth state change:", { event, hasSession: !!session, hasUser: !!session?.user });
       
-      if (hasHandledAuth) return; // Prevent multiple handling
+      // Ne traiter que si on n'a pas déjà une session valide
+      if (hasValidSession) {
+        console.log("[RESET_PASSWORD_FORM] Already have valid session, ignoring auth change");
+        return;
+      }
       
-      if (event === 'PASSWORD_RECOVERY' && session) {
-        console.log("PASSWORD_RECOVERY event détecté avec session valide");
-        hasHandledAuth = true;
+      if (event === 'PASSWORD_RECOVERY' && session && session.user) {
+        console.log("[RESET_PASSWORD_FORM] PASSWORD_RECOVERY event with valid session");
+        hasValidSession = true;
         setIsReady(true);
         setIsChecking(false);
         toast({
@@ -53,43 +74,43 @@ export const useResetPasswordForm = () => {
           description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
           duration: 3000
         });
-      } else if (event === 'SIGNED_IN' && session) {
-        // User signed in normally - check if this is a password recovery session
-        if (session && session.user) {
-          console.log("SIGNED_IN event avec session valide");
-          hasHandledAuth = true;
-          setIsReady(true);
-          setIsChecking(false);
-        }
+      } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && session.user) {
+        console.log("[RESET_PASSWORD_FORM] User session available after sign in/refresh");
+        hasValidSession = true;
+        setIsReady(true);
+        setIsChecking(false);
       }
     });
 
     // Check initial session
-    checkInitialSession();
+    validatePasswordRecoverySession();
 
-    // Set a timeout to check if no valid session was found
+    // Timeout de sécurité plus long pour laisser le temps à Supabase de traiter le lien
     const timeoutId = setTimeout(() => {
-      if (!hasHandledAuth) {
-        console.log("Timeout: aucune session valide trouvée");
+      if (!hasValidSession) {
+        console.log("[RESET_PASSWORD_FORM] Timeout: No valid session found, redirecting");
         setIsChecking(false);
         toast({
-          title: "Lien invalide",
+          title: "Lien invalide ou expiré",
           description: "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
           duration: 5000
         });
         navigate("/mot-de-passe-oublie");
       }
-    }, 5000); // 5 second timeout
+    }, 8000); // 8 secondes pour laisser plus de temps
 
-    // Cleanup
     return () => {
+      console.log("[RESET_PASSWORD_FORM] Cleaning up");
       subscription.unsubscribe();
       clearTimeout(timeoutId);
     };
   }, [toast, navigate]);
 
   const handleResetPassword = async (values: ResetPasswordFormValues) => {
+    console.log("[RESET_PASSWORD_FORM] Attempting password reset");
+    
     if (!isReady) {
+      console.log("[RESET_PASSWORD_FORM] Not ready for password reset");
       toast({
         title: "Session invalide",
         description: "Veuillez cliquer sur le lien de réinitialisation reçu par email.",
@@ -101,14 +122,14 @@ export const useResetPasswordForm = () => {
 
     setIsLoading(true);
     try {
-      console.log("Tentative de mise à jour du mot de passe...");
+      console.log("[RESET_PASSWORD_FORM] Updating password...");
       
       const { error } = await supabase.auth.updateUser({
         password: values.password
       });
       
       if (error) {
-        console.error("Erreur lors de la mise à jour:", error);
+        console.error("[RESET_PASSWORD_FORM] Password update error:", error);
         
         let errorMessage = "Erreur lors de la mise à jour du mot de passe.";
         if (error.message.includes("weak")) {
@@ -125,7 +146,7 @@ export const useResetPasswordForm = () => {
         return;
       }
 
-      console.log("Mot de passe mis à jour avec succès");
+      console.log("[RESET_PASSWORD_FORM] Password updated successfully");
       setIsSuccess(true);
       toast({
         title: "Mot de passe mis à jour",
@@ -133,14 +154,13 @@ export const useResetPasswordForm = () => {
         duration: 3000
       });
 
-      // Déconnecter l'utilisateur et rediriger vers la page de connexion
-      await supabase.auth.signOut();
-      
-      setTimeout(() => {
+      // Déconnecter l'utilisateur et rediriger vers la page de connexion après un délai
+      setTimeout(async () => {
+        await supabase.auth.signOut();
         navigate("/connexion");
       }, 2000);
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du mot de passe:", error);
+      console.error("[RESET_PASSWORD_FORM] Exception during password update:", error);
       toast({
         title: "Erreur",
         description: "Une erreur s'est produite lors de la mise à jour du mot de passe.",

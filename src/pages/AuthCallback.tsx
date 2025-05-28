@@ -9,63 +9,54 @@ const AuthCallback = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("[AUTH_CALLBACK] Component mounted, processing auth callback");
+    
     const handleAuthCallback = async () => {
       try {
-        console.log("AuthCallback: Traitement du callback d'authentification");
-        
         // Écouter les changements d'état d'authentification
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log("Auth state change event:", event);
-          console.log("Session:", session);
+          console.log("[AUTH_CALLBACK] Auth state change:", { event, hasSession: !!session });
           
-          if (event === 'PASSWORD_RECOVERY' && session) {
-            // L'utilisateur a cliqué sur le lien de réinitialisation et une session temporaire a été créée
-            console.log("PASSWORD_RECOVERY event détecté, redirection vers /reset-password");
-            toast({
-              title: "Lien valide",
-              description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
-              duration: 3000
-            });
-            navigate("/reset-password");
+          if (event === 'PASSWORD_RECOVERY') {
+            console.log("[AUTH_CALLBACK] PASSWORD_RECOVERY event detected, redirecting to reset password");
+            subscription.unsubscribe();
+            navigate("/reset-password", { replace: true });
           } else if (event === 'SIGNED_IN' && session) {
-            // Connexion normale réussie
-            console.log("SIGNED_IN event détecté, redirection vers /");
+            console.log("[AUTH_CALLBACK] Normal sign in detected, redirecting to home");
+            subscription.unsubscribe();
             toast({
               title: "Connexion réussie",
               description: "Vous êtes maintenant connecté.",
               duration: 3000
             });
-            navigate("/");
+            navigate("/", { replace: true });
           } else if (event === 'SIGNED_OUT') {
-            // Déconnexion
-            console.log("SIGNED_OUT event détecté");
-            navigate("/connexion");
+            console.log("[AUTH_CALLBACK] Sign out detected");
+            subscription.unsubscribe();
+            navigate("/connexion", { replace: true });
           }
-          
-          // Nettoyer l'abonnement après traitement
-          subscription.unsubscribe();
         });
         
-        // Timeout de sécurité au cas où aucun événement ne se déclenche
+        // Timeout de sécurité
         setTimeout(() => {
-          console.log("Timeout atteint, redirection vers /connexion");
+          console.log("[AUTH_CALLBACK] Timeout reached, redirecting to login");
           subscription.unsubscribe();
           toast({
             title: "Lien invalide",
             description: "Ce lien d'authentification est invalide ou a expiré.",
             duration: 5000
           });
-          navigate("/connexion");
-        }, 5000);
+          navigate("/connexion", { replace: true });
+        }, 6000);
         
       } catch (error) {
-        console.error("Erreur dans handleAuthCallback:", error);
+        console.error("[AUTH_CALLBACK] Error in handleAuthCallback:", error);
         toast({
           title: "Erreur",
           description: "Une erreur s'est produite lors du traitement de l'authentification.",
           duration: 3000
         });
-        navigate("/connexion");
+        navigate("/connexion", { replace: true });
       }
     };
 
