@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -84,7 +85,7 @@ export const useResetPasswordForm = () => {
     // Check initial session
     validatePasswordRecoverySession();
 
-    // Timeout de sécurité étendu à 30 secondes pour laisser plus de temps à Supabase
+    // Timeout de sécurité étendu à 180 secondes (3 minutes) pour laisser beaucoup plus de temps à Supabase
     const timeoutId = setTimeout(() => {
       if (!hasValidSession) {
         console.log("[RESET_PASSWORD_FORM] Timeout: No valid session found, redirecting");
@@ -96,7 +97,7 @@ export const useResetPasswordForm = () => {
         });
         navigate("/mot-de-passe-oublie");
       }
-    }, 30000); // 30 secondes pour laisser beaucoup plus de temps
+    }, 180000); // 180 secondes (3 minutes) pour laisser beaucoup plus de temps
 
     return () => {
       console.log("[RESET_PASSWORD_FORM] Cleaning up");
