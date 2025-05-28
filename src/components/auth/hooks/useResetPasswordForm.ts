@@ -11,80 +11,69 @@ export const useResetPasswordForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const handlePasswordRecovery = async () => {
-      try {
-        console.log("Vérification du token de réinitialisation...");
-        
-        // Vérifier les paramètres URL pour le token de récupération
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        const type = hashParams.get('type');
-        
-        console.log("Type d'authentification:", type);
-        console.log("Token présent:", !!accessToken);
+    let hasHandledAuth = false;
 
-        if (type === 'recovery' && accessToken && refreshToken) {
-          console.log("Token de récupération détecté, configuration de la session...");
-          
-          // Configurer la session avec les tokens de l'URL
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
-
-          if (error) {
-            console.error("Erreur lors de la configuration de la session:", error);
-            toast({
-              title: "Lien invalide",
-              description: "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
-              duration: 5000
-            });
-            navigate("/mot-de-passe-oublie");
-            return;
-          }
-
-          if (data.session && data.user) {
-            console.log("Session configurée avec succès pour:", data.user.email);
-            setIsReady(true);
-            toast({
-              title: "Lien valide",
-              description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
-              duration: 3000
-            });
-          }
-        } else {
-          // Vérifier s'il y a déjà une session active
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (session && session.user) {
-            console.log("Session existante trouvée");
-            setIsReady(true);
-          } else {
-            console.log("Aucun token de récupération ou session trouvé");
-            toast({
-              title: "Accès non autorisé",
-              description: "Vous devez cliquer sur le lien de réinitialisation reçu par email pour accéder à cette page.",
-              duration: 5000
-            });
-            navigate("/mot-de-passe-oublie");
-          }
-        }
-
-      } catch (error) {
-        console.error("Erreur lors de la vérification:", error);
+    // Set up auth state change listener to handle PASSWORD_RECOVERY event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change event:", event);
+      console.log("Session présente:", !!session);
+      
+      if (hasHandledAuth) return; // Prevent multiple handling
+      
+      if (event === 'PASSWORD_RECOVERY' && session) {
+        console.log("PASSWORD_RECOVERY event détecté avec session valide");
+        hasHandledAuth = true;
+        setIsReady(true);
+        setIsChecking(false);
         toast({
-          title: "Erreur",
-          description: "Une erreur s'est produite. Veuillez réessayer.",
+          title: "Lien valide",
+          description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
           duration: 3000
+        });
+      } else if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+        // Check if we have a session that allows password updates
+        if (session && session.user) {
+          console.log("Session existante trouvée lors de l'initialisation");
+          hasHandledAuth = true;
+          setIsReady(true);
+          setIsChecking(false);
+        }
+      } else if (event === 'SIGNED_OUT' || (!session && (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED'))) {
+        // Only redirect if we've finished checking and there's definitely no valid session
+        if (!hasHandledAuth && !isChecking) {
+          console.log("Aucune session valide, redirection vers mot-de-passe-oublie");
+          toast({
+            title: "Accès non autorisé",
+            description: "Vous devez cliquer sur le lien de réinitialisation reçu par email pour accéder à cette page.",
+            duration: 5000
+          });
+          navigate("/mot-de-passe-oublie");
+        }
+      }
+    });
+
+    // Set a timeout to check if no auth event was received
+    const timeoutId = setTimeout(() => {
+      if (!hasHandledAuth) {
+        console.log("Timeout: aucun événement d'authentification reçu");
+        setIsChecking(false);
+        toast({
+          title: "Lien invalide",
+          description: "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
+          duration: 5000
         });
         navigate("/mot-de-passe-oublie");
       }
-    };
+    }, 5000); // 5 second timeout
 
-    handlePasswordRecovery();
+    // Cleanup
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, [toast, navigate]);
 
   const handleResetPassword = async (values: ResetPasswordFormValues) => {
@@ -154,6 +143,7 @@ export const useResetPasswordForm = () => {
     handleResetPassword, 
     isLoading, 
     isSuccess, 
-    isReady
+    isReady,
+    isChecking
   };
 };

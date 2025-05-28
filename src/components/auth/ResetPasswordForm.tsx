@@ -12,10 +12,10 @@ import { useResetPasswordForm } from "./hooks/useResetPasswordForm";
 import ResetPasswordFormContent from "./forms/ResetPasswordFormContent";
 
 const ResetPasswordForm: React.FC = () => {
-  const { handleResetPassword, isLoading, isSuccess, isReady } = useResetPasswordForm();
+  const { handleResetPassword, isLoading, isSuccess, isReady, isChecking } = useResetPasswordForm();
 
   // Affichage pendant la vérification
-  if (!isReady && !isSuccess) {
+  if (isChecking) {
     return (
       <Card>
         <CardHeader>
@@ -36,6 +36,20 @@ const ResetPasswordForm: React.FC = () => {
           <CardTitle>Mot de passe mis à jour !</CardTitle>
           <CardDescription>
             Votre mot de passe a été mis à jour avec succès. Vous allez être redirigé vers la page de connexion.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  // Affichage si le lien n'est pas valide
+  if (!isReady) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Lien invalide</CardTitle>
+          <CardDescription>
+            Ce lien de réinitialisation est invalide ou a expiré.
           </CardDescription>
         </CardHeader>
       </Card>
