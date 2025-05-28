@@ -15,87 +15,35 @@ export const useResetPasswordForm = () => {
 
   useEffect(() => {
     console.log("[RESET_PASSWORD_FORM] Hook initialized");
-    let hasValidSession = false;
     let mounted = true;
+    let hasValidSession = false;
 
-    const validatePasswordRecoverySession = async () => {
-      try {
-        console.log("[RESET_PASSWORD_FORM] Checking initial session...");
-        
-        // Check if this is a password recovery URL first
-        const urlHash = window.location.hash;
-        const urlParams = new URLSearchParams(urlHash.substring(1));
-        const recoveryType = urlParams.get('type');
-        
-        console.log("[RESET_PASSWORD_FORM] URL analysis:", {
-          hash: urlHash,
-          type: recoveryType,
-          hasRecoveryToken: urlParams.has('access_token')
+    // Check if this is a password recovery URL first
+    const urlHash = window.location.hash;
+    const urlParams = new URLSearchParams(urlHash.substring(1));
+    const recoveryType = urlParams.get('type');
+    const hasAccessToken = urlParams.has('access_token');
+    
+    console.log("[RESET_PASSWORD_FORM] URL analysis:", {
+      hash: urlHash,
+      type: recoveryType,
+      hasAccessToken
+    });
+
+    // If this is not a recovery URL, redirect immediately
+    if (recoveryType !== 'recovery' || !hasAccessToken) {
+      console.log("[RESET_PASSWORD_FORM] Not a valid recovery URL, redirecting");
+      if (mounted) {
+        setIsChecking(false);
+        toast({
+          title: "Lien invalide",
+          description: "Ce lien de réinitialisation est invalide. Veuillez demander un nouveau lien.",
+          duration: 5000
         });
-
-        // If this is clearly a recovery URL, process it immediately
-        if (recoveryType === 'recovery' && urlParams.has('access_token')) {
-          console.log("[RESET_PASSWORD_FORM] Valid recovery URL detected, processing tokens...");
-          
-          // Let Supabase process the recovery tokens
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error("[RESET_PASSWORD_FORM] Error getting session after token processing:", error);
-            throw error;
-          }
-
-          if (data.session && data.session.user) {
-            console.log("[RESET_PASSWORD_FORM] Recovery session established successfully");
-            hasValidSession = true;
-            if (mounted) {
-              setIsReady(true);
-              setIsChecking(false);
-              toast({
-                title: "Lien valide",
-                description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
-                duration: 3000
-              });
-            }
-            return true;
-          }
-        }
-
-        // Fallback: check regular session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("[RESET_PASSWORD_FORM] Error getting session:", error);
-          throw error;
-        }
-
-        console.log("[RESET_PASSWORD_FORM] Session check:", {
-          hasSession: !!session,
-          hasUser: !!session?.user,
-          userAud: session?.user?.aud
-        });
-
-        if (session && session.user) {
-          console.log("[RESET_PASSWORD_FORM] Valid session found");
-          hasValidSession = true;
-          if (mounted) {
-            setIsReady(true);
-            setIsChecking(false);
-            toast({
-              title: "Lien valide",
-              description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
-              duration: 3000
-            });
-          }
-          return true;
-        }
-
-        return false;
-      } catch (error) {
-        console.error("[RESET_PASSWORD_FORM] Exception during session validation:", error);
-        return false;
+        navigate("/mot-de-passe-oublie");
       }
-    };
+      return;
+    }
 
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -104,15 +52,8 @@ export const useResetPasswordForm = () => {
       console.log("[RESET_PASSWORD_FORM] Auth state change:", { 
         event, 
         hasSession: !!session, 
-        hasUser: !!session?.user,
-        hasValidSession 
+        hasUser: !!session?.user
       });
-      
-      // Only process if we don't already have a valid session
-      if (hasValidSession) {
-        console.log("[RESET_PASSWORD_FORM] Already have valid session, ignoring auth change");
-        return;
-      }
       
       if (event === 'PASSWORD_RECOVERY' && session && session.user) {
         console.log("[RESET_PASSWORD_FORM] PASSWORD_RECOVERY event with valid session");
@@ -124,48 +65,73 @@ export const useResetPasswordForm = () => {
           description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
           duration: 3000
         });
-      } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && session.user) {
-        console.log("[RESET_PASSWORD_FORM] User session available after sign in/refresh");
-        hasValidSession = true;
-        setIsReady(true);
-        setIsChecking(false);
-      } else if (event === 'INITIAL_SESSION' && session && session.user) {
-        console.log("[RESET_PASSWORD_FORM] Initial session found with user");
-        hasValidSession = true;
-        setIsReady(true);
-        setIsChecking(false);
+      } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session && session.user) {
+        console.log("[RESET_PASSWORD_FORM] Session available, checking if it's for password recovery");
+        
+        // Check if we're in a password recovery context
+        if (recoveryType === 'recovery' && hasAccessToken) {
+          console.log("[RESET_PASSWORD_FORM] Session found in password recovery context");
+          hasValidSession = true;
+          setIsReady(true);
+          setIsChecking(false);
+          toast({
+            title: "Lien valide",
+            description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
+            duration: 3000
+          });
+        }
       }
     });
 
-    // Check initial session immediately
-    validatePasswordRecoverySession();
+    // Check for existing session immediately
+    const checkInitialSession = async () => {
+      try {
+        console.log("[RESET_PASSWORD_FORM] Checking initial session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("[RESET_PASSWORD_FORM] Error getting session:", error);
+          return;
+        }
 
-    // Much more generous timeout - only trigger if we're absolutely sure it's invalid
+        console.log("[RESET_PASSWORD_FORM] Initial session check:", {
+          hasSession: !!session,
+          hasUser: !!session?.user
+        });
+
+        if (session && session.user && recoveryType === 'recovery') {
+          console.log("[RESET_PASSWORD_FORM] Valid session found in recovery context");
+          hasValidSession = true;
+          if (mounted) {
+            setIsReady(true);
+            setIsChecking(false);
+            toast({
+              title: "Lien valide",
+              description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
+              duration: 3000
+            });
+          }
+        }
+      } catch (error) {
+        console.error("[RESET_PASSWORD_FORM] Exception during initial session check:", error);
+      }
+    };
+
+    checkInitialSession();
+
+    // Much more generous timeout - only for absolute edge cases
     const timeoutId = setTimeout(() => {
       if (!hasValidSession && mounted) {
         console.log("[RESET_PASSWORD_FORM] Timeout: No valid session found after extended wait");
-        
-        // Final check: if URL doesn't contain recovery info, it's definitely invalid
-        const urlHash = window.location.hash;
-        const urlParams = new URLSearchParams(urlHash.substring(1));
-        const recoveryType = urlParams.get('type');
-        
-        if (recoveryType !== 'recovery' && !urlParams.has('access_token')) {
-          console.log("[RESET_PASSWORD_FORM] No recovery tokens in URL, redirecting");
-          setIsChecking(false);
-          toast({
-            title: "Lien invalide ou expiré",
-            description: "Ce lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.",
-            duration: 5000
-          });
-          navigate("/mot-de-passe-oublie");
-        } else {
-          console.log("[RESET_PASSWORD_FORM] Recovery tokens present but session not established, allowing user to try");
-          setIsChecking(false);
-          // Don't redirect, let user see if the form works
-        }
+        setIsChecking(false);
+        toast({
+          title: "Session expirée",
+          description: "La session de réinitialisation a expiré. Veuillez demander un nouveau lien.",
+          duration: 5000
+        });
+        navigate("/mot-de-passe-oublie");
       }
-    }, 10000); // Reduced to 10 seconds but with better logic
+    }, 30000); // Reduced to 30 seconds with better logic
 
     return () => {
       console.log("[RESET_PASSWORD_FORM] Cleaning up");
