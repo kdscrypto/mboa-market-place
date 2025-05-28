@@ -24,6 +24,11 @@ const ResetPasswordForm: React.FC = () => {
             Vérification du lien de réinitialisation en cours...
           </CardDescription>
         </CardHeader>
+        <div className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mboa-orange"></div>
+          </div>
+        </div>
       </Card>
     );
   }
@@ -38,31 +43,26 @@ const ResetPasswordForm: React.FC = () => {
             Votre mot de passe a été mis à jour avec succès. Vous allez être redirigé vers la page de connexion.
           </CardDescription>
         </CardHeader>
+        <div className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+            <span className="ml-2 text-green-600">Redirection en cours...</span>
+          </div>
+        </div>
       </Card>
     );
   }
 
-  // Affichage si le lien n'est pas valide
-  if (!isReady) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Lien invalide</CardTitle>
-          <CardDescription>
-            Ce lien de réinitialisation est invalide ou a expiré.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
-  // Formulaire de réinitialisation
+  // Show the form whether isReady is true or false - let the user try
+  // This prevents the premature "Lien invalide" message
   return (
     <Card>
       <CardHeader>
         <CardTitle>Nouveau mot de passe</CardTitle>
         <CardDescription>
-          Entrez votre nouveau mot de passe
+          {isReady 
+            ? "Entrez votre nouveau mot de passe" 
+            : "Entrez votre nouveau mot de passe (session en cours de validation)"}
         </CardDescription>
       </CardHeader>
       
@@ -70,6 +70,17 @@ const ResetPasswordForm: React.FC = () => {
         onSubmit={handleResetPassword} 
         isLoading={isLoading} 
       />
+      
+      {!isReady && (
+        <div className="px-6 pb-4">
+          <p className="text-sm text-yellow-600">
+            Si vous rencontrez des difficultés, veuillez{" "}
+            <Link to="/mot-de-passe-oublie" className="text-mboa-orange hover:underline">
+              demander un nouveau lien
+            </Link>.
+          </p>
+        </div>
+      )}
     </Card>
   );
 };
