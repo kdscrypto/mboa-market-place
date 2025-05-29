@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import SearchFilters from "@/components/SearchFilters";
 import { searchAds } from "@/services/searchService";
 import { Ad } from "@/types/adTypes";
 import { AlertCircle } from "lucide-react";
@@ -36,6 +35,8 @@ const CategoryPage = () => {
       try {
         const offset = (page - 1) * ITEMS_PER_PAGE;
         
+        console.log("Fetching results for category:", { slug, category: category?.name });
+        
         // Search with the category slug
         const searchFilters = {
           category: slug,
@@ -44,6 +45,7 @@ const CategoryPage = () => {
         };
         
         const { ads, count } = await searchAds(searchFilters);
+        console.log("Category search results:", { ads: ads.length, count });
         setResults(ads);
         setTotalCount(count);
       } catch (err) {
@@ -55,7 +57,7 @@ const CategoryPage = () => {
     };
 
     fetchResults();
-  }, [slug, page]);
+  }, [slug, page, category]);
 
   // Get the total number of pages
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
