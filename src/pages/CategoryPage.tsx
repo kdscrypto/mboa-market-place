@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { searchAds } from "@/services/searchService";
+import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import { AlertCircle } from "lucide-react";
 import { categories } from "@/data/categoriesData";
@@ -33,21 +33,52 @@ const CategoryPage = () => {
       setError(null);
       
       try {
+        console.log("[CategoryPage] Raw URL slug:", slug);
+        console.log("[CategoryPage] Found category:", category);
+
+        if (!category) {
+          console.error("[CategoryPage] Category not found for slug:", slug);
+          setError("Catégorie non trouvée");
+          setIsLoading(false);
+          return;
+        }
+
+        // Get the numerical category ID from the category data
+        // The categories data should have an id field that matches the database
+        const categoryIdToFilter = category.id;
+        console.log(`[CategoryPage] Using numerical category ID: ${categoryIdToFilter} (Type: ${typeof categoryIdToFilter})`);
+
         const offset = (page - 1) * ITEMS_PER_PAGE;
         
-        console.log("Fetching results for category:", { slug, category: category?.name });
+        // Query ads using the numerical category ID
+        console.log(`[CategoryPage] Fetching ads for category_id: ${categoryIdToFilter}`);
         
-        // Search with the category slug
-        const searchFilters = {
-          category: slug,
-          limit: ITEMS_PER_PAGE,
-          offset
-        };
+        const { data: ads, error: adsError, count } = await supabase
+          .from('ads')
+          .select('*', { count: 'exact' })
+          .eq('category', categoryIdToFilter.toString()) // Convert to string to match database field
+          .eq('status', 'approved') // Only show approved ads
+          .range(offset, offset + ITEMS_PER_PAGE - 1)
+          .order('created_at', { ascending: false });
+
+        console.log("[CategoryPage] Supabase query result:", { 
+          ads: ads?.length || 0, 
+          count, 
+          error: adsError,
+          categoryIdUsed: categoryIdToFilter.toString()
+        });
+
+        if (adsError) {
+          console.error("[CategoryPage] Error fetching ads:", adsError);
+          setError("Une erreur s'est produite lors du chargement des annonces. Veuillez réessayer.");
+          setIsLoading(false);
+          return;
+        }
+
+        setResults(ads || []);
+        setTotalCount(count || 0);
         
-        const { ads, count } = await searchAds(searchFilters);
-        console.log("Category search results:", { ads: ads.length, count });
-        setResults(ads);
-        setTotalCount(count);
+        console.log(`[CategoryPage] Successfully loaded ${ads?.length || 0} ads for category ${category.name}`);
       } catch (err) {
         console.error("Error fetching category results:", err);
         setError("Une erreur s'est produite lors du chargement des annonces. Veuillez réessayer.");
