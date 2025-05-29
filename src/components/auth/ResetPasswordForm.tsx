@@ -7,14 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useResetPasswordForm } from "./hooks/useResetPasswordForm";
 import ResetPasswordFormContent from "./forms/ResetPasswordFormContent";
 
 const ResetPasswordForm: React.FC = () => {
   const { handleResetPassword, isLoading, isSuccess, isReady, isChecking } = useResetPasswordForm();
 
-  // Affichage pendant la vérification
+  // Show loading state while checking
   if (isChecking) {
     return (
       <Card>
@@ -33,7 +32,7 @@ const ResetPasswordForm: React.FC = () => {
     );
   }
 
-  // Affichage après succès
+  // Show success state after password update
   if (isSuccess) {
     return (
       <Card>
@@ -53,8 +52,7 @@ const ResetPasswordForm: React.FC = () => {
     );
   }
 
-  // Show the form whether isReady is true or false - let the user try
-  // This prevents the premature "Lien invalide" message
+  // Always show the form - let the user try even if session validation is incomplete
   return (
     <Card>
       <CardHeader>
@@ -62,7 +60,7 @@ const ResetPasswordForm: React.FC = () => {
         <CardDescription>
           {isReady 
             ? "Entrez votre nouveau mot de passe" 
-            : "Entrez votre nouveau mot de passe (session en cours de validation)"}
+            : "Entrez votre nouveau mot de passe"}
         </CardDescription>
       </CardHeader>
       
@@ -71,16 +69,19 @@ const ResetPasswordForm: React.FC = () => {
         isLoading={isLoading} 
       />
       
-      {!isReady && (
-        <div className="px-6 pb-4">
-          <p className="text-sm text-yellow-600">
-            Si vous rencontrez des difficultés, veuillez{" "}
-            <Link to="/mot-de-passe-oublie" className="text-mboa-orange hover:underline">
-              demander un nouveau lien
-            </Link>.
+      <div className="px-6 pb-4">
+        {!isReady && (
+          <p className="text-sm text-yellow-600 mb-2">
+            ⚠️ Validation de la session en cours... Si vous rencontrez des problèmes, le lien pourrait être expiré.
           </p>
-        </div>
-      )}
+        )}
+        <p className="text-sm text-gray-600">
+          Si vous rencontrez des difficultés, veuillez{" "}
+          <Link to="/mot-de-passe-oublie" className="text-mboa-orange hover:underline">
+            demander un nouveau lien
+          </Link>.
+        </p>
+      </div>
     </Card>
   );
 };
