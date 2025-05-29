@@ -22,24 +22,42 @@ export const useResetPasswordSession = () => {
     const urlParams = new URLSearchParams(urlHash.substring(1));
     const recoveryType = urlParams.get('type');
     const hasAccessToken = urlParams.has('access_token');
+    const hasRefreshToken = urlParams.has('refresh_token');
 
     console.log("[RESET_PASSWORD_SESSION] URL analysis:", {
       hash: urlHash,
       type: recoveryType,
-      hasAccessToken
+      hasAccessToken,
+      hasRefreshToken,
+      fullUrl: window.location.href
     });
 
-    // If this is clearly not a recovery URL, redirect immediately
-    if (!urlHash || (!recoveryType && !hasAccessToken)) {
-      console.log("[RESET_PASSWORD_SESSION] No recovery parameters found, redirecting");
+    // More lenient validation - check for recovery indicators
+    const isRecoveryUrl = recoveryType === 'recovery' || hasAccessToken || hasRefreshToken || urlHash.includes('type=recovery');
+    
+    // If this is clearly not a recovery URL, redirect after a longer delay
+    if (!urlHash && !window.location.href.includes('reset-password')) {
+      console.log("[RESET_PASSWORD_SESSION] Not on reset password page, this hook shouldn't run");
       setIsChecking(false);
-      toast({
-        title: "Lien invalide",
-        description: "Ce lien de réinitialisation est invalide. Veuillez demander un nouveau lien.",
-        duration: 5000
-      });
-      navigate("/mot-de-passe-oublie");
       return;
+    }
+
+    // If we have some recovery indicators, proceed with session validation
+    if (!isRecoveryUrl) {
+      console.log("[RESET_PASSWORD_SESSION] No clear recovery indicators found");
+      // Don't redirect immediately - give more time for the session to be established
+      setTimeout(() => {
+        if (!hasValidSession.current && mounted.current) {
+          console.log("[RESET_PASSWORD_SESSION] No recovery session after extended wait");
+          setIsChecking(false);
+          toast({
+            title: "Lien expiré",
+            description: "Ce lien de réinitialisation semble expiré. Veuillez demander un nouveau lien.",
+            duration: 5000
+          });
+          navigate("/mot-de-passe-oublie");
+        }
+      }, 10000); // Wait 10 seconds before giving up
     }
 
     // Set up auth state change listener
@@ -49,7 +67,12 @@ export const useResetPasswordSession = () => {
       console.log("[RESET_PASSWORD_SESSION] Auth state change:", { 
         event, 
         hasSession: !!session, 
-        hasUser: !!session?.user
+        hasUser: !!session?.user,
+        sessionDetails: session ? {
+          accessToken: !!session.access_token,
+          refreshToken: !!session.refresh_token,
+          expiresAt: session.expires_at
+        } : null
       });
       
       if (event === 'PASSWORD_RECOVERY' && session && session.user) {
@@ -62,26 +85,37 @@ export const useResetPasswordSession = () => {
           description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
           duration: 3000
         });
-      } else if (event === 'INITIAL_SESSION' && session && session.user && recoveryType === 'recovery') {
-        console.log("[RESET_PASSWORD_SESSION] INITIAL_SESSION in recovery context");
-        hasValidSession.current = true;
-        setIsReady(true);
-        setIsChecking(false);
-        toast({
-          title: "Lien valide",
-          description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
-          duration: 3000
-        });
-      } else if (event === 'SIGNED_IN' && session && session.user && recoveryType === 'recovery') {
-        console.log("[RESET_PASSWORD_SESSION] SIGNED_IN in recovery context");
-        hasValidSession.current = true;
-        setIsReady(true);
-        setIsChecking(false);
-        toast({
-          title: "Lien valide",
-          description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
-          duration: 3000
-        });
+      } else if (event === 'INITIAL_SESSION' && session && session.user) {
+        console.log("[RESET_PASSWORD_SESSION] INITIAL_SESSION - checking if recovery context");
+        if (isRecoveryUrl) {
+          hasValidSession.current = true;
+          setIsReady(true);
+          setIsChecking(false);
+          toast({
+            title: "Lien valide",
+            description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
+            duration: 3000
+          });
+        }
+      } else if (event === 'SIGNED_IN' && session && session.user) {
+        console.log("[RESET_PASSWORD_SESSION] SIGNED_IN - checking if recovery context");
+        if (isRecoveryUrl) {
+          hasValidSession.current = true;
+          setIsReady(true);
+          setIsChecking(false);
+          toast({
+            title: "Lien valide",
+            description: "Vous pouvez maintenant définir votre nouveau mot de passe.",
+            duration: 3000
+          });
+        }
+      } else if (event === 'TOKEN_REFRESHED' && session && session.user) {
+        console.log("[RESET_PASSWORD_SESSION] TOKEN_REFRESHED in recovery context");
+        if (isRecoveryUrl) {
+          hasValidSession.current = true;
+          setIsReady(true);
+          setIsChecking(false);
+        }
       }
     });
 
@@ -99,10 +133,15 @@ export const useResetPasswordSession = () => {
         console.log("[RESET_PASSWORD_SESSION] Initial session check:", {
           hasSession: !!session,
           hasUser: !!session?.user,
-          recoveryType
+          isRecoveryUrl,
+          sessionDetails: session ? {
+            accessToken: !!session.access_token,
+            refreshToken: !!session.refresh_token,
+            expiresAt: session.expires_at
+          } : null
         });
 
-        if (session && session.user && recoveryType === 'recovery') {
+        if (session && session.user && isRecoveryUrl) {
           console.log("[RESET_PASSWORD_SESSION] Valid session found in recovery context");
           hasValidSession.current = true;
           if (mounted.current) {
@@ -122,17 +161,16 @@ export const useResetPasswordSession = () => {
 
     checkInitialSession();
 
-    // Generous timeout - only for absolute edge cases where nothing works
+    // More generous timeout - only for absolute edge cases
     const timeoutId = setTimeout(() => {
       if (!hasValidSession.current && mounted.current) {
-        console.log("[RESET_PASSWORD_SESSION] Timeout: No valid session found after extended wait");
+        console.log("[RESET_PASSWORD_SESSION] Final timeout: No valid session found");
         setIsChecking(false);
         
-        // Don't redirect immediately - show a more helpful message
-        // The form itself will handle showing error states
-        console.log("[RESET_PASSWORD_SESSION] Timeout reached but allowing form to be shown with warning");
+        // Show warning but don't redirect immediately - let user try
+        console.log("[RESET_PASSWORD_SESSION] Allowing form to be shown with warning");
       }
-    }, 15000); // Increased timeout to 15 seconds
+    }, 20000); // Extended to 20 seconds
 
     return () => {
       console.log("[RESET_PASSWORD_SESSION] Cleaning up");

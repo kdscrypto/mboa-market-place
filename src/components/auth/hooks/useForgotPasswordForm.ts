@@ -14,9 +14,10 @@ export const useForgotPasswordForm = () => {
     try {
       console.log("Envoi de l'email de réinitialisation pour:", values.email);
       
-      // Rediriger directement vers la page de reset password
+      // Use the exact URL format that matches your route configuration
       const currentUrl = window.location.origin;
       const redirectUrl = `${currentUrl}/reset-password`;
+      
       console.log("URL de redirection configurée:", redirectUrl);
         
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
