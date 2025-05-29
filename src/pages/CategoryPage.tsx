@@ -44,19 +44,19 @@ const CategoryPage = () => {
           return;
         }
 
-        // Use the category name for database filtering instead of ID
-        const categoryNameForQuery = category.name;
-        console.log("3. Using category name for database query:", categoryNameForQuery);
+        // Use the category ID for database filtering (stored as string in database)
+        const categoryIdForQuery = category.id.toString();
+        console.log("3. Using category ID for database query:", categoryIdForQuery, "Type:", typeof categoryIdForQuery);
 
         const offset = (page - 1) * ITEMS_PER_PAGE;
         
-        console.log("4. About to query 'ads' table. Filtering with category name =", categoryNameForQuery);
+        console.log("4. About to query 'ads' table. Filtering with category ID =", categoryIdForQuery);
         
-        // Query ads using the category name
+        // Query ads using the category ID (as string)
         const { data: ads, error: adsError, count, status } = await supabase
           .from('ads')
           .select('*', { count: 'exact' })
-          .eq('category', categoryNameForQuery)
+          .eq('category', categoryIdForQuery)
           .eq('status', 'approved') // Only show approved ads
           .range(offset, offset + ITEMS_PER_PAGE - 1)
           .order('created_at', { ascending: false });
@@ -119,7 +119,7 @@ const CategoryPage = () => {
         setResults(mappedAds);
         setTotalCount(count || 0);
         
-        console.log(`Successfully loaded ${mappedAds.length} ads for category ${category.name}`);
+        console.log(`Successfully loaded ${mappedAds.length} ads for category ${category.name} (ID: ${categoryIdForQuery})`);
         
         if (mappedAds.length === 0) {
           console.log("8. Rendering '0 résultats trouvés' because ads array is empty and no loading/error.");
