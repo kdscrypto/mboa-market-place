@@ -49,11 +49,16 @@ const SearchResults = () => {
         // Get the filters from the URL
         const filters = getFiltersFromUrl();
         
-        // Add pagination
+        // Convert string values to appropriate types for the search service
         const searchFilters = {
-          ...filters,
+          query: filters.query,
+          category: filters.category,
+          region: filters.region,
           limit: ITEMS_PER_PAGE,
-          offset
+          offset,
+          // Convert price strings to numbers, only if they're not empty
+          ...(filters.minPrice && { minPrice: parseInt(filters.minPrice) }),
+          ...(filters.maxPrice && { maxPrice: parseInt(filters.maxPrice) })
         };
         
         console.log("Executing search with enhanced ILIKE functionality:", searchFilters);
