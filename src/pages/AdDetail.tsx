@@ -32,30 +32,42 @@ const AdDetail: React.FC = () => {
   
   useEffect(() => {
     const fetchAdDetails = async () => {
-      if (!id) return;
+      if (!id) {
+        console.error("No ad ID provided in URL params");
+        setError("ID d'annonce manquant.");
+        setLoading(false);
+        return;
+      }
+
+      console.log("Fetching ad with ID:", id);
 
       try {
         setLoading(true);
         
-        // Fetch ad details from Supabase
+        // Fetch ad details from Supabase using maybeSingle() instead of single()
         const { data, error } = await supabase
           .from('ads')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
+
+        console.log("Supabase query result:", { data, error });
 
         if (error) {
           console.error("Error fetching ad:", error);
-          setError("Impossible de charger cette annonce.");
+          setError("Erreur lors du chargement de l'annonce.");
           setLoading(false);
           return;
         }
 
         if (!data) {
-          setError("Cette annonce n'existe pas.");
+          console.warn("No ad found with ID:", id);
+          setError("Cette annonce n'existe pas ou a été supprimée.");
           setLoading(false);
           return;
         }
+
+        console.log("Ad found successfully:", data);
 
         // Fetch all images for this ad
         const { data: imagesData, error: imagesError } = await supabase
@@ -63,6 +75,8 @@ const AdDetail: React.FC = () => {
           .select('image_url')
           .eq('ad_id', id)
           .order('position', { ascending: true });
+
+        console.log("Images query result:", { imagesData, imagesError });
 
         if (imagesError) {
           console.error("Error fetching ad images:", imagesError);
@@ -83,10 +97,11 @@ const AdDetail: React.FC = () => {
           imageUrl: imageUrls.length > 0 ? imageUrls[0] : '/placeholder.svg'
         };
 
+        console.log("Setting ad state with:", adWithImage);
         setAd(adWithImage);
       } catch (error) {
-        console.error("Error:", error);
-        setError("Une erreur s'est produite lors du chargement de l'annonce.");
+        console.error("Unexpected error:", error);
+        setError("Une erreur inattendue s'est produite lors du chargement de l'annonce.");
       } finally {
         setLoading(false);
       }
@@ -98,6 +113,7 @@ const AdDetail: React.FC = () => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       setIsLoggedIn(!!data.session);
+      console.log("User logged in:", !!data.session);
     };
     
     checkAuth();
@@ -108,7 +124,9 @@ const AdDetail: React.FC = () => {
       if (!ad) return;
       
       const { data: { session } } = await supabase.auth.getSession();
-      setIsCurrentUserAuthor(session?.user?.id === ad.user_id);
+      const isAuthor = session?.user?.id === ad.user_id;
+      setIsCurrentUserAuthor(isAuthor);
+      console.log("User is author of ad:", isAuthor);
     };
     
     checkIfUserIsAuthor();
@@ -117,6 +135,8 @@ const AdDetail: React.FC = () => {
   const handleLoginRedirect = () => {
     navigate("/connexion", { state: { from: `/annonce/${id}` } });
   };
+
+  console.log("AdDetail render state:", { loading, error, ad: !!ad, id });
 
   if (loading) {
     return (
@@ -132,18 +152,27 @@ const AdDetail: React.FC = () => {
   }
 
   if (error || !ad) {
+    console.log("Rendering error state:", { error, hasAd: !!ad });
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
         <div className="flex-grow flex flex-col justify-center items-center p-4">
           <h2 className="text-2xl font-bold mb-4">Erreur</h2>
           <p className="text-gray-700 mb-6">{error || "Annonce introuvable"}</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="bg-mboa-orange hover:bg-mboa-orange/90 text-white px-4 py-2 rounded"
-          >
-            Retour
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="bg-mboa-orange hover:bg-mboa-orange/90 text-white px-4 py-2 rounded"
+            >
+              Retour
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded ml-4"
+            >
+              Accueil
+            </button>
+          </div>
         </div>
         <Footer />
       </div>
