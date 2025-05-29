@@ -22,12 +22,17 @@ const CATEGORY_SLUG_TO_DB_MAPPING: { [key: string]: string } = {
   'formations': 'Formations'
 };
 
+// Mapping inverse : valeurs de la base de données vers les slugs
+const CATEGORY_DB_TO_SLUG_MAPPING: { [key: string]: string } = Object.fromEntries(
+  Object.entries(CATEGORY_SLUG_TO_DB_MAPPING).map(([slug, dbValue]) => [dbValue, slug])
+);
+
 /**
  * Convertit un slug de catégorie en valeur de base de données
  */
 export const getCategoryDbValue = (slug: string): string => {
   const dbValue = CATEGORY_SLUG_TO_DB_MAPPING[slug];
-  console.log("Category mapping:", { slug, dbValue, available: Object.keys(CATEGORY_SLUG_TO_DB_MAPPING) });
+  console.log("Category slug to DB mapping:", { slug, dbValue, available: Object.keys(CATEGORY_SLUG_TO_DB_MAPPING) });
   return dbValue || slug;
 };
 
@@ -35,10 +40,17 @@ export const getCategoryDbValue = (slug: string): string => {
  * Convertit une valeur de base de données en slug de catégorie
  */
 export const getCategorySlug = (dbValue: string): string => {
-  const entry = Object.entries(CATEGORY_SLUG_TO_DB_MAPPING).find(
-    ([slug, value]) => value === dbValue
-  );
-  return entry ? entry[0] : dbValue.toLowerCase().replace(/\s+/g, '-');
+  const slug = CATEGORY_DB_TO_SLUG_MAPPING[dbValue];
+  console.log("Category DB to slug mapping:", { dbValue, slug, available: Object.keys(CATEGORY_DB_TO_SLUG_MAPPING) });
+  return slug || dbValue.toLowerCase().replace(/\s+/g, '-');
+};
+
+/**
+ * Obtient le nom d'affichage d'une catégorie à partir de sa valeur en base
+ */
+export const getCategoryDisplayName = (dbValue: string): string => {
+  // La valeur en base est déjà le nom d'affichage
+  return dbValue;
 };
 
 /**

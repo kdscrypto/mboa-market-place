@@ -239,6 +239,7 @@ const AdDetail: React.FC = () => {
                 <p className="text-gray-800 whitespace-pre-line">{ad.description}</p>
               </div>
               <div className="space-y-2 mb-6">
+                {/* Display category name instead of ID */}
                 <p className="text-sm"><span className="font-semibold">Catégorie:</span> {ad.category}</p>
                 <p className="text-sm"><span className="font-semibold">Lieu:</span> {ad.city}, {ad.region}</p>
                 <p className="text-sm"><span className="font-semibold">Date de publication:</span> {new Date(ad.created_at).toLocaleDateString()}</p>

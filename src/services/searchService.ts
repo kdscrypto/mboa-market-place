@@ -68,7 +68,8 @@ export const searchAds = async (filters: SearchFilters) => {
     query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
   }
 
-  // Execute query
+  // Execute query with enhanced logging
+  console.log("Executing Supabase query for category:", filters.category ? getCategoryDbValue(filters.category) : 'all');
   const { data, error, count } = await query;
 
   if (error) {
@@ -79,7 +80,8 @@ export const searchAds = async (filters: SearchFilters) => {
   console.log("Search results:", { 
     foundAds: data?.length || 0, 
     totalCount: count,
-    filters: filters
+    filters: filters,
+    categoryUsed: filters.category ? getCategoryDbValue(filters.category) : 'all'
   });
 
   // Add imageUrl to each ad (using first image or placeholder)
