@@ -44,35 +44,24 @@ const CategoryPage = () => {
           return;
         }
 
-        // The categories data should have an id field that matches the database
-        const categoryIdToFilter = category.id;
-        console.log("3. Attempting to filter by category ID:", categoryIdToFilter, "Type:", typeof categoryIdToFilter);
-        
-        // Convert to string as the database stores category as text
-        const finalIdForQuery = categoryIdToFilter.toString();
-        console.log("4. Final ID for Supabase query (as string):", finalIdForQuery, "Type:", typeof finalIdForQuery);
-
-        if (!finalIdForQuery || finalIdForQuery === "null" || finalIdForQuery === "undefined") {
-          console.error("CRITICAL: finalIdForQuery is not valid for filtering:", finalIdForQuery);
-          setError("Erreur de configuration de la catégorie");
-          setIsLoading(false);
-          return;
-        }
+        // Use the category name for database filtering instead of ID
+        const categoryNameForQuery = category.name;
+        console.log("3. Using category name for database query:", categoryNameForQuery);
 
         const offset = (page - 1) * ITEMS_PER_PAGE;
         
-        console.log("5. About to query 'ads' table. Filtering with category =", finalIdForQuery);
+        console.log("4. About to query 'ads' table. Filtering with category name =", categoryNameForQuery);
         
-        // Query ads using the string category ID
+        // Query ads using the category name
         const { data: ads, error: adsError, count, status } = await supabase
           .from('ads')
           .select('*', { count: 'exact' })
-          .eq('category', finalIdForQuery)
+          .eq('category', categoryNameForQuery)
           .eq('status', 'approved') // Only show approved ads
           .range(offset, offset + ITEMS_PER_PAGE - 1)
           .order('created_at', { ascending: false });
 
-        console.log("6. Supabase 'ads' query response:");
+        console.log("5. Supabase 'ads' query response:");
         console.log("   Status:", status);
         console.log("   Error:", JSON.stringify(adsError, null, 2));
         console.log("   Data:", ads);
@@ -89,7 +78,7 @@ const CategoryPage = () => {
         const mappedAds: Ad[] = [];
         
         if (ads && ads.length > 0) {
-          console.log("7. Processing", ads.length, "ads to add imageUrl");
+          console.log("6. Processing", ads.length, "ads to add imageUrl");
           
           for (const ad of ads) {
             // Get the first image for this ad
@@ -125,7 +114,7 @@ const CategoryPage = () => {
           }
         }
 
-        console.log("8. After mapping, final ads array length:", mappedAds.length);
+        console.log("7. After mapping, final ads array length:", mappedAds.length);
         
         setResults(mappedAds);
         setTotalCount(count || 0);
@@ -133,7 +122,7 @@ const CategoryPage = () => {
         console.log(`Successfully loaded ${mappedAds.length} ads for category ${category.name}`);
         
         if (mappedAds.length === 0) {
-          console.log("9. Rendering '0 résultats trouvés' because ads array is empty and no loading/error.");
+          console.log("8. Rendering '0 résultats trouvés' because ads array is empty and no loading/error.");
         }
       } catch (err) {
         console.error("Error fetching category results:", err);
