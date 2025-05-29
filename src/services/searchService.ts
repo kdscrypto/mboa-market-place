@@ -29,7 +29,21 @@ export const searchAds = async (filters: SearchFilters) => {
   if (filters.category && filters.category !== 'all' && filters.category !== '0') {
     // Convert category slug to database value
     const categoryDbValue = getCategoryDbValue(filters.category);
-    console.log("Mapping category slug to DB value:", { slug: filters.category, dbValue: categoryDbValue });
+    console.log("Applying category filter:", { 
+      originalSlug: filters.category, 
+      mappedDbValue: categoryDbValue 
+    });
+    
+    // Debug: Let's also check what categories exist in the database
+    const { data: allAds } = await supabase
+      .from('ads')
+      .select('category')
+      .eq('status', 'approved')
+      .limit(100);
+    
+    const uniqueCategories = [...new Set(allAds?.map(ad => ad.category) || [])];
+    console.log("Available categories in database:", uniqueCategories);
+    
     query = query.eq('category', categoryDbValue);
   }
 
@@ -62,7 +76,11 @@ export const searchAds = async (filters: SearchFilters) => {
     throw error;
   }
 
-  console.log("Found", data?.length || 0, "ads matching the filters");
+  console.log("Search results:", { 
+    foundAds: data?.length || 0, 
+    totalCount: count,
+    filters: filters
+  });
 
   // Add imageUrl to each ad (using first image or placeholder)
   const adsWithImages = await Promise.all(
