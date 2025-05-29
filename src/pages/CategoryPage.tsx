@@ -44,19 +44,26 @@ const CategoryPage = () => {
           return;
         }
 
-        // Use the category ID for database filtering (stored as string in database)
-        const categoryIdForQuery = category.id.toString();
-        console.log("3. Using category ID for database query:", categoryIdForQuery, "Type:", typeof categoryIdForQuery);
+        // Use the numeric category ID directly
+        const categoryIdToFilter = category.id;
+        console.log("3. Attempting to filter by category ID (NUMERIC):", categoryIdToFilter, "Type:", typeof categoryIdToFilter);
+
+        if (categoryIdToFilter === null || categoryIdToFilter === undefined || isNaN(categoryIdToFilter)) {
+          console.error("CRITICAL: categoryIdToFilter is not valid for filtering:", categoryIdToFilter);
+          setError("Erreur de configuration de la catégorie");
+          setIsLoading(false);
+          return;
+        }
 
         const offset = (page - 1) * ITEMS_PER_PAGE;
         
-        console.log("4. About to query 'ads' table. Filtering with category ID =", categoryIdForQuery);
+        console.log("4. About to query 'ads' table. Filtering with category =", categoryIdToFilter);
         
-        // Query ads using the category ID (as string)
+        // Query ads using the numeric category ID
         const { data: ads, error: adsError, count, status } = await supabase
           .from('ads')
           .select('*', { count: 'exact' })
-          .eq('category', categoryIdForQuery)
+          .eq('category', categoryIdToFilter)
           .eq('status', 'approved') // Only show approved ads
           .range(offset, offset + ITEMS_PER_PAGE - 1)
           .order('created_at', { ascending: false });
@@ -119,7 +126,7 @@ const CategoryPage = () => {
         setResults(mappedAds);
         setTotalCount(count || 0);
         
-        console.log(`Successfully loaded ${mappedAds.length} ads for category ${category.name} (ID: ${categoryIdForQuery})`);
+        console.log(`Successfully loaded ${mappedAds.length} ads for category ${category.name} (ID: ${categoryIdToFilter})`);
         
         if (mappedAds.length === 0) {
           console.log("8. Rendering '0 résultats trouvés' because ads array is empty and no loading/error.");
