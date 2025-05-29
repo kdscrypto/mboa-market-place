@@ -82,12 +82,12 @@ const Index = () => {
         <HeroSection />
         <SearchSection onSearch={handleSearch} />
         <CategoriesSection categories={featuredCategories} />
-        <FeaturesSections />
         <AdsSection 
           recentAds={recentAds} 
           isLoading={isLoading} 
           error={error} 
         />
+        <FeaturesSections />
         <CTASection />
       </main>
       <Footer />
