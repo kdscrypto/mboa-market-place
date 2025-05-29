@@ -55,10 +55,9 @@ const CategoryPage = () => {
         
         console.log("4. Sample category values from database:", allAds?.map(ad => ad.category).slice(0, 10));
         
-        // Try multiple approaches to find the ads
-        const categoryQueries = [
+        // Try multiple approaches to find the ads - ensure all values are strings
+        const categoryQueries: string[] = [
           category.id.toString(),  // "10"
-          category.id,             // 10
           category.name,           // "Services"
           category.slug            // "services"
         ];
