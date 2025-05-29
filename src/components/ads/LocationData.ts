@@ -27,11 +27,11 @@ export const cities = {
   "sud": ["Ebolowa", "Kribi", "Sangmélima"],
 };
 
-export const categories = [
-  { id: 1, name: "Électronique", slug: "electronique" },
-  { id: 2, name: "Véhicules", slug: "vehicules" },
-  { id: 3, name: "Immobilier", slug: "immobilier" },
-  { id: 4, name: "Vêtements", slug: "vetements" },
-  { id: 5, name: "Services", slug: "services" },
-  { id: 6, name: "Emploi", slug: "emploi" },
-];
+// UPDATED: Use the same categories as in categoriesData.ts to ensure consistency
+import { categories as mainCategories } from "@/data/categoriesData";
+
+export const categories = mainCategories.map(cat => ({
+  id: cat.id,
+  name: cat.name,
+  slug: cat.slug
+}));

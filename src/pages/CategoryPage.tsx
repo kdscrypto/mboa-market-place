@@ -44,28 +44,69 @@ const CategoryPage = () => {
           return;
         }
 
-        // Convert the numeric category ID to string for database query (since category column is text)
-        const categoryIdForQuery = category.id.toString();
-        console.log("3. Converting category ID to string for database query:", categoryIdForQuery, "Type:", typeof categoryIdForQuery);
-
         const offset = (page - 1) * ITEMS_PER_PAGE;
         
-        console.log("4. About to query 'ads' table. Filtering with category =", categoryIdForQuery);
-        
-        // Query ads using the category ID (converted to string)
-        const { data: ads, error: adsError, count, status } = await supabase
+        // First, let's check what category values exist in the database
+        console.log("3. Checking what category values exist in the database...");
+        const { data: allAds } = await supabase
           .from('ads')
-          .select('*', { count: 'exact' })
-          .eq('category', categoryIdForQuery)
-          .eq('status', 'approved') // Only show approved ads
-          .range(offset, offset + ITEMS_PER_PAGE - 1)
-          .order('created_at', { ascending: false });
-
-        console.log("5. Supabase 'ads' query response:");
-        console.log("   Status:", status);
-        console.log("   Error:", JSON.stringify(adsError, null, 2));
-        console.log("   Data:", ads);
-        console.log("   Count:", count);
+          .select('category, status')
+          .limit(100);
+        
+        console.log("4. Sample category values from database:", allAds?.map(ad => ad.category).slice(0, 10));
+        
+        // Try multiple approaches to find the ads
+        const categoryQueries = [
+          category.id.toString(),  // "10"
+          category.id,             // 10
+          category.name,           // "Services"
+          category.slug            // "services"
+        ];
+        
+        console.log("5. Trying different category query values:", categoryQueries);
+        
+        let ads = null;
+        let adsError = null;
+        let count = 0;
+        let matchedQuery = null;
+        
+        for (const queryValue of categoryQueries) {
+          console.log(`6. Trying category query with value: ${queryValue} (type: ${typeof queryValue})`);
+          
+          const { data: testAds, error: testError, count: testCount } = await supabase
+            .from('ads')
+            .select('*', { count: 'exact' })
+            .eq('category', queryValue)
+            .eq('status', 'approved')
+            .range(offset, offset + ITEMS_PER_PAGE - 1)
+            .order('created_at', { ascending: false });
+          
+          console.log(`   Result: ${testAds?.length || 0} ads found, error:`, testError);
+          
+          if (testAds && testAds.length > 0) {
+            ads = testAds;
+            adsError = testError;
+            count = testCount || 0;
+            matchedQuery = queryValue;
+            console.log(`7. SUCCESS! Found ${ads.length} ads using query value: ${queryValue}`);
+            break;
+          }
+        }
+        
+        // If still no results, try a broader search
+        if (!ads || ads.length === 0) {
+          console.log("8. No ads found with specific category matching. Trying broader search...");
+          
+          const { data: broadAds, error: broadError, count: broadCount } = await supabase
+            .from('ads')
+            .select('*', { count: 'exact' })
+            .eq('status', 'approved')
+            .range(offset, offset + ITEMS_PER_PAGE - 1)
+            .order('created_at', { ascending: false });
+          
+          console.log("9. Broad search (all approved ads):", broadAds?.length || 0, "ads found");
+          console.log("10. Sample of all approved ads categories:", broadAds?.slice(0, 5).map(ad => ({ id: ad.id, category: ad.category, title: ad.title })));
+        }
 
         if (adsError) {
           console.error("Error fetching ads:", adsError);
@@ -78,7 +119,7 @@ const CategoryPage = () => {
         const mappedAds: Ad[] = [];
         
         if (ads && ads.length > 0) {
-          console.log("6. Processing", ads.length, "ads to add imageUrl");
+          console.log("11. Processing", ads.length, "ads to add imageUrl");
           
           for (const ad of ads) {
             // Get the first image for this ad
@@ -114,15 +155,16 @@ const CategoryPage = () => {
           }
         }
 
-        console.log("7. After mapping, final ads array length:", mappedAds.length);
+        console.log("12. After mapping, final ads array length:", mappedAds.length);
+        console.log("13. Query that worked:", matchedQuery || "none");
         
         setResults(mappedAds);
         setTotalCount(count || 0);
         
-        console.log(`Successfully loaded ${mappedAds.length} ads for category ${category.name} (ID: ${categoryIdForQuery})`);
+        console.log(`Successfully loaded ${mappedAds.length} ads for category ${category.name} (ID: ${category.id}) using query: ${matchedQuery || 'none'}`);
         
         if (mappedAds.length === 0) {
-          console.log("8. Rendering '0 résultats trouvés' because ads array is empty and no loading/error.");
+          console.log("14. Rendering '0 résultats trouvés' because ads array is empty and no loading/error.");
         }
       } catch (err) {
         console.error("Error fetching category results:", err);
