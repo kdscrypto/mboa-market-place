@@ -85,7 +85,7 @@ const CategoryPage = () => {
           return;
         }
 
-        // Map the database results to include imageUrl
+        // Map the database results to include imageUrl and handle missing fields
         const mappedAds: Ad[] = [];
         
         if (ads && ads.length > 0) {
@@ -116,7 +116,7 @@ const CategoryPage = () => {
               created_at: ad.created_at,
               imageUrl: imageUrl,
               user_id: ad.user_id,
-              is_premium: ad.is_premium,
+              is_premium: false, // Default value since this field doesn't exist in the database
               ad_type: ad.ad_type,
               reject_reason: ad.reject_reason
             };
