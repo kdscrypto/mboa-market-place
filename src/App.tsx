@@ -12,6 +12,7 @@ import AuthCallback from "./pages/AuthCallback";
 import SearchResults from "./pages/SearchResults";
 import Categories from "./pages/Categories";
 import CategoryPage from "./pages/CategoryPage";
+import AdDetail from "./pages/AdDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/recherche" element={<SearchResults />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/categorie/:slug" element={<CategoryPage />} />
+          <Route path="/annonce/:id" element={<AdDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
