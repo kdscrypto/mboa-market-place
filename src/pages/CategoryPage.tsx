@@ -33,52 +33,108 @@ const CategoryPage = () => {
       setError(null);
       
       try {
-        console.log("[CategoryPage] Raw URL slug:", slug);
-        console.log("[CategoryPage] Found category:", category);
+        console.log("--- DEBUG CATEGORY PAGE ---");
+        console.log("1. Raw URL Parameter (slug from useParams):", slug);
+        console.log("2. Found category from categories data:", category);
 
         if (!category) {
-          console.error("[CategoryPage] Category not found for slug:", slug);
+          console.error("CRITICAL: Category not found for slug:", slug);
           setError("Catégorie non trouvée");
           setIsLoading(false);
           return;
         }
 
-        // Get the numerical category ID from the category data
         // The categories data should have an id field that matches the database
         const categoryIdToFilter = category.id;
-        console.log(`[CategoryPage] Using numerical category ID: ${categoryIdToFilter} (Type: ${typeof categoryIdToFilter})`);
+        console.log("3. Attempting to filter by category ID:", categoryIdToFilter, "Type:", typeof categoryIdToFilter);
+        
+        // Convert to string as the database stores category as text
+        const finalIdForQuery = categoryIdToFilter.toString();
+        console.log("4. Final ID for Supabase query (as string):", finalIdForQuery, "Type:", typeof finalIdForQuery);
+
+        if (!finalIdForQuery || finalIdForQuery === "null" || finalIdForQuery === "undefined") {
+          console.error("CRITICAL: finalIdForQuery is not valid for filtering:", finalIdForQuery);
+          setError("Erreur de configuration de la catégorie");
+          setIsLoading(false);
+          return;
+        }
 
         const offset = (page - 1) * ITEMS_PER_PAGE;
         
-        // Query ads using the numerical category ID
-        console.log(`[CategoryPage] Fetching ads for category_id: ${categoryIdToFilter}`);
+        console.log("5. About to query 'ads' table. Filtering with category =", finalIdForQuery);
         
-        const { data: ads, error: adsError, count } = await supabase
+        // Query ads using the string category ID
+        const { data: ads, error: adsError, count, status } = await supabase
           .from('ads')
           .select('*', { count: 'exact' })
-          .eq('category', categoryIdToFilter.toString()) // Convert to string to match database field
+          .eq('category', finalIdForQuery)
           .eq('status', 'approved') // Only show approved ads
           .range(offset, offset + ITEMS_PER_PAGE - 1)
           .order('created_at', { ascending: false });
 
-        console.log("[CategoryPage] Supabase query result:", { 
-          ads: ads?.length || 0, 
-          count, 
-          error: adsError,
-          categoryIdUsed: categoryIdToFilter.toString()
-        });
+        console.log("6. Supabase 'ads' query response:");
+        console.log("   Status:", status);
+        console.log("   Error:", JSON.stringify(adsError, null, 2));
+        console.log("   Data:", ads);
+        console.log("   Count:", count);
 
         if (adsError) {
-          console.error("[CategoryPage] Error fetching ads:", adsError);
+          console.error("Error fetching ads:", adsError);
           setError("Une erreur s'est produite lors du chargement des annonces. Veuillez réessayer.");
           setIsLoading(false);
           return;
         }
 
-        setResults(ads || []);
+        // Map the database results to include imageUrl
+        const mappedAds: Ad[] = [];
+        
+        if (ads && ads.length > 0) {
+          console.log("7. Processing", ads.length, "ads to add imageUrl");
+          
+          for (const ad of ads) {
+            // Get the first image for this ad
+            const { data: images } = await supabase
+              .from('ad_images')
+              .select('image_url')
+              .eq('ad_id', ad.id)
+              .order('position', { ascending: true })
+              .limit(1);
+
+            const imageUrl = images && images.length > 0 ? images[0].image_url : '/placeholder.svg';
+            
+            const mappedAd: Ad = {
+              id: ad.id,
+              title: ad.title,
+              description: ad.description,
+              price: ad.price,
+              category: ad.category,
+              city: ad.city,
+              region: ad.region,
+              phone: ad.phone,
+              whatsapp: ad.whatsapp,
+              status: ad.status,
+              created_at: ad.created_at,
+              imageUrl: imageUrl,
+              user_id: ad.user_id,
+              is_premium: ad.is_premium,
+              ad_type: ad.ad_type,
+              reject_reason: ad.reject_reason
+            };
+            
+            mappedAds.push(mappedAd);
+          }
+        }
+
+        console.log("8. After mapping, final ads array length:", mappedAds.length);
+        
+        setResults(mappedAds);
         setTotalCount(count || 0);
         
-        console.log(`[CategoryPage] Successfully loaded ${ads?.length || 0} ads for category ${category.name}`);
+        console.log(`Successfully loaded ${mappedAds.length} ads for category ${category.name}`);
+        
+        if (mappedAds.length === 0) {
+          console.log("9. Rendering '0 résultats trouvés' because ads array is empty and no loading/error.");
+        }
       } catch (err) {
         console.error("Error fetching category results:", err);
         setError("Une erreur s'est produite lors du chargement des annonces. Veuillez réessayer.");
