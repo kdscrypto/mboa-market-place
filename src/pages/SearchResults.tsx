@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
@@ -10,6 +9,22 @@ import { Ad } from "@/types/adTypes";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { categories } from "@/data/categoriesData";
+
+// Regions data - imported from the same source as categories
+const regions = [
+  { id: 0, name: 'Tout le Cameroun', slug: 'all' },
+  { id: 1, name: 'Littoral', slug: 'littoral' },
+  { id: 2, name: 'Centre', slug: 'centre' },
+  { id: 3, name: 'Ouest', slug: 'ouest' },
+  { id: 4, name: 'Sud-Ouest', slug: 'sud-ouest' },
+  { id: 5, name: 'Nord-Ouest', slug: 'nord-ouest' },
+  { id: 6, name: 'Est', slug: 'est' },
+  { id: 7, name: 'Adamaoua', slug: 'adamaoua' },
+  { id: 8, name: 'Nord', slug: 'nord' },
+  { id: 9, name: 'Extrême-Nord', slug: 'extreme-nord' },
+  { id: 10, name: 'Sud', slug: 'sud' },
+];
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -58,6 +73,7 @@ const SearchResults = () => {
           offset
         };
         
+        console.log("Executing search with enhanced ILIKE functionality:", searchFilters);
         const { ads, count } = await searchAds(searchFilters);
         setResults(ads);
         setTotalCount(count);
@@ -220,6 +236,11 @@ const SearchResults = () => {
                   ) : (
                     <>
                       <span className="font-semibold">{totalCount}</span> résultat{totalCount !== 1 ? 's' : ''} trouvé{totalCount !== 1 ? 's' : ''} pour {getSearchSummary()}
+                      {currentFilters.query && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          Recherche avancée : correspondance partielle et insensible à la casse
+                        </div>
+                      )}
                     </>
                   )}
                 </p>
@@ -285,30 +306,5 @@ const SearchResults = () => {
     </div>
   );
 };
-
-// Mock data - Same as used in SearchFilters
-const categories = [
-  { id: 0, name: 'Toutes les catégories', slug: 'all' },
-  { id: 1, name: 'Électronique', slug: 'electronique' },
-  { id: 2, name: 'Véhicules', slug: 'vehicules' },
-  { id: 3, name: 'Immobilier', slug: 'immobilier' },
-  { id: 4, name: 'Vêtements', slug: 'vetements' },
-  { id: 5, name: 'Services', slug: 'services' },
-  { id: 6, name: 'Emploi', slug: 'emploi' },
-];
-
-const regions = [
-  { id: 0, name: 'Tout le Cameroun', slug: 'all' },
-  { id: 1, name: 'Littoral', slug: 'littoral' },
-  { id: 2, name: 'Centre', slug: 'centre' },
-  { id: 3, name: 'Ouest', slug: 'ouest' },
-  { id: 4, name: 'Sud-Ouest', slug: 'sud-ouest' },
-  { id: 5, name: 'Nord-Ouest', slug: 'nord-ouest' },
-  { id: 6, name: 'Est', slug: 'est' },
-  { id: 7, name: 'Adamaoua', slug: 'adamaoua' },
-  { id: 8, name: 'Nord', slug: 'nord' },
-  { id: 9, name: 'Extrême-Nord', slug: 'extreme-nord' },
-  { id: 10, name: 'Sud', slug: 'sud' },
-];
 
 export default SearchResults;

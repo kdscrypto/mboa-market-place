@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
-import { categories, regions } from "@/data/categoriesData";
 
 interface SearchFilters {
   query?: string;
@@ -23,22 +22,41 @@ export const searchAds = async (filters: SearchFilters): Promise<{ ads: Ad[], co
       .select('*', { count: 'exact' })
       .eq('status', 'approved');
 
-    // Apply filters
+    // Apply text search with ILIKE for partial, case-insensitive matching
     if (filters.query && filters.query.trim() !== '') {
-      // Full text search using ilike for simple case
-      query = query.ilike('title', `%${filters.query.trim()}%`);
+      const searchQuery = filters.query.trim();
+      
+      // Split search query into individual words for AND logic
+      const searchWords = searchQuery.split(/\s+/).filter(word => word.length > 0);
+      
+      if (searchWords.length === 1) {
+        // Single word search - search in title OR description
+        const word = searchWords[0];
+        query = query.or(`title.ilike.%${word}%,description.ilike.%${word}%`);
+      } else if (searchWords.length > 1) {
+        // Multiple words - each word must be found in at least one field (AND logic across words)
+        // Build a complex filter where each word can match in either title OR description
+        const wordFilters = searchWords.map(word => 
+          `or(title.ilike.%${word}%,description.ilike.%${word}%)`
+        );
+        
+        // Apply each word filter as an AND condition
+        const filterString = `and(${wordFilters.join(',')})`;
+        query = query.or(filterString);
+      }
     }
 
-    if (filters.category && filters.category !== 'all') {
-      // Direct matching on category slug
+    // Apply category filter
+    if (filters.category && filters.category !== '0' && filters.category !== 'all') {
       query = query.eq('category', filters.category);
     }
 
-    if (filters.region && filters.region !== 'all') {
-      // Direct matching on region slug
+    // Apply region filter
+    if (filters.region && filters.region !== '0' && filters.region !== 'all') {
       query = query.eq('region', filters.region);
     }
 
+    // Apply price filters
     if (filters.minPrice && Number(filters.minPrice) > 0) {
       query = query.gte('price', Number(filters.minPrice));
     }
@@ -47,7 +65,7 @@ export const searchAds = async (filters: SearchFilters): Promise<{ ads: Ad[], co
       query = query.lte('price', Number(filters.maxPrice));
     }
 
-    // First sort by ad_type (premium first), then by most recent
+    // Sort by ad_type (premium first), then by most recent
     query = query.order('ad_type', { ascending: false });
     query = query.order('created_at', { ascending: false });
 
@@ -56,8 +74,8 @@ export const searchAds = async (filters: SearchFilters): Promise<{ ads: Ad[], co
       query = query.limit(filters.limit);
     }
 
-    if (filters.offset) {
-      query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
+    if (filters.offset && filters.limit) {
+      query = query.range(filters.offset, filters.offset + filters.limit - 1);
     }
 
     // Execute the query
