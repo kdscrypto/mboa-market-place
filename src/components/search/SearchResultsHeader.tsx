@@ -1,7 +1,7 @@
 
 import React from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { categories } from "@/data/categoriesData";
+import { categories } from "@/data/filtersData";
 
 // Regions data - same as in SearchResults
 const regions = [
@@ -58,7 +58,8 @@ const SearchResultsHeader: React.FC<SearchResultsHeaderProps> = ({
           filterCategoryId: filters.category,
           parsedId: categoryId,
           foundCategory: category,
-          categoryName: categoryName
+          categoryName: categoryName,
+          availableCategories: categories.map(c => ({ id: c.id, name: c.name }))
         });
       }
       
