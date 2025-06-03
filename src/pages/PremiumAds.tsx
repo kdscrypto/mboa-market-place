@@ -1,33 +1,61 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { fetchPremiumAds } from "@/services/trendingService";
+import { searchPremiumAds, getUniqueValues } from "@/services/premiumSearchService";
 import { Ad } from "@/types/adTypes";
-import AdCard from "@/components/AdCard";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PremiumBadge from "@/components/PremiumBadge";
+import PremiumFilters from "@/components/premium/PremiumFilters";
+import PremiumSearchResults from "@/components/premium/PremiumSearchResults";
+import { usePremiumFilters } from "@/hooks/usePremiumFilters";
 import { toast } from "@/components/ui/use-toast";
 
 const PremiumAds = () => {
   const [premiumAds, setPremiumAds] = useState<Ad[]>([]);
+  const [filteredAds, setFilteredAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [isRetrying, setIsRetrying] = useState<boolean>(false);
 
+  const {
+    filters,
+    updateFilter,
+    resetFilters,
+    getSearchParams,
+    hasActiveFilters
+  } = usePremiumFilters();
+
+  // Load all premium ads initially
   useEffect(() => {
     loadPremiumAds();
   }, []);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (hasActiveFilters()) {
+        performSearch();
+      } else {
+        setFilteredAds(premiumAds);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [filters, premiumAds, hasActiveFilters]);
 
   const loadPremiumAds = async () => {
     setIsLoading(true);
     setError(false);
     try {
       console.log("Loading all premium ads...");
-      const ads = await fetchPremiumAds(50); // Load more ads for the dedicated page
+      const ads = await fetchPremiumAds(100); // Load more ads for filtering
       console.log("Premium ads loaded:", ads.length);
       setPremiumAds(ads);
+      setFilteredAds(ads);
     } catch (err) {
       console.error("Error loading premium ads:", err);
       setError(true);
@@ -36,13 +64,43 @@ const PremiumAds = () => {
     }
   };
 
+  const performSearch = useCallback(async () => {
+    if (!hasActiveFilters()) {
+      setFilteredAds(premiumAds);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const searchParams = getSearchParams();
+      console.log("Performing premium search with params:", searchParams);
+      
+      const results = await searchPremiumAds(searchParams);
+      setFilteredAds(results);
+      
+      console.log("Search completed:", {
+        query: searchParams,
+        resultsCount: results.length
+      });
+    } catch (err) {
+      console.error("Error searching premium ads:", err);
+      toast({
+        description: "Erreur lors de la recherche",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  }, [filters, premiumAds, hasActiveFilters, getSearchParams]);
+
   const handleRetry = () => {
     setIsRetrying(true);
     
     const retryLoad = async () => {
       try {
-        const ads = await fetchPremiumAds(50);
+        const ads = await fetchPremiumAds(100);
         setPremiumAds(ads);
+        setFilteredAds(ads);
         setError(false);
         toast({
           description: "Données rafraîchies avec succès",
@@ -62,6 +120,15 @@ const PremiumAds = () => {
     retryLoad();
   };
 
+  const handleResetFilters = () => {
+    resetFilters();
+    setFilteredAds(premiumAds);
+  };
+
+  // Get unique values for filters
+  const uniqueCategories = getUniqueValues(premiumAds, 'category');
+  const uniqueCities = getUniqueValues(premiumAds, 'city');
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -79,14 +146,17 @@ const PremiumAds = () => {
             </p>
           </div>
 
-          {/* Content */}
-          <div className="bg-white border rounded-lg p-6">
-            {isLoading ? (
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="bg-white border rounded-lg p-6">
               <div className="flex justify-center items-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-mboa-orange" />
                 <span className="ml-2">Chargement des annonces premium...</span>
               </div>
-            ) : error ? (
+            </div>
+          ) : error ? (
+            /* Error State */
+            <div className="bg-white border rounded-lg p-6">
               <div className="text-center py-8">
                 <div className="flex justify-center mb-4">
                   <AlertCircle className="h-12 w-12 text-red-500" />
@@ -113,40 +183,39 @@ const PremiumAds = () => {
                   )}
                 </Button>
               </div>
-            ) : premiumAds.length === 0 ? (
-              <div className="text-center py-8">
-                <h3 className="text-lg font-semibold mb-2">Aucune annonce premium</h3>
-                <p className="text-gray-600">
-                  Aucune annonce premium n'est disponible pour le moment.
-                </p>
+            </div>
+          ) : (
+            /* Main Content */
+            <>
+              {/* Filters */}
+              <PremiumFilters
+                searchQuery={filters.query}
+                onSearchChange={(query) => updateFilter('query', query)}
+                uniqueCategories={uniqueCategories}
+                uniqueCities={uniqueCities}
+                filterCategory={filters.category}
+                setFilterCategory={(category) => updateFilter('category', category)}
+                filterCity={filters.city}
+                setFilterCity={(city) => updateFilter('city', city)}
+                minPrice={filters.minPrice}
+                maxPrice={filters.maxPrice}
+                onMinPriceChange={(price) => updateFilter('minPrice', price)}
+                onMaxPriceChange={(price) => updateFilter('maxPrice', price)}
+                onResetFilters={handleResetFilters}
+                hasActiveFilters={hasActiveFilters()}
+              />
+
+              {/* Results */}
+              <div className="bg-white border rounded-lg p-6">
+                <PremiumSearchResults
+                  ads={filteredAds}
+                  isSearching={isSearching}
+                  hasFilters={hasActiveFilters()}
+                  totalAdsCount={premiumAds.length}
+                />
               </div>
-            ) : (
-              <>
-                <div className="mb-4">
-                  <p className="text-gray-600">
-                    {premiumAds.length} annonce{premiumAds.length > 1 ? 's' : ''} premium trouvée{premiumAds.length > 1 ? 's' : ''}
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                  {premiumAds.map((ad) => (
-                    <AdCard
-                      key={ad.id}
-                      id={ad.id}
-                      title={ad.title}
-                      price={ad.price}
-                      location={{
-                        city: ad.city,
-                        region: ad.region
-                      }}
-                      imageUrl={ad.imageUrl}
-                      createdAt={new Date(ad.created_at)}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </main>
 
