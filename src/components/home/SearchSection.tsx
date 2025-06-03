@@ -9,7 +9,11 @@ interface SearchSectionProps {
 const SearchSection: React.FC<SearchSectionProps> = ({ onSearch }) => {
   return (
     <div className="mboa-container -mt-8 mb-8 relative z-20">
-      <SearchFilters onSearch={onSearch} />
+      <SearchFilters 
+        onSearch={onSearch}
+        placeholder="Rechercher une annonce..."
+        searchButtonText="Rechercher"
+      />
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -7,9 +8,8 @@ import { Ad } from "@/types/adTypes";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PremiumBadge from "@/components/PremiumBadge";
-import PremiumFilters from "@/components/premium/PremiumFilters";
+import SearchFilters from "@/components/SearchFilters";
 import PremiumSearchResults from "@/components/premium/PremiumSearchResults";
-import { usePremiumFilters } from "@/hooks/usePremiumFilters";
 import { toast } from "@/hooks/use-toast";
 
 const PremiumAds = () => {
@@ -19,32 +19,12 @@ const PremiumAds = () => {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [isRetrying, setIsRetrying] = useState<boolean>(false);
-
-  const {
-    filters,
-    updateFilter,
-    resetFilters,
-    getSearchParams,
-    hasActiveFilters
-  } = usePremiumFilters();
+  const [hasActiveFilters, setHasActiveFilters] = useState<boolean>(false);
 
   // Load all premium ads initially
   useEffect(() => {
     loadPremiumAds();
   }, []);
-
-  // Debounced search effect
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (hasActiveFilters()) {
-        performSearch();
-      } else {
-        setFilteredAds(premiumAds);
-      }
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [filters, premiumAds, hasActiveFilters]);
 
   const loadPremiumAds = async () => {
     setIsLoading(true);
@@ -63,15 +43,27 @@ const PremiumAds = () => {
     }
   };
 
-  const performSearch = useCallback(async () => {
-    if (!hasActiveFilters()) {
+  const handleSearch = useCallback(async (filters: any) => {
+    console.log("Premium search filters:", filters);
+    
+    const hasFilters = Object.keys(filters).length > 0;
+    setHasActiveFilters(hasFilters);
+    
+    if (!hasFilters) {
       setFilteredAds(premiumAds);
       return;
     }
 
     setIsSearching(true);
     try {
-      const searchParams = getSearchParams();
+      // Convert the filters to match the premium search service format
+      const searchParams: any = {};
+      
+      if (filters.query) searchParams.query = filters.query;
+      if (filters.category) searchParams.category = filters.category;
+      if (filters.minPrice) searchParams.minPrice = parseInt(filters.minPrice);
+      if (filters.maxPrice) searchParams.maxPrice = parseInt(filters.maxPrice);
+      
       console.log("Performing premium search with params:", searchParams);
       
       const results = await searchPremiumAds(searchParams);
@@ -90,7 +82,7 @@ const PremiumAds = () => {
     } finally {
       setIsSearching(false);
     }
-  }, [filters, premiumAds, hasActiveFilters, getSearchParams]);
+  }, [premiumAds]);
 
   const handleRetry = () => {
     setIsRetrying(true);
@@ -118,15 +110,6 @@ const PremiumAds = () => {
     
     retryLoad();
   };
-
-  const handleResetFilters = () => {
-    resetFilters();
-    setFilteredAds(premiumAds);
-  };
-
-  // Get unique values for filters
-  const uniqueCategories = getUniqueValues(premiumAds, 'category');
-  const uniqueCities = getUniqueValues(premiumAds, 'city');
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -186,22 +169,13 @@ const PremiumAds = () => {
           ) : (
             /* Main Content */
             <>
-              {/* Filters */}
-              <PremiumFilters
-                searchQuery={filters.query}
-                onSearchChange={(query) => updateFilter('query', query)}
-                uniqueCategories={uniqueCategories}
-                uniqueCities={uniqueCities}
-                filterCategory={filters.category}
-                setFilterCategory={(category) => updateFilter('category', category)}
-                filterCity={filters.city}
-                setFilterCity={(city) => updateFilter('city', city)}
-                minPrice={filters.minPrice}
-                maxPrice={filters.maxPrice}
-                onMinPriceChange={(price) => updateFilter('minPrice', price)}
-                onMaxPriceChange={(price) => updateFilter('maxPrice', price)}
-                onResetFilters={handleResetFilters}
-                hasActiveFilters={hasActiveFilters()}
+              {/* Search Filters */}
+              <SearchFilters
+                onSearch={handleSearch}
+                showRegion={false}
+                placeholder="Rechercher dans les annonces premium..."
+                searchButtonText="Rechercher"
+                className="mb-6"
               />
 
               {/* Results */}
@@ -209,7 +183,7 @@ const PremiumAds = () => {
                 <PremiumSearchResults
                   ads={filteredAds}
                   isSearching={isSearching}
-                  hasFilters={hasActiveFilters()}
+                  hasFilters={hasActiveFilters}
                   totalAdsCount={premiumAds.length}
                 />
               </div>

@@ -6,14 +6,19 @@ import { Search } from 'lucide-react';
 interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
 }
 
-const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => {
+const SearchInput: React.FC<SearchInputProps> = ({ 
+  value, 
+  onChange, 
+  placeholder = "Rechercher une annonce..." 
+}) => {
   return (
     <div className="relative">
       <Input
         type="text"
-        placeholder="Rechercher une annonce..."
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="pl-10 pr-4 mboa-input w-full"

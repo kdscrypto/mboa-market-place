@@ -17,9 +17,19 @@ interface SearchFiltersProps {
     minPrice?: string;
     maxPrice?: string;
   };
+  showRegion?: boolean;
+  searchButtonText?: string;
+  placeholder?: string;
 }
 
-const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className, initialFilters = {} }) => {
+const SearchFilters: React.FC<SearchFiltersProps> = ({ 
+  onSearch, 
+  className, 
+  initialFilters = {},
+  showRegion = true,
+  searchButtonText = "Rechercher",
+  placeholder = "Rechercher une annonce..."
+}) => {
   const [expanded, setExpanded] = useState(false);
   const [filters, setFilters] = useState({
     query: initialFilters.query || '',
@@ -73,6 +83,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className, init
           <SearchInput
             value={filters.query}
             onChange={(value) => handleChange('query', value)}
+            placeholder={placeholder}
           />
           
           {/* Always visible filters */}
@@ -82,10 +93,12 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className, init
               onChange={(value) => handleChange('category', value)}
             />
             
-            <RegionSelector
-              value={filters.region}
-              onChange={(value) => handleChange('region', value)}
-            />
+            {showRegion && (
+              <RegionSelector
+                value={filters.region}
+                onChange={(value) => handleChange('region', value)}
+              />
+            )}
             
             <AdvancedFilters
               expanded={expanded}
@@ -98,7 +111,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, className, init
             />
             
             <Button type="submit" className="bg-mboa-orange hover:bg-mboa-orange/90">
-              <Search className="mr-2 h-4 w-4" /> Rechercher
+              <Search className="mr-2 h-4 w-4" /> {searchButtonText}
             </Button>
           </div>
         </div>
