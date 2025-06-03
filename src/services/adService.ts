@@ -2,11 +2,18 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import { sendAdRejectionNotification } from "./messaging/notificationService";
+import { sanitizeText } from "@/utils/inputSanitization";
 
 // Fonction pour récupérer toutes les annonces avec leurs images principales
 export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
   try {
     console.log(`Fetching ads with status: ${status}`);
+    
+    // Sanitize status input
+    const sanitizedStatus = sanitizeText(status, 50);
+    if (!['pending', 'approved', 'rejected'].includes(sanitizedStatus)) {
+      throw new Error("Invalid status parameter");
+    }
     
     // Vérifier si l'utilisateur est connecté
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -18,23 +25,35 @@ export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
     
     if (!session) {
       console.error("No active session found");
-      throw new Error("Not authenticated");
+      throw new Error("Authentication required");
     }
     
-    // Fetch all ads with the specified status, without filtering by user_id
-    // The RLS policies will handle access control based on user role
+    // Check if user has admin/moderator privileges
+    const { data: hasAccess, error: accessError } = await supabase.rpc('is_admin_or_moderator');
+    
+    if (accessError) {
+      console.error("Error checking access privileges:", accessError);
+      throw new Error("Access verification failed");
+    }
+    
+    if (!hasAccess) {
+      console.error("User does not have required privileges");
+      throw new Error("Insufficient privileges");
+    }
+    
+    // Fetch ads with the specified status
     const { data: ads, error } = await supabase
       .from('ads')
       .select('*')
-      .eq('status', status)
+      .eq('status', sanitizedStatus)
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error(`Error retrieving ads with status ${status}:`, error);
+      console.error(`Error retrieving ads with status ${sanitizedStatus}:`, error);
       throw error;
     }
     
-    console.log(`${status} ads retrieved:`, ads?.length || 0);
+    console.log(`${sanitizedStatus} ads retrieved:`, ads?.length || 0);
     
     // Pour chaque annonce, récupérer l'image principale
     const adsWithImages = await Promise.all(
@@ -68,7 +87,7 @@ export const fetchAdsWithStatus = async (status: string): Promise<Ad[]> => {
     return adsWithImages;
   } catch (error) {
     console.error(`Error retrieving ads with status ${status}:`, error);
-    return [];
+    throw error; // Re-throw to let caller handle
   }
 };
 
@@ -81,6 +100,24 @@ export const updateAdStatus = async (
   try {
     console.log(`Updating ad ${adId} to status: ${status}`, rejectMessage ? `with message: ${rejectMessage}` : '');
     
+    // Sanitize inputs
+    const sanitizedAdId = sanitizeText(adId, 100);
+    if (!sanitizedAdId || !/^[a-fA-F0-9-]{36}$/.test(sanitizedAdId)) {
+      throw new Error("Invalid ad ID format");
+    }
+    
+    if (!['approved', 'rejected'].includes(status)) {
+      throw new Error("Invalid status value");
+    }
+    
+    let sanitizedRejectMessage: string | undefined;
+    if (rejectMessage) {
+      sanitizedRejectMessage = sanitizeText(rejectMessage, 1000);
+      if (!sanitizedRejectMessage.trim()) {
+        throw new Error("Reject message cannot be empty");
+      }
+    }
+    
     // Check authentication before proceeding
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
@@ -89,16 +126,29 @@ export const updateAdStatus = async (
       throw new Error("Authentication required");
     }
     
+    // Check if user has admin/moderator privileges
+    const { data: hasAccess, error: accessError } = await supabase.rpc('is_admin_or_moderator');
+    
+    if (accessError) {
+      console.error("Error checking access privileges:", accessError);
+      throw new Error("Access verification failed");
+    }
+    
+    if (!hasAccess) {
+      console.error("User does not have required privileges");
+      throw new Error("Insufficient privileges");
+    }
+    
     // Récupérer les détails de l'annonce pour obtenir user_id et title
     const { data: ad, error: adError } = await supabase
       .from('ads')
       .select('user_id, title')
-      .eq('id', adId)
+      .eq('id', sanitizedAdId)
       .single();
     
     if (adError || !ad) {
-      console.error(`Error fetching ad ${adId}:`, adError);
-      return false;
+      console.error(`Error fetching ad ${sanitizedAdId}:`, adError);
+      throw new Error("Ad not found");
     }
     
     console.log("Ad details:", ad);
@@ -107,31 +157,28 @@ export const updateAdStatus = async (
     const updateData: any = { status };
     
     // Ajouter le message de rejet si fourni
-    if (status === 'rejected' && rejectMessage) {
-      updateData.reject_reason = rejectMessage;
+    if (status === 'rejected' && sanitizedRejectMessage) {
+      updateData.reject_reason = sanitizedRejectMessage;
     }
     
-    // Let Row Level Security handle permission checks
+    // Update the ad status
     const { error } = await supabase
       .from('ads')
       .update(updateData)
-      .eq('id', adId);
+      .eq('id', sanitizedAdId);
     
     if (error) {
-      console.error(`Error updating ad ${adId}:`, error);
-      if (error.code === 'PGRST116') {
-        throw new Error("Permission denied: You don't have the required privileges");
-      }
+      console.error(`Error updating ad ${sanitizedAdId}:`, error);
       throw error;
     }
     
-    console.log(`Successfully updated ad ${adId} to ${status}`);
+    console.log(`Successfully updated ad ${sanitizedAdId} to ${status}`);
     
     // Si l'annonce est rejetée et qu'un message est fourni, envoyer une notification
-    if (status === 'rejected' && rejectMessage && ad.user_id) {
+    if (status === 'rejected' && sanitizedRejectMessage && ad.user_id) {
       console.log("Sending rejection notification...");
       try {
-        const notificationSent = await sendAdRejectionNotification(ad.user_id, adId, ad.title, rejectMessage);
+        const notificationSent = await sendAdRejectionNotification(ad.user_id, sanitizedAdId, ad.title, sanitizedRejectMessage);
         console.log("Notification sent:", notificationSent);
         
         if (!notificationSent) {
@@ -139,13 +186,14 @@ export const updateAdStatus = async (
         }
       } catch (notifError) {
         console.error("Error sending notification:", notifError);
-        // Nous continuons même si la notification échoue, car le statut a été mis à jour
+        // Continue even if notification fails, as the ad status was updated
       }
     }
     
     return true;
   } catch (error) {
     console.error(`Error updating ad ${adId} to ${status}:`, error);
-    return false;
+    throw error; // Re-throw to let caller handle
   }
 };
+

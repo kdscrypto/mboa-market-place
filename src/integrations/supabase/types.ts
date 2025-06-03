@@ -205,6 +205,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      validate_image_extension: {
+        Args: { filename: string }
+        Returns: boolean
+      }
     }
     Enums: {
       user_role: "user" | "admin" | "moderator"

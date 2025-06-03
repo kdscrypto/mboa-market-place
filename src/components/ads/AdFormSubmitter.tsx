@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AdFormData } from "./AdFormTypes";
 import { v4 as uuidv4 } from "uuid";
+import { sanitizeAdData, sanitizeFileName, isValidImageExtension, isValidFileSize } from "@/utils/inputSanitization";
 
 export const useAdSubmission = () => {
   const { toast } = useToast();
@@ -16,7 +17,12 @@ export const useAdSubmission = () => {
     
     try {
       // Vérifier l'authentification
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw new Error("Authentication error");
+      }
       
       if (!session) {
         toast({
@@ -28,20 +34,49 @@ export const useAdSubmission = () => {
         return;
       }
       
+      // Sanitize form data
+      const sanitizedData = sanitizeAdData(formData);
+      
+      // Validate required fields
+      if (!sanitizedData.title.trim()) {
+        throw new Error("Le titre est requis");
+      }
+      
+      if (!sanitizedData.description.trim()) {
+        throw new Error("La description est requise");
+      }
+      
+      if (!sanitizedData.phone.trim()) {
+        throw new Error("Le numéro de téléphone est requis");
+      }
+      
+      // Validate images if present
+      if (formData.images && formData.images.length > 0) {
+        for (const file of formData.images) {
+          if (!isValidImageExtension(file.name)) {
+            throw new Error(`Format d'image non valide: ${file.name}. Utilisez JPG, PNG, GIF ou WebP.`);
+          }
+          
+          if (!isValidFileSize(file.size, 10)) {
+            throw new Error(`Image trop volumineuse: ${file.name}. Taille maximale: 10 MB.`);
+          }
+        }
+      }
+      
       // Insérer l'annonce dans Supabase
       const { data: ad, error: adError } = await supabase
         .from('ads')
         .insert({
-          title: formData.title,
-          description: formData.description || "",
-          category: formData.category,
-          price: parseInt(formData.price || "0"),
-          region: formData.region,
-          city: formData.city,
-          phone: formData.phone,
-          whatsapp: formData.whatsapp || null,
+          title: sanitizedData.title,
+          description: sanitizedData.description,
+          category: sanitizedData.category,
+          price: sanitizedData.price,
+          region: sanitizedData.region,
+          city: sanitizedData.city,
+          phone: sanitizedData.phone,
+          whatsapp: sanitizedData.whatsapp || null,
           status: "pending",
-          ad_type: formData.adType,
+          ad_type: sanitizedData.adType,
           user_id: session.user.id
         })
         .select('id')
@@ -54,22 +89,29 @@ export const useAdSubmission = () => {
 
       // Si des images sont présentes, les télécharger et créer des références
       if (formData.images && formData.images.length > 0) {
+        console.log(`Uploading ${formData.images.length} images for ad ${ad.id}`);
+        
         // Gérer les téléchargements d'images séquentiellement pour éviter les problèmes sur mobile
         for (let i = 0; i < formData.images.length; i++) {
           const file = formData.images[i];
           const fileExt = file.name.split('.').pop();
-          const fileName = `${uuidv4()}.${fileExt}`;
-          const filePath = `${ad.id}/${fileName}`;
+          const sanitizedFileName = sanitizeFileName(`${uuidv4()}.${fileExt}`);
+          const filePath = `${ad.id}/${sanitizedFileName}`;
           
           try {
+            console.log(`Uploading image ${i + 1}/${formData.images.length}: ${sanitizedFileName}`);
+            
             // Télécharger le fichier dans Supabase Storage
             const { data: uploadData, error: uploadError } = await supabase.storage
               .from('ad_images')
-              .upload(filePath, file);
+              .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+              });
             
             if (uploadError) {
               console.error("Erreur lors du téléchargement de l'image:", uploadError);
-              continue;
+              throw new Error(`Erreur lors du téléchargement de l'image ${i + 1}`);
             }
             
             // Récupérer l'URL publique de l'image
@@ -88,9 +130,13 @@ export const useAdSubmission = () => {
             
             if (imageError) {
               console.error("Erreur lors de l'enregistrement de l'image:", imageError);
+              throw new Error(`Erreur lors de l'enregistrement de l'image ${i + 1}`);
             }
+            
+            console.log(`Successfully uploaded and saved image ${i + 1}`);
           } catch (imgError) {
-            console.error("Erreur non gérée lors du téléchargement:", imgError);
+            console.error("Erreur lors du traitement de l'image:", imgError);
+            throw imgError;
           }
         }
       }
@@ -110,9 +156,15 @@ export const useAdSubmission = () => {
       
     } catch (error) {
       console.error("Erreur lors de la soumission de l'annonce:", error);
+      
+      let errorMessage = "Un problème est survenu lors de la publication de votre annonce.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erreur",
-        description: "Un problème est survenu lors de la publication de votre annonce.",
+        description: errorMessage,
         variant: "destructive"
       });
       setIsLoading(false);
@@ -125,3 +177,4 @@ export const useAdSubmission = () => {
     handleSubmit
   };
 };
+
