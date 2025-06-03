@@ -24,10 +24,15 @@ const AdDetailInfo: React.FC<AdDetailInfoProps> = ({ ad }) => {
         <p className="theme-text-primary whitespace-pre-line">{ad.description}</p>
       </div>
       <div className="space-y-2 mb-6">
-        {/* Display category name instead of ID */}
-        <p className="text-sm theme-text-secondary"><span className="font-semibold theme-text-primary">Catégorie:</span> {ad.category}</p>
-        <p className="text-sm theme-text-secondary"><span className="font-semibold theme-text-primary">Lieu:</span> {ad.city}, {ad.region}</p>
-        <p className="text-sm theme-text-secondary"><span className="font-semibold theme-text-primary">Date de publication:</span> {new Date(ad.created_at).toLocaleDateString()}</p>
+        <p className="text-sm theme-text-secondary">
+          <span className="font-semibold theme-text-primary">Catégorie:</span> {ad.category}
+        </p>
+        <p className="text-sm theme-text-secondary">
+          <span className="font-semibold theme-text-primary">Lieu:</span> {ad.city}, {ad.region}
+        </p>
+        <p className="text-sm theme-text-secondary">
+          <span className="font-semibold theme-text-primary">Date de publication:</span> {new Date(ad.created_at).toLocaleDateString()}
+        </p>
       </div>
     </>
   );
