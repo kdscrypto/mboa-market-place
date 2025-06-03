@@ -5,6 +5,7 @@ import { Ad } from "@/types/adTypes";
 interface PremiumSearchFilters {
   query?: string;
   category?: string;
+  region?: string;
   city?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -26,6 +27,10 @@ export const searchPremiumAds = async (filters: PremiumSearchFilters = {}) => {
 
   if (filters.category && filters.category !== '') {
     query = query.eq('category', filters.category);
+  }
+
+  if (filters.region && filters.region !== '' && filters.region !== '0') {
+    query = query.eq('region', filters.region);
   }
 
   if (filters.city && filters.city !== '') {

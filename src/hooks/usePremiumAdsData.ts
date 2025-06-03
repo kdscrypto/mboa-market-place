@@ -54,6 +54,7 @@ export const usePremiumAdsData = () => {
       
       if (filters.query) searchParams.query = filters.query;
       if (filters.category) searchParams.category = filters.category;
+      if (filters.region) searchParams.region = filters.region;
       if (filters.minPrice) searchParams.minPrice = parseInt(filters.minPrice);
       if (filters.maxPrice) searchParams.maxPrice = parseInt(filters.maxPrice);
       

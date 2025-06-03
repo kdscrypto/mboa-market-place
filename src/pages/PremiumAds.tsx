@@ -47,7 +47,6 @@ const PremiumAds = () => {
               {/* Search Filters */}
               <SearchFilters
                 onSearch={handleSearch}
-                showRegion={false}
                 placeholder="Rechercher dans les annonces premium..."
                 searchButtonText="Rechercher"
                 className="mb-6"
