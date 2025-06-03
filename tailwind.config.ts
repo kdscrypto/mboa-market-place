@@ -2,7 +2,7 @@
 import type { Config } from "tailwindcss";
 
 export default {
-	darkMode: ["class"],
+	darkMode: ["class", '[data-theme="dark"]'],
 	content: [
 		"./pages/**/*.{ts,tsx}",
 		"./components/**/*.{ts,tsx}",
@@ -63,12 +63,18 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for Mboa Market
-				'mboa-orange': '#FF7722',
-				'mboa-green': '#25D366', 
-				'mboa-blue': '#3498db',
-				'mboa-gray': '#f8f9fa',
-				'mboa-dark': '#2d3436',
+				// Custom colors for Mboa Market with CSS variable references
+				'mboa-orange': 'var(--color-primary-accent)',
+				'mboa-green': 'var(--color-green)', 
+				'mboa-blue': 'var(--color-blue)',
+				'mboa-gray': 'var(--color-surface-elevated)',
+				'mboa-dark': 'var(--color-text-primary)',
+				// Theme-aware colors
+				'theme-bg': 'var(--color-background)',
+				'theme-surface': 'var(--color-surface)',
+				'theme-text': 'var(--color-text-primary)',
+				'theme-text-secondary': 'var(--color-text-secondary)',
+				'theme-border': 'var(--color-border)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

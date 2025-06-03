@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,9 +34,32 @@
     --ring: 30 100% 57%;
 
     --radius: 0.5rem;
+
+    /* Custom Mboa Market theme variables - Light Mode */
+    --color-background: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-elevated: #f8f9fa;
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-text-muted: #9ca3af;
+    --color-primary-accent: #FF7722;
+    --color-primary-accent-hover: #e5661f;
+    --color-text-on-accent: #ffffff;
+    --color-border: #e5e7eb;
+    --color-border-light: #f3f4f6;
+    --color-error: #ef4444;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-green: #25D366;
+    --color-blue: #3498db;
+    --color-input-bg: #ffffff;
+    --color-input-border: #d1d5db;
+    --color-dropdown-bg: #ffffff;
+    --color-shadow: rgba(0, 0, 0, 0.1);
+    --color-shadow-lg: rgba(0, 0, 0, 0.15);
   }
 
-  .dark {
+  html[data-theme="dark"] {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
@@ -45,7 +69,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 30 100% 57%;
+    --primary: 30 100% 60%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -63,6 +87,29 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 30 100% 60%;
+
+    /* Custom Mboa Market theme variables - Dark Mode */
+    --color-background: #121212;
+    --color-surface: #1e1e1e;
+    --color-surface-elevated: #2c2c2c;
+    --color-text-primary: #e0e0e0;
+    --color-text-secondary: #a0a0a0;
+    --color-text-muted: #737373;
+    --color-primary-accent: #FFA726;
+    --color-primary-accent-hover: #ff9800;
+    --color-text-on-accent: #000000;
+    --color-border: #333333;
+    --color-border-light: #404040;
+    --color-error: #f87171;
+    --color-success: #34d399;
+    --color-warning: #fbbf24;
+    --color-green: #25D366;
+    --color-blue: #60a5fa;
+    --color-input-bg: #1e1e1e;
+    --color-input-border: #404040;
+    --color-dropdown-bg: #1e1e1e;
+    --color-shadow: rgba(0, 0, 0, 0.3);
+    --color-shadow-lg: rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -74,10 +121,79 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold;
+    color: var(--color-text-primary);
+    transition: color 0.3s ease-in-out;
+  }
+
+  /* Update all surface elements to use theme variables */
+  .bg-white {
+    background-color: var(--color-surface) !important;
+    transition: background-color 0.3s ease-in-out;
+  }
+
+  .border {
+    border-color: var(--color-border) !important;
+    transition: border-color 0.3s ease-in-out;
+  }
+
+  .text-gray-600 {
+    color: var(--color-text-secondary) !important;
+    transition: color 0.3s ease-in-out;
+  }
+
+  .text-gray-700 {
+    color: var(--color-text-primary) !important;
+    transition: color 0.3s ease-in-out;
+  }
+
+  .text-gray-500 {
+    color: var(--color-text-muted) !important;
+    transition: color 0.3s ease-in-out;
+  }
+
+  /* Input and form elements */
+  input, textarea, select {
+    background-color: var(--color-input-bg) !important;
+    border-color: var(--color-input-border) !important;
+    color: var(--color-text-primary) !important;
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: var(--color-text-muted) !important;
+    transition: color 0.3s ease-in-out;
+  }
+
+  /* Dropdown and popover backgrounds */
+  [role="menu"], [role="listbox"], .popover-content, .dropdown-content {
+    background-color: var(--color-dropdown-bg) !important;
+    border-color: var(--color-border) !important;
+    box-shadow: 0 10px 15px -3px var(--color-shadow), 0 4px 6px -2px var(--color-shadow);
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  }
+
+  /* Shadow utilities for dark mode */
+  .shadow-sm {
+    box-shadow: 0 1px 2px 0 var(--color-shadow);
+  }
+
+  .shadow {
+    box-shadow: 0 1px 3px 0 var(--color-shadow), 0 1px 2px 0 var(--color-shadow);
+  }
+
+  .shadow-md {
+    box-shadow: 0 4px 6px -1px var(--color-shadow), 0 2px 4px -1px var(--color-shadow);
+  }
+
+  .shadow-lg {
+    box-shadow: 0 10px 15px -3px var(--color-shadow-lg), 0 4px 6px -2px var(--color-shadow);
   }
 }
 
@@ -87,23 +203,47 @@
   }
   
   .mboa-card {
-    @apply rounded-lg border bg-card shadow-sm hover:shadow-md transition-all duration-200;
+    @apply rounded-lg border shadow-sm hover:shadow-md transition-all duration-200;
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.2s ease-in-out;
   }
 
   .mboa-btn-primary {
-    @apply bg-mboa-orange text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors;
+    background-color: var(--color-primary-accent);
+    color: var(--color-text-on-accent);
+    @apply px-4 py-2 rounded-md transition-colors;
+  }
+
+  .mboa-btn-primary:hover {
+    background-color: var(--color-primary-accent-hover);
   }
 
   .mboa-btn-secondary {
-    @apply bg-mboa-green text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors;
+    background-color: var(--color-green);
+    color: var(--color-text-on-accent);
+    @apply px-4 py-2 rounded-md transition-colors;
+  }
+
+  .mboa-btn-secondary:hover {
+    opacity: 0.9;
   }
 
   .mboa-input {
-    @apply border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-mboa-orange;
+    background-color: var(--color-input-bg);
+    border-color: var(--color-input-border);
+    color: var(--color-text-primary);
+    @apply border p-2 rounded-md w-full focus:outline-none focus:ring-2 transition-all duration-200;
+    focus:ring-color: var(--color-primary-accent);
   }
   
   .mboa-link {
-    @apply text-mboa-orange hover:text-mboa-orange/80 transition-colors;
+    color: var(--color-primary-accent);
+    @apply transition-colors;
+  }
+
+  .mboa-link:hover {
+    color: var(--color-primary-accent-hover);
   }
   
   /* New animation and interaction classes */
@@ -117,6 +257,37 @@
   
   .animate-slide-in {
     @apply animate-[slide-in-right_0.4s_ease-out];
+  }
+
+  /* Theme-aware background utilities */
+  .theme-bg-primary {
+    background-color: var(--color-background);
+    transition: background-color 0.3s ease-in-out;
+  }
+
+  .theme-bg-surface {
+    background-color: var(--color-surface);
+    transition: background-color 0.3s ease-in-out;
+  }
+
+  .theme-bg-elevated {
+    background-color: var(--color-surface-elevated);
+    transition: background-color 0.3s ease-in-out;
+  }
+
+  .theme-text-primary {
+    color: var(--color-text-primary);
+    transition: color 0.3s ease-in-out;
+  }
+
+  .theme-text-secondary {
+    color: var(--color-text-secondary);
+    transition: color 0.3s ease-in-out;
+  }
+
+  .theme-border {
+    border-color: var(--color-border);
+    transition: border-color 0.3s ease-in-out;
   }
 }
 
