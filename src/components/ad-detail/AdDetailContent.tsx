@@ -25,7 +25,7 @@ const AdDetailContent: React.FC<AdDetailContentProps> = ({
       <div className="md:w-1/2">
         <AdImageCarousel images={images} title={ad.title} />
       </div>
-      <div className="p-6 md:w-1/2">
+      <div className="p-6 md:w-1/2 theme-bg-surface">
         <AdDetailInfo ad={ad} />
         
         <div className="space-y-3">
