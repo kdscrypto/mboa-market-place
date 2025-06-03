@@ -43,6 +43,11 @@ export const searchAds = async (filters: SearchFilters) => {
     
     const uniqueCategories = [...new Set(allAds?.map(ad => ad.category) || [])];
     console.log("Available categories in database:", uniqueCategories);
+    console.log("Category mapping debug:", {
+      inputCategory: filters.category,
+      mappedCategory: categoryDbValue,
+      availableInDb: uniqueCategories
+    });
     
     query = query.eq('category', categoryDbValue);
   }
@@ -81,7 +86,8 @@ export const searchAds = async (filters: SearchFilters) => {
     foundAds: data?.length || 0, 
     totalCount: count,
     filters: filters,
-    categoryUsed: filters.category ? getCategoryDbValue(filters.category) : 'all'
+    categoryUsed: filters.category ? getCategoryDbValue(filters.category) : 'all',
+    actualResultsCategories: data?.map(ad => ad.category) || []
   });
 
   // Add imageUrl to each ad (using first image or placeholder)
