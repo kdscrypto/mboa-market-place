@@ -93,9 +93,11 @@ const Footer = () => {
           <p className="text-gray-300">
             &copy; {currentYear} Mboa Market. Tous droits réservés.
           </p>
-          <p className="text-gray-300 mt-2">
-            <span className="font-bold">built with <Heart className="inline-block text-red-500" size={16} fill="red" /> by KDS</span>
-          </p>
+          <div className="mt-4">
+            <p className="text-xs text-gray-500 opacity-60">
+              <span>built with <Heart className="inline-block text-red-500" size={12} fill="red" /> by KDS</span>
+            </p>
+          </div>
         </div>
       </div>
     </footer>
