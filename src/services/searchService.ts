@@ -27,29 +27,26 @@ export const searchAds = async (filters: SearchFilters) => {
   }
 
   if (filters.category && filters.category !== 'all' && filters.category !== '0') {
-    // Convert category slug to database value
-    const categoryDbValue = getCategoryDbValue(filters.category);
+    // Use the category ID directly instead of converting it
     console.log("Applying category filter:", { 
-      originalSlug: filters.category, 
-      mappedDbValue: categoryDbValue 
+      originalCategory: filters.category,
+      categoryType: typeof filters.category
     });
     
-    // Debug: Let's also check what categories exist in the database
+    // Check what's actually in the database first
     const { data: allAds } = await supabase
       .from('ads')
       .select('category')
       .eq('status', 'approved')
-      .limit(100);
+      .limit(50);
     
     const uniqueCategories = [...new Set(allAds?.map(ad => ad.category) || [])];
     console.log("Available categories in database:", uniqueCategories);
-    console.log("Category mapping debug:", {
-      inputCategory: filters.category,
-      mappedCategory: categoryDbValue,
-      availableInDb: uniqueCategories
-    });
     
-    query = query.eq('category', categoryDbValue);
+    // Use the category value directly (should be the category ID as string)
+    query = query.eq('category', filters.category);
+    
+    console.log("Final category filter applied:", filters.category);
   }
 
   if (filters.region && filters.region !== 'all' && filters.region !== '0') {
@@ -73,8 +70,8 @@ export const searchAds = async (filters: SearchFilters) => {
     query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
   }
 
-  // Execute query with enhanced logging
-  console.log("Executing Supabase query for category:", filters.category ? getCategoryDbValue(filters.category) : 'all');
+  // Execute query
+  console.log("Executing search query with category:", filters.category);
   const { data, error, count } = await query;
 
   if (error) {
@@ -86,7 +83,6 @@ export const searchAds = async (filters: SearchFilters) => {
     foundAds: data?.length || 0, 
     totalCount: count,
     filters: filters,
-    categoryUsed: filters.category ? getCategoryDbValue(filters.category) : 'all',
     actualResultsCategories: data?.map(ad => ad.category) || []
   });
 

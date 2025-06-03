@@ -46,32 +46,21 @@ const SearchResultsHeader: React.FC<SearchResultsHeaderProps> = ({
     }
     
     if (filters.category && filters.category !== '0') {
-      // Handle both numeric and string category values
+      // Get category name directly from the ID in filters
+      const categoryId = parseInt(filters.category);
       let categoryName = null;
       
-      // Try to find by ID first (numeric)
-      const categoryId = parseInt(filters.category);
       if (!isNaN(categoryId)) {
         const category = categories.find(c => c.id === categoryId);
         categoryName = category?.name;
+        
+        console.log("Category lookup for header:", {
+          filterCategoryId: filters.category,
+          parsedId: categoryId,
+          foundCategory: category,
+          categoryName: categoryName
+        });
       }
-      
-      // If not found by ID, try to find by name (string)
-      if (!categoryName) {
-        const category = categories.find(c => 
-          c.name.toLowerCase() === filters.category.toLowerCase() ||
-          c.slug?.toLowerCase() === filters.category.toLowerCase()
-        );
-        categoryName = category?.name;
-      }
-      
-      // Log for debugging
-      console.log("Category search debug:", {
-        filterCategory: filters.category,
-        parsedId: categoryId,
-        foundCategoryName: categoryName,
-        availableCategories: categories.map(c => ({ id: c.id, name: c.name, slug: c.slug }))
-      });
       
       if (categoryName && categoryName !== 'Toutes les catégories') {
         parts.push(`dans ${categoryName}`);
