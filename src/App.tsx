@@ -13,6 +13,7 @@ import SearchResults from "./pages/SearchResults";
 import Categories from "./pages/Categories";
 import CategoryPage from "./pages/CategoryPage";
 import AdDetail from "./pages/AdDetail";
+import PremiumAds from "./pages/PremiumAds";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/categories" element={<Categories />} />
           <Route path="/categorie/:slug" element={<CategoryPage />} />
           <Route path="/annonce/:id" element={<AdDetail />} />
+          <Route path="/premium" element={<PremiumAds />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
