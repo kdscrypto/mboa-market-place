@@ -123,63 +123,63 @@
     font-family: 'Inter', sans-serif;
     background-color: var(--color-background);
     color: var(--color-text-primary);
-    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold;
     color: var(--color-text-primary);
-    transition: color 0.3s ease-in-out;
+    transition: color 0.15s ease;
   }
 
-  /* Update all surface elements to use theme variables */
+  /* Optimized surface elements transitions */
   .bg-white {
     background-color: var(--color-surface) !important;
-    transition: background-color 0.3s ease-in-out;
+    transition: background-color 0.15s ease;
   }
 
   .border {
     border-color: var(--color-border) !important;
-    transition: border-color 0.3s ease-in-out;
+    transition: border-color 0.15s ease;
   }
 
   .text-gray-600 {
     color: var(--color-text-secondary) !important;
-    transition: color 0.3s ease-in-out;
+    transition: color 0.15s ease;
   }
 
   .text-gray-700 {
     color: var(--color-text-primary) !important;
-    transition: color 0.3s ease-in-out;
+    transition: color 0.15s ease;
   }
 
   .text-gray-500 {
     color: var(--color-text-muted) !important;
-    transition: color 0.3s ease-in-out;
+    transition: color 0.15s ease;
   }
 
-  /* Input and form elements */
+  /* Optimized input and form elements */
   input, textarea, select {
     background-color: var(--color-input-bg) !important;
     border-color: var(--color-input-border) !important;
     color: var(--color-text-primary) !important;
-    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   }
 
   input::placeholder, textarea::placeholder {
     color: var(--color-text-muted) !important;
-    transition: color 0.3s ease-in-out;
+    transition: color 0.15s ease;
   }
 
-  /* Dropdown and popover backgrounds */
+  /* Optimized dropdown and popover backgrounds */
   [role="menu"], [role="listbox"], .popover-content, .dropdown-content {
     background-color: var(--color-dropdown-bg) !important;
     border-color: var(--color-border) !important;
     box-shadow: 0 10px 15px -3px var(--color-shadow), 0 4px 6px -2px var(--color-shadow);
-    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
   }
 
-  /* Shadow utilities for dark mode */
+  /* Simplified shadow utilities */
   .shadow-sm {
     box-shadow: 0 1px 2px 0 var(--color-shadow);
   }
@@ -206,7 +206,7 @@
     @apply rounded-lg border shadow-sm hover:shadow-md transition-all duration-200;
     background-color: var(--color-surface);
     border-color: var(--color-border);
-    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.2s ease-in-out;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
   }
 
   .mboa-btn-primary {
@@ -258,35 +258,35 @@
     @apply animate-[slide-in-right_0.4s_ease-out];
   }
 
-  /* Theme-aware background utilities */
+  /* Optimized theme-aware background utilities */
   .theme-bg-primary {
     background-color: var(--color-background);
-    transition: background-color 0.3s ease-in-out;
+    transition: background-color 0.15s ease;
   }
 
   .theme-bg-surface {
     background-color: var(--color-surface);
-    transition: background-color 0.3s ease-in-out;
+    transition: background-color 0.15s ease;
   }
 
   .theme-bg-elevated {
     background-color: var(--color-surface-elevated);
-    transition: background-color 0.3s ease-in-out;
+    transition: background-color 0.15s ease;
   }
 
   .theme-text-primary {
     color: var(--color-text-primary);
-    transition: color 0.3s ease-in-out;
+    transition: color 0.15s ease;
   }
 
   .theme-text-secondary {
     color: var(--color-text-secondary);
-    transition: color 0.3s ease-in-out;
+    transition: color 0.15s ease;
   }
 
   .theme-border {
     border-color: var(--color-border);
-    transition: border-color 0.3s ease-in-out;
+    transition: border-color 0.15s ease;
   }
 }
 
