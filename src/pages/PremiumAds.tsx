@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,7 +10,7 @@ import PremiumBadge from "@/components/PremiumBadge";
 import PremiumFilters from "@/components/premium/PremiumFilters";
 import PremiumSearchResults from "@/components/premium/PremiumSearchResults";
 import { usePremiumFilters } from "@/hooks/usePremiumFilters";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const PremiumAds = () => {
   const [premiumAds, setPremiumAds] = useState<Ad[]>([]);
