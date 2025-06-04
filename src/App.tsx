@@ -15,6 +15,11 @@ import Categories from "./pages/Categories";
 import CategoryPage from "./pages/CategoryPage";
 import AdDetail from "./pages/AdDetail";
 import PremiumAds from "./pages/PremiumAds";
+import About from "./pages/About";
+import Help from "./pages/Help";
+import TermsOfService from "./pages/TermsOfService";
+import Contact from "./pages/Contact";
+import ConseilsVendeurs from "./pages/ConseilsVendeurs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +42,11 @@ const App = () => (
             <Route path="/categorie/:slug" element={<CategoryPage />} />
             <Route path="/annonce/:id" element={<AdDetail />} />
             <Route path="/premium" element={<PremiumAds />} />
+            <Route path="/a-propos" element={<About />} />
+            <Route path="/aide" element={<Help />} />
+            <Route path="/conditions" element={<TermsOfService />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/conseils-vendeurs" element={<ConseilsVendeurs />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
