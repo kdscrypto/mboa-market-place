@@ -13,8 +13,8 @@ interface MessagesSidebarProps {
   loading: boolean;
   soundEnabled: boolean;
   notificationsEnabled: boolean;
-  onToggleSound: () => void;
-  onToggleNotifications: () => void;
+  onToggleSound: (enabled: boolean) => void;
+  onToggleNotifications: (enabled: boolean) => void;
   onSelectConversation: (conversationId: string) => void;
   onFilteredConversations: (filtered: Conversation[]) => void;
 }
