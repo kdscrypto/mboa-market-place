@@ -145,11 +145,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
             <Checkbox
               checked={isAllSelected}
               onCheckedChange={handleSelectAll}
-              ref={(el) => {
-                if (el) {
-                  el.indeterminate = isSomeSelected;
-                }
-              }}
+              className={isSomeSelected ? "data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted" : ""}
             />
             <span className="text-sm text-gray-600">
               {selectedAds.length > 0 ? `${selectedAds.length} sélectionnée(s)` : "Tout sélectionner"}
@@ -193,11 +189,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
                   <Checkbox
                     checked={isAllSelected}
                     onCheckedChange={handleSelectAll}
-                    ref={(el) => {
-                      if (el) {
-                        el.indeterminate = isSomeSelected;
-                      }
-                    }}
+                    className={isSomeSelected ? "data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted" : ""}
                   />
                 </TableHead>
               )}
