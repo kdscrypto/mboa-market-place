@@ -23,8 +23,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSender }) => {
     >
       {!isSender && (
         <Avatar className="h-8 w-8 mr-2">
-          <AvatarFallback className="bg-mboa-orange text-white">
-            {isSender ? "V" : "A"}
+          <AvatarFallback className="theme-bg-elevated theme-text-primary">
+            A
           </AvatarFallback>
         </Avatar>
       )}
@@ -34,14 +34,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSender }) => {
           "max-w-[80%] rounded-lg px-4 py-2 shadow-sm",
           isSender 
             ? "bg-mboa-orange text-white rounded-br-none" 
-            : "bg-gray-100 text-gray-800 rounded-bl-none"
+            : "theme-bg-surface theme-border border theme-text-primary rounded-bl-none"
         )}
       >
         <p className="text-sm">{message.content}</p>
         <p 
           className={cn(
             "text-xs mt-1 text-right",
-            isSender ? "text-white/80" : "text-gray-500"
+            isSender ? "text-white/80" : "theme-text-secondary"
           )}
         >
           {formattedTime}
