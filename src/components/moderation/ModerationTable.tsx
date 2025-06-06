@@ -1,23 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Check, Trash2 } from "lucide-react";
+import { Table, TableBody } from "@/components/ui/table";
 import { Ad } from "@/types/adTypes";
-import AdStatusBadge from "./AdStatusBadge";
-import AdActionButtons from "./AdActionButtons";
 import AdPreviewDialog from "./AdPreviewDialog";
 import RejectAdDialog from "./RejectAdDialog";
+import ModerationTableHeader from "./table/ModerationTableHeader";
+import ModerationTableRow from "./table/ModerationTableRow";
+import BulkActionsBar from "./table/BulkActionsBar";
+import EmptyTableState from "./table/EmptyTableState";
 
 interface ModerationTableProps {
   ads: Ad[];
@@ -63,7 +53,9 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
 
   // Reset selected ads when ads change
   useEffect(() => {
-    setCurrentSelectedAds([]);
+    if (typeof setCurrentSelectedAds === 'function') {
+      setCurrentSelectedAds([]);
+    }
   }, [ads, setCurrentSelectedAds]);
   
   const handleRejectClick = (adId: string) => {
@@ -89,18 +81,22 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setCurrentSelectedAds(ads.map(ad => ad.id));
-    } else {
-      setCurrentSelectedAds([]);
+    if (typeof setCurrentSelectedAds === 'function') {
+      if (checked) {
+        setCurrentSelectedAds(ads.map(ad => ad.id));
+      } else {
+        setCurrentSelectedAds([]);
+      }
     }
   };
 
   const handleSelectAd = (adId: string, checked: boolean) => {
-    if (checked) {
-      setCurrentSelectedAds(prev => [...prev, adId]);
-    } else {
-      setCurrentSelectedAds(prev => prev.filter(id => id !== adId));
+    if (typeof setCurrentSelectedAds === 'function') {
+      if (checked) {
+        setCurrentSelectedAds(prev => [...prev, adId]);
+      } else {
+        setCurrentSelectedAds(prev => prev.filter(id => id !== adId));
+      }
     }
   };
 
@@ -109,7 +105,9 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
       const confirmed = window.confirm(`Êtes-vous sûr de vouloir approuver ${currentSelectedAds.length} annonce(s) ?`);
       if (confirmed) {
         onBulkApprove(currentSelectedAds);
-        setCurrentSelectedAds([]);
+        if (typeof setCurrentSelectedAds === 'function') {
+          setCurrentSelectedAds([]);
+        }
       }
     }
   };
@@ -119,7 +117,9 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
       const confirmed = window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement ${currentSelectedAds.length} annonce(s) ? Cette action est irréversible.`);
       if (confirmed) {
         onBulkDelete(currentSelectedAds);
-        setCurrentSelectedAds([]);
+        if (typeof setCurrentSelectedAds === 'function') {
+          setCurrentSelectedAds([]);
+        }
       }
     }
   };
@@ -127,20 +127,8 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   const isAllSelected = ads.length > 0 && currentSelectedAds.length === ads.length;
   const isSomeSelected = currentSelectedAds.length > 0 && currentSelectedAds.length < ads.length;
   
-  if (isLoading) {
-    return <p className="text-center py-10">Chargement des annonces...</p>;
-  }
-  
-  if (!ads || ads.length === 0) {
-    return (
-      <p className="text-center py-10 text-gray-500">
-        {status === "pending"
-          ? "Aucune annonce en attente de modération."
-          : status === "approved"
-          ? "Aucune annonce approuvée."
-          : "Aucune annonce rejetée."}
-      </p>
-    );
+  if (isLoading || !ads || ads.length === 0) {
+    return <EmptyTableState status={status} isLoading={isLoading} />;
   }
 
   const showBulkActions = (status === "pending" && onBulkApprove) || (status === "rejected" && onBulkDelete);
@@ -148,116 +136,39 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   return (
     <>
       {showBulkActions && (
-        <div className="mb-4 flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={isAllSelected}
-              onCheckedChange={handleSelectAll}
-              className={isSomeSelected ? "data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted" : ""}
-            />
-            <span className="text-sm text-gray-600">
-              {currentSelectedAds.length > 0 ? `${currentSelectedAds.length} sélectionnée(s)` : "Tout sélectionner"}
-            </span>
-          </div>
-          
-          {currentSelectedAds.length > 0 && (
-            <div className="flex gap-2">
-              {status === "pending" && onBulkApprove && (
-                <Button
-                  onClick={handleBulkApprove}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  size="sm"
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  Approuver ({currentSelectedAds.length})
-                </Button>
-              )}
-              
-              {status === "rejected" && onBulkDelete && (
-                <Button
-                  onClick={handleBulkDelete}
-                  variant="destructive"
-                  size="sm"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Supprimer ({currentSelectedAds.length})
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
+        <BulkActionsBar
+          status={status}
+          selectedCount={currentSelectedAds.length}
+          isAllSelected={isAllSelected}
+          isSomeSelected={isSomeSelected}
+          onSelectAll={handleSelectAll}
+          onBulkApprove={handleBulkApprove}
+          onBulkDelete={handleBulkDelete}
+        />
       )}
 
       <div className="rounded-md border">
         <Table>
-          <TableHeader>
-            <TableRow>
-              {showBulkActions && (
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={isAllSelected}
-                    onCheckedChange={handleSelectAll}
-                    className={isSomeSelected ? "data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted" : ""}
-                  />
-                </TableHead>
-              )}
-              <TableHead>Image</TableHead>
-              <TableHead>Titre</TableHead>
-              <TableHead>Catégorie</TableHead>
-              <TableHead>Prix</TableHead>
-              <TableHead>Lieu</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+          <ModerationTableHeader
+            showBulkActions={showBulkActions}
+            isAllSelected={isAllSelected}
+            isSomeSelected={isSomeSelected}
+            onSelectAll={handleSelectAll}
+          />
           <TableBody>
             {ads.map((ad) => (
-              <TableRow key={ad.id}>
-                {showBulkActions && (
-                  <TableCell>
-                    <Checkbox
-                      checked={currentSelectedAds.includes(ad.id)}
-                      onCheckedChange={(checked) => handleSelectAd(ad.id, checked as boolean)}
-                    />
-                  </TableCell>
-                )}
-                <TableCell className="font-medium">
-                  <div className="w-16 h-16 relative">
-                    <img 
-                      src={ad.imageUrl} 
-                      alt={ad.title}
-                      className="object-cover w-full h-full rounded"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder.svg';
-                      }}
-                    />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="max-w-[200px] truncate">{ad.title}</div>
-                </TableCell>
-                <TableCell>{ad.category}</TableCell>
-                <TableCell>{ad.price.toLocaleString('fr-FR')} XAF</TableCell>
-                <TableCell>{ad.city}</TableCell>
-                <TableCell>
-                  {format(new Date(ad.created_at), "dd MMM yyyy", { locale: fr })}
-                </TableCell>
-                <TableCell>
-                  <AdStatusBadge status={ad.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <AdActionButtons 
-                    adId={ad.id}
-                    status={status}
-                    onViewClick={() => setSelectedAd(ad)}
-                    onApprove={() => handleApproveClick(ad.id)}
-                    onRejectClick={() => handleRejectClick(ad.id)}
-                    onDelete={onDelete}
-                  />
-                </TableCell>
-              </TableRow>
+              <ModerationTableRow
+                key={ad.id}
+                ad={ad}
+                status={status}
+                showBulkActions={showBulkActions}
+                isSelected={currentSelectedAds.includes(ad.id)}
+                onSelectAd={handleSelectAd}
+                onViewClick={setSelectedAd}
+                onApprove={handleApproveClick}
+                onRejectClick={handleRejectClick}
+                onDelete={onDelete}
+              />
             ))}
           </TableBody>
         </Table>

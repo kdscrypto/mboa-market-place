@@ -39,12 +39,13 @@ const ModerationDashboard: React.FC<ModerationDashboardProps> = ({
     new Date(ad.created_at) >= today
   ).length;
   
+  // Use created_at instead of updated_at since updated_at doesn't exist in Ad type
   const todaysApproved = approvedAds.filter(ad => 
-    new Date(ad.updated_at) >= today
+    new Date(ad.created_at) >= today
   ).length;
   
   const todaysRejected = rejectedAds.filter(ad => 
-    new Date(ad.updated_at) >= today
+    new Date(ad.created_at) >= today
   ).length;
 
   if (isLoading) {
