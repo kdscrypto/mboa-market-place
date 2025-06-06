@@ -13,6 +13,11 @@ export interface Conversation {
   ad_image?: string;
   unread_count?: number;
   other_user_id?: string;
+  // New advanced management properties
+  archived?: boolean;
+  pinned?: boolean;
+  archived_at?: string;
+  pinned_at?: string;
 }
 
 export interface Message {
@@ -33,6 +38,11 @@ export interface Message {
   attachment_name?: string | null;
   attachment_size?: number | null;
   attachment_type?: string | null;
+  // New moderation fields
+  moderated?: boolean;
+  moderation_reason?: string;
+  moderated_by?: string;
+  moderated_at?: string;
 }
 
 export interface ConversationWithDetails extends Conversation {
@@ -50,4 +60,34 @@ export interface ConversationWithDetails extends Conversation {
     sender_id: string;
   };
   unread_count: number;
+}
+
+export interface ConversationLabel {
+  id: string;
+  conversation_id: string;
+  label_name: string;
+  label_color: string;
+  created_at: string;
+  user_id: string;
+}
+
+export interface SystemMessage {
+  id: string;
+  conversation_id: string;
+  message_type: 'conversation_created' | 'user_joined' | 'user_left' | 'conversation_archived' | 'conversation_unarchived' | 'label_added' | 'label_removed';
+  content: string;
+  metadata: any;
+  created_at: string;
+}
+
+export interface MessageReport {
+  id: string;
+  message_id: string;
+  reported_by: string;
+  reason: 'spam' | 'inappropriate' | 'harassment' | 'scam' | 'other';
+  description?: string;
+  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+  reviewed_by?: string;
+  reviewed_at?: string;
+  created_at: string;
 }

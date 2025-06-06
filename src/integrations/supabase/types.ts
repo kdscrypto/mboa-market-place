@@ -95,33 +95,80 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_labels: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          label_color: string | null
+          label_name: string
+          user_id: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          label_color?: string | null
+          label_name: string
+          user_id?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          label_color?: string | null
+          label_name?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_labels_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           ad_id: string
+          archived: boolean | null
+          archived_at: string | null
           buyer_id: string
           created_at: string
           id: string
           last_message_at: string
+          pinned: boolean | null
+          pinned_at: string | null
           seller_id: string
           status: string
           updated_at: string
         }
         Insert: {
           ad_id: string
+          archived?: boolean | null
+          archived_at?: string | null
           buyer_id: string
           created_at?: string
           id?: string
           last_message_at?: string
+          pinned?: boolean | null
+          pinned_at?: string | null
           seller_id: string
           status?: string
           updated_at?: string
         }
         Update: {
           ad_id?: string
+          archived?: boolean | null
+          archived_at?: string | null
           buyer_id?: string
           created_at?: string
           id?: string
           last_message_at?: string
+          pinned?: boolean | null
+          pinned_at?: string | null
           seller_id?: string
           status?: string
           updated_at?: string
@@ -132,6 +179,50 @@ export type Database = {
             columns: ["ad_id"]
             isOneToOne: false
             referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reports: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          message_id: string | null
+          reason: string
+          reported_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          message_id?: string | null
+          reason: string
+          reported_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          message_id?: string | null
+          reason?: string
+          reported_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]
@@ -148,6 +239,10 @@ export type Database = {
           delivered_at: string | null
           id: string
           message_type: string
+          moderated: boolean | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
           read: boolean
           read_at: string | null
           sender_id: string
@@ -164,6 +259,10 @@ export type Database = {
           delivered_at?: string | null
           id?: string
           message_type?: string
+          moderated?: boolean | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
           read?: boolean
           read_at?: string | null
           sender_id: string
@@ -180,6 +279,10 @@ export type Database = {
           delivered_at?: string | null
           id?: string
           message_type?: string
+          moderated?: boolean | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
           read?: boolean
           read_at?: string | null
           sender_id?: string
@@ -188,6 +291,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_messages: {
+        Row: {
+          content: string
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          message_type: string
+          metadata: Json | null
+        }
+        Insert: {
+          content: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          message_type: string
+          metadata?: Json | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          message_type?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_messages_conversation_id_fkey"
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
@@ -221,6 +359,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_system_message: {
+        Args: {
+          conversation_uuid: string
+          msg_type: string
+          msg_content: string
+          msg_metadata?: Json
+        }
+        Returns: string
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
