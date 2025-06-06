@@ -2,7 +2,7 @@
 import React from "react";
 import HowItWorks from "@/components/HowItWorks";
 import SiteStats from "@/components/SiteStats";
-import AdSidebar from "@/components/ads/AdSidebar";
+import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 
 const FeaturesSections: React.FC = () => {
   return (
@@ -16,12 +16,11 @@ const FeaturesSections: React.FC = () => {
               <HowItWorks />
             </div>
             
-            {/* Sidebar ad - hidden on mobile, visible on large screens */}
+            {/* Google Ad Sidebar - hidden on mobile, visible on large screens */}
             <div className="hidden lg:block lg:w-80">
-              <AdSidebar
-                title="Boostez vos ventes"
-                description="Découvrez comment augmenter votre visibilité et vendre plus rapidement sur Mboa Market"
-                ctaText="Voir les options"
+              <GoogleAdSidebar
+                adSlot="1234567890"
+                style={{ width: "300px", height: "600px" }}
               />
             </div>
           </div>

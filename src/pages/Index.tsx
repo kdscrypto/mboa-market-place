@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -11,7 +12,7 @@ import CTASection from "@/components/home/CTASection";
 import { fetchApprovedAds } from "@/services/homeService";
 import { Ad } from "@/types/adTypes";
 import { categories } from "@/data/categoriesData";
-import AdBanner from "@/components/ads/AdBanner";
+import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -83,12 +84,11 @@ const Index = () => {
         <SearchSection onSearch={handleSearch} />
         <CategoriesSection categories={featuredCategories} />
         
-        {/* Strategic Banner Ad Placement */}
+        {/* Strategic Google Ad Banner Placement */}
         <div className="mboa-container mb-8">
-          <AdBanner
-            title="Développez votre business au Cameroun"
-            description="Rejoignez des milliers d'entrepreneurs qui font confiance à nos solutions digitales"
-            ctaText="Commencer maintenant"
+          <GoogleAdBanner
+            adSlot="9876543210"
+            style={{ width: "100%", height: "200px" }}
           />
         </div>
         
