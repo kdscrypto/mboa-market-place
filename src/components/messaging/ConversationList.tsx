@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -38,62 +39,64 @@ const ConversationList: React.FC<ConversationListProps> = ({
   }
 
   return (
-    <div className="flex flex-col divide-y overflow-auto">
-      {conversations.map((conversation) => {
-        const isActive = conversation.id === currentConversation;
-        const hasUnread = (conversation.unread_count || 0) > 0;
-        const formattedDate = format(
-          new Date(conversation.last_message_at),
-          "d MMM HH:mm",
-          { locale: fr }
-        );
+    <ScrollArea className="flex-1">
+      <div className="flex flex-col divide-y">
+        {conversations.map((conversation) => {
+          const isActive = conversation.id === currentConversation;
+          const hasUnread = (conversation.unread_count || 0) > 0;
+          const formattedDate = format(
+            new Date(conversation.last_message_at),
+            "d MMM HH:mm",
+            { locale: fr }
+          );
 
-        return (
-          <div
-            key={conversation.id}
-            className={cn(
-              "flex cursor-pointer hover:bg-gray-50 p-3",
-              isActive && "bg-blue-50 hover:bg-blue-50"
-            )}
-            onClick={() => onSelectConversation(conversation.id)}
-          >
-            <div className="flex-shrink-0 mr-3">
-              <img
-                src={conversation.ad_image || "/placeholder.svg"}
-                alt={conversation.ad_title || "Annonce"}
-                className="h-14 w-14 object-cover rounded-md"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/placeholder.svg";
-                }}
-              />
-            </div>
-            <div className="flex-grow">
-              <div className="flex justify-between items-start">
-                <h3 className={cn(
-                  "text-sm font-medium line-clamp-1",
-                  hasUnread && "font-bold"
-                )}>
-                  {conversation.ad_title || "Annonce sans titre"}
-                </h3>
-                <span className="text-xs text-gray-500">{formattedDate}</span>
+          return (
+            <div
+              key={conversation.id}
+              className={cn(
+                "flex cursor-pointer hover:bg-gray-50 p-3 transition-colors",
+                isActive && "bg-blue-50 hover:bg-blue-50"
+              )}
+              onClick={() => onSelectConversation(conversation.id)}
+            >
+              <div className="flex-shrink-0 mr-3">
+                <img
+                  src={conversation.ad_image || "/placeholder.svg"}
+                  alt={conversation.ad_title || "Annonce"}
+                  className="h-14 w-14 object-cover rounded-md"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/placeholder.svg";
+                  }}
+                />
               </div>
-              
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-gray-500">
-                  {conversation.status === "active" ? "Conversation active" : "Archivée"}
-                </p>
+              <div className="flex-grow min-w-0">
+                <div className="flex justify-between items-start">
+                  <h3 className={cn(
+                    "text-sm font-medium line-clamp-1",
+                    hasUnread && "font-bold"
+                  )}>
+                    {conversation.ad_title || "Annonce sans titre"}
+                  </h3>
+                  <span className="text-xs text-gray-500 flex-shrink-0 ml-2">{formattedDate}</span>
+                </div>
                 
-                {hasUnread && (
-                  <Badge variant="default" className="bg-mboa-orange">
-                    {conversation.unread_count}
-                  </Badge>
-                )}
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-gray-500">
+                    {conversation.status === "active" ? "Conversation active" : "Archivée"}
+                  </p>
+                  
+                  {hasUnread && (
+                    <Badge variant="default" className="bg-mboa-orange flex-shrink-0">
+                      {conversation.unread_count}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </ScrollArea>
   );
 };
 

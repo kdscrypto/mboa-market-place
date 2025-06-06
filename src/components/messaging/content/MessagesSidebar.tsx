@@ -33,25 +33,29 @@ const MessagesSidebar: React.FC<MessagesSidebarProps> = ({
   onFilteredConversations
 }) => {
   return (
-    <div className="w-1/3 border-r flex flex-col">
-      <div className="p-4 border-b">
+    <div className="w-1/3 border-r flex flex-col h-full">
+      <div className="p-4 border-b flex-shrink-0">
         <h2 className="text-lg font-semibold">Messages</h2>
       </div>
       
-      <EnhancedNotifications
-        unreadCount={totalUnread}
-        soundEnabled={soundEnabled}
-        notificationsEnabled={notificationsEnabled}
-        onToggleSound={onToggleSound}
-        onToggleNotifications={onToggleNotifications}
-      />
+      <div className="flex-shrink-0 p-3">
+        <EnhancedNotifications
+          unreadCount={totalUnread}
+          soundEnabled={soundEnabled}
+          notificationsEnabled={notificationsEnabled}
+          onToggleSound={onToggleSound}
+          onToggleNotifications={onToggleNotifications}
+        />
+      </div>
       
-      <ConversationSearch
-        conversations={conversations}
-        onFilteredConversations={onFilteredConversations}
-      />
+      <div className="flex-shrink-0">
+        <ConversationSearch
+          conversations={conversations}
+          onFilteredConversations={onFilteredConversations}
+        />
+      </div>
       
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0">
         <ConversationList
           conversations={filteredConversations}
           currentConversation={currentConversation}
