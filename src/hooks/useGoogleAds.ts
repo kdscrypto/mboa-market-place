@@ -8,7 +8,7 @@ declare global {
 }
 
 export const useGoogleAds = (adSlot: string, adFormat?: string, fullWidthResponsive?: boolean) => {
-  const adRef = useRef<HTMLDivElement>(null);
+  const adRef = useRef<HTMLModElement>(null);
   const isLoaded = useRef(false);
 
   useEffect(() => {
