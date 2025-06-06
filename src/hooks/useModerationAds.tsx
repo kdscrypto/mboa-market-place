@@ -1,4 +1,3 @@
-
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAdsList } from "@/hooks/useAdsList";
 import { useAdActions } from "@/hooks/useAdActions";
@@ -34,7 +33,7 @@ export const useModerationAds = () => {
   } = adsList;
   
   // Gestion des actions de modération
-  const { handleApproveAd, handleRejectAd } = useAdActions(
+  const { handleApproveAd, handleRejectAd, handleDeleteAd } = useAdActions(
     isAuthenticated,
     isAdmin,
     {
@@ -60,6 +59,7 @@ export const useModerationAds = () => {
     rejectedAds,
     handleApproveAd,
     handleRejectAd,
+    handleDeleteAd,
     isAuthenticated,
     isAdmin
   };

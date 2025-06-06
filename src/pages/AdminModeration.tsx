@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ModerationLayout from "@/components/moderation/ModerationLayout";
@@ -17,6 +16,7 @@ const AdminModeration = () => {
     rejectedAds,
     handleApproveAd,
     handleRejectAd,
+    handleDeleteAd,
     isAuthenticated,
     isAdmin
   } = useModerationAds();
@@ -81,6 +81,7 @@ const AdminModeration = () => {
         isLoading={isLoading}
         onApprove={handleApproveAd}
         onReject={handleRejectAd}
+        onDelete={handleDeleteAd}
       />
     </ModerationLayout>
   );

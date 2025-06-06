@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -22,6 +21,7 @@ interface ModerationTableProps {
   isLoading: boolean;
   onApprove?: (adId: string) => void;
   onReject?: (adId: string, message?: string) => void;
+  onDelete?: (adId: string) => void;
 }
 
 const ModerationTable: React.FC<ModerationTableProps> = ({ 
@@ -29,7 +29,8 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   status, 
   isLoading,
   onApprove,
-  onReject
+  onReject,
+  onDelete
 }) => {
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
   const [rejectAdId, setRejectAdId] = useState<string | null>(null);
@@ -132,6 +133,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
                     onViewClick={() => setSelectedAd(ad)}
                     onApprove={() => handleApproveClick(ad.id)}
                     onRejectClick={() => handleRejectClick(ad.id)}
+                    onDelete={onDelete}
                   />
                 </TableCell>
               </TableRow>

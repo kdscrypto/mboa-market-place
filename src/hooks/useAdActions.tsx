@@ -1,6 +1,5 @@
-
 import { useToast } from "@/hooks/use-toast";
-import { updateAdStatus } from "@/services/adService";
+import { updateAdStatus, deleteAd } from "@/services/adService";
 import { Ad } from "@/types/adTypes";
 
 type AdListState = {
@@ -13,7 +12,7 @@ type AdListState = {
 };
 
 /**
- * Hook pour les actions de modération (approuver/rejeter)
+ * Hook pour les actions de modération (approuver/rejeter/supprimer)
  */
 export const useAdActions = (
   isAuthenticated: boolean, 
@@ -119,8 +118,47 @@ export const useAdActions = (
     }
   };
 
+  // Fonction pour supprimer définitivement une annonce
+  const handleDeleteAd = async (adId: string) => {
+    if (!isAuthenticated || !isAdmin) {
+      toast({
+        title: "Accès refusé",
+        description: "Vous n'avez pas les droits pour effectuer cette action",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      console.log("useAdActions: Deleting ad:", adId);
+      
+      const success = await deleteAd(adId);
+      
+      if (!success) throw new Error("Failed to delete ad");
+      
+      toast({
+        title: "Annonce supprimée",
+        description: "L'annonce a été supprimée définitivement",
+        duration: 3000
+      });
+      
+      // Mettre à jour les listes localement
+      setPendingAds(prev => prev.filter(ad => ad.id !== adId));
+      setApprovedAds(prev => prev.filter(ad => ad.id !== adId));
+      setRejectedAds(prev => prev.filter(ad => ad.id !== adId));
+    } catch (error) {
+      console.error("Error deleting ad:", error);
+      toast({
+        title: "Erreur",
+        description: "Un problème est survenu lors de la suppression de l'annonce",
+        variant: "destructive"
+      });
+    }
+  };
+
   return {
     handleApproveAd,
-    handleRejectAd
+    handleRejectAd,
+    handleDeleteAd
   };
 };

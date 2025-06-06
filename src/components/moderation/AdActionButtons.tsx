@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Eye, Check, X } from "lucide-react";
+import { Eye, Check, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AdActionButtonsProps {
@@ -9,7 +9,8 @@ interface AdActionButtonsProps {
   onViewClick: () => void;
   onApprove?: (adId: string) => void;
   onReject?: (adId: string) => void;
-  onRejectClick?: () => void; // Prop pour ouvrir la boîte de dialogue de rejet
+  onRejectClick?: () => void;
+  onDelete?: (adId: string) => void;
 }
 
 const AdActionButtons: React.FC<AdActionButtonsProps> = ({
@@ -17,7 +18,8 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
   status,
   onViewClick,
   onApprove,
-  onRejectClick
+  onRejectClick,
+  onDelete
 }) => {
   const handleApprove = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -34,6 +36,17 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
     console.log("AdActionButtons: handleRejectClick called for ad", adId);
     if (onRejectClick) {
       onRejectClick();
+    }
+  };
+  
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer définitivement cette annonce ? Cette action est irréversible.")) {
+      console.log("AdActionButtons: handleDelete called for ad", adId);
+      if (onDelete) {
+        onDelete(adId);
+      }
     }
   };
   
@@ -77,6 +90,19 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
             <span className="sr-only">Rejeter</span>
           </Button>
         </>
+      )}
+      
+      {status === "rejected" && onDelete && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="text-red-600 border-red-600 hover:bg-red-50"
+          onClick={handleDelete}
+          type="button"
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Supprimer</span>
+        </Button>
       )}
     </div>
   );
