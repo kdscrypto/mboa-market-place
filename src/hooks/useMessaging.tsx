@@ -1,12 +1,13 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useConversations } from './messaging/useConversations';
 import { useConversationMessages } from './messaging/useConversationMessages';
 import { useMessageNotifications } from './messaging/useMessageNotifications';
 import { useSendMessage } from './messaging/useSendMessage';
+import { useMessagingState } from './messaging/useMessagingState';
 
 export const useMessaging = () => {
-  const [currentConversation, setCurrentConversation] = useState<string | null>(null);
+  const { currentConversation, selectConversation } = useMessagingState();
   
   const {
     conversations,
@@ -30,7 +31,7 @@ export const useMessaging = () => {
     retryLoading
   } = useConversationMessages(currentConversation, handleMarkAsRead);
 
-  // Enhanced load messages handler with proper error handling
+  // Enhanced load messages handler
   const loadMessages = useCallback((conversationId: string) => {
     try {
       if (!conversationId) {
@@ -47,11 +48,11 @@ export const useMessaging = () => {
       }
       
       console.log(`[MESSAGING DEBUG] Setting current conversation to: ${conversationId}`);
-      setCurrentConversation(conversationId);
+      selectConversation(conversationId);
     } catch (error) {
       console.error("[MESSAGING DEBUG] Error in loadMessages:", error);
     }
-  }, [currentConversation]);
+  }, [currentConversation, selectConversation]);
 
   // Enhanced retry functionality
   const retryLoadMessages = useCallback(() => {
