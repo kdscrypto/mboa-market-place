@@ -76,8 +76,12 @@ export const fetchConversationMessages = async (conversationId: string): Promise
     console.log(`[SERVICE DEBUG] Successfully fetched ${messages?.length || 0} messages for conversation ${conversationId}`);
     console.log(`[SERVICE DEBUG] Messages data:`, messages);
     
-    // Garantir que nous renvoyons toujours un tableau
-    const result = messages || [];
+    // Garantir que nous renvoyons toujours un tableau et que les status sont typés correctement
+    const result = (messages || []).map(msg => ({
+      ...msg,
+      status: (msg.status as 'sent' | 'delivered' | 'read') || 'sent',
+      message_type: (msg.message_type as 'text' | 'image' | 'document') || 'text'
+    }));
     console.log(`[SERVICE DEBUG] Returning ${result.length} messages`);
     return result;
   } catch (error: any) {

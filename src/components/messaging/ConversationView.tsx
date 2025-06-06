@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Message } from "@/services/messaging/types";
 import MessageBubble from "./MessageBubble";
 import MessageForm from "./MessageForm";
+import TypingIndicator from "./TypingIndicator";
 import { Loader2Icon, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loadedMessages, setLoadedMessages] = useState<Message[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
   const previousLoadingState = useRef<boolean>(loading);
   const previousErrorState = useRef<string | null>(error);
   const previousMessagesLength = useRef<number>(messages.length);
@@ -79,6 +81,30 @@ const ConversationView: React.FC<ConversationViewProps> = ({
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [loadedMessages]);
+
+  // Simulate typing indicator (in real implementation, this would come from realtime)
+  useEffect(() => {
+    if (loadedMessages.length > 0) {
+      // Randomly show typing indicator for demo purposes
+      const randomInterval = Math.random() * 10000 + 5000; // 5-15 seconds
+      const timeout = setTimeout(() => {
+        setIsTyping(true);
+        setTimeout(() => setIsTyping(false), 2000); // Show for 2 seconds
+      }, randomInterval);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [loadedMessages.length]);
+
+  const handleAddReaction = (messageId: string, emoji: string) => {
+    console.log(`Adding reaction ${emoji} to message ${messageId}`);
+    // TODO: Implement real reaction functionality with backend
+  };
+
+  const handleRemoveReaction = (messageId: string, emoji: string) => {
+    console.log(`Removing reaction ${emoji} from message ${messageId}`);
+    // TODO: Implement real reaction functionality with backend
+  };
 
   // Handle error state first
   if (error) {
@@ -135,6 +161,9 @@ const ConversationView: React.FC<ConversationViewProps> = ({
               key={message.id}
               message={message}
               isSender={message.sender_id === currentUserId}
+              currentUserId={currentUserId || undefined}
+              onAddReaction={handleAddReaction}
+              onRemoveReaction={handleRemoveReaction}
             />
           ))
         ) : (
@@ -142,6 +171,10 @@ const ConversationView: React.FC<ConversationViewProps> = ({
             <p className="text-gray-500">Aucun message à afficher</p>
           </div>
         )}
+        
+        {/* Typing indicator */}
+        <TypingIndicator isTyping={isTyping} />
+        
         <div ref={messagesEndRef} />
       </div>
 

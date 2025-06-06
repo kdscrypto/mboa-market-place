@@ -1,25 +1,23 @@
 
-import React, { useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useCallback } from "react";
 import { useMessaging } from "@/hooks/useMessaging";
-import ConversationList from "@/components/messaging/ConversationList";
-import ConversationView from "@/components/messaging/ConversationView";
-import { MessageCircle } from "lucide-react";
-import { toast } from "sonner";
-import MessagesErrorState from "./MessagesErrorState";
+import { useNotificationSettings } from "@/hooks/messaging/useNotificationSettings";
+import ConversationList from "./ConversationList";
+import ConversationView from "./ConversationView";
+import ConversationSearch from "./ConversationSearch";
+import EnhancedNotifications from "./EnhancedNotifications";
 import MessagesEmptyState from "./MessagesEmptyState";
+import MessagesErrorState from "./MessagesErrorState";
+import { Conversation } from "@/services/messaging/types";
 
 const MessagesContent: React.FC = () => {
-  const navigate = useNavigate();
-  const { conversationId } = useParams();
-  const [globalRetryCount, setGlobalRetryCount] = React.useState(0);
-  
   const {
     conversations,
     currentConversation,
     messages,
     loading,
     messagesLoading,
+    totalUnread,
     error,
     loadConversations,
     loadMessages,
@@ -27,125 +25,107 @@ const MessagesContent: React.FC = () => {
     retryLoadMessages
   } = useMessaging();
 
-  // Debug logging for state changes
-  useEffect(() => {
-    console.log(`[MESSAGES PAGE DEBUG] State update:`, {
-      conversationId,
-      currentConversation,
-      messagesCount: messages.length,
-      messagesLoading,
-      error
-    });
-  }, [conversationId, currentConversation, messages.length, messagesLoading, error]);
+  const {
+    soundEnabled,
+    notificationsEnabled,
+    toggleSound,
+    toggleNotifications,
+    playNotificationSound,
+    showDesktopNotification
+  } = useNotificationSettings();
 
-  // Load selected conversation from URL
-  useEffect(() => {
-    if (conversationId) {
-      console.log(`[MESSAGES PAGE DEBUG] Loading conversation from URL: ${conversationId}`);
-      console.log(`[MESSAGES PAGE DEBUG] Current conversation: ${currentConversation}`);
-      
-      if (currentConversation !== conversationId) {
-        console.log(`[MESSAGES PAGE DEBUG] Conversation changed, calling loadMessages`);
-        loadMessages(conversationId);
-      } else {
-        console.log(`[MESSAGES PAGE DEBUG] Same conversation already loaded`);
-      }
-    } else {
-      console.log(`[MESSAGES PAGE DEBUG] No conversationId in URL`);
-    }
-  }, [conversationId, loadMessages, currentConversation]);
+  const [filteredConversations, setFilteredConversations] = useState<Conversation[]>(conversations);
 
-  // Handle conversation selection
-  const handleSelectConversation = useCallback((id: string) => {
-    console.log(`[MESSAGES PAGE DEBUG] Conversation selected: ${id}`);
-    navigate(`/messages/${id}`);
-  }, [navigate]);
+  // Update filtered conversations when conversations change
+  React.useEffect(() => {
+    setFilteredConversations(conversations);
+  }, [conversations]);
 
-  // Handle sending a message with optional attachment
-  const handleSendMessage = useCallback(async (
-    content: string, 
-    attachment?: { file: File; type: string }
-  ): Promise<void> => {
-    if (!currentConversation) {
-      console.error("[MESSAGES PAGE DEBUG] No current conversation for sending message");
-      toast.error("Aucune conversation sélectionnée");
-      return;
-    }
-    
-    try {
-      console.log(`[MESSAGES PAGE DEBUG] Sending message to conversation: ${currentConversation}`);
-      await sendMessage(currentConversation, content, attachment);
-      console.log(`[MESSAGES PAGE DEBUG] Message sent successfully`);
-    } catch (error) {
-      console.error("[MESSAGES PAGE DEBUG] Error sending message:", error);
-      toast.error("Erreur lors de l'envoi du message");
-    }
-  }, [currentConversation, sendMessage]);
+  const handleConversationSelect = useCallback((conversationId: string) => {
+    loadMessages(conversationId);
+  }, [loadMessages]);
 
-  // Global retry handler - increments counter to force full reload of dependencies
-  const handleGlobalRetry = useCallback(() => {
-    console.log(`[MESSAGES PAGE DEBUG] Global retry triggered`);
-    setGlobalRetryCount(prev => prev + 1);
-    loadConversations();
-    
+  const handleSendMessage = useCallback(async (message: string, attachment?: { file: File; type: string }) => {
     if (currentConversation) {
-      console.log(`[MESSAGES PAGE DEBUG] Retrying messages for current conversation: ${currentConversation}`);
-      retryLoadMessages();
+      await sendMessage(currentConversation, message, attachment);
+      
+      // Play notification sound for sent message
+      if (soundEnabled) {
+        playNotificationSound();
+      }
     }
-  }, [currentConversation, loadConversations, retryLoadMessages]);
+  }, [currentConversation, sendMessage, soundEnabled, playNotificationSound]);
+
+  const handleFilteredConversations = useCallback((filtered: Conversation[]) => {
+    setFilteredConversations(filtered);
+  }, []);
 
   // Get current conversation details
-  const currentConversationDetails = conversations.find(
-    conv => conv.id === currentConversation
-  );
+  const currentConversationData = conversations.find(c => c.id === currentConversation);
+
+  if (loading) {
+    return <MessagesEmptyState loading={true} />;
+  }
+
+  if (error) {
+    return <MessagesErrorState error={error} onRetry={loadConversations} />;
+  }
 
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <h2 className="text-xl font-bold p-4 border-b">Messagerie</h2>
-      
-      <div className="flex h-[600px] max-h-[70vh]">
-        {/* Conversation list */}
-        <div className="w-1/3 border-r">
+    <div className="flex h-[70vh] bg-white rounded-lg shadow-sm border">
+      {/* Sidebar with conversations */}
+      <div className="w-1/3 border-r flex flex-col">
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold">Messages</h2>
+        </div>
+        
+        <EnhancedNotifications
+          unreadCount={totalUnread}
+          soundEnabled={soundEnabled}
+          notificationsEnabled={notificationsEnabled}
+          onToggleSound={toggleSound}
+          onToggleNotifications={toggleNotifications}
+        />
+        
+        <ConversationSearch
+          conversations={conversations}
+          onFilteredConversations={handleFilteredConversations}
+        />
+        
+        <div className="flex-1 overflow-hidden">
           <ConversationList
-            conversations={conversations}
+            conversations={filteredConversations}
             currentConversation={currentConversation}
-            onSelectConversation={handleSelectConversation}
+            onSelectConversation={handleConversationSelect}
             loading={loading}
           />
         </div>
-        
-        {/* Conversation view */}
-        <div className="w-2/3 flex flex-col">
-          {error && !currentConversation && (
-            <MessagesErrorState 
-              error={error} 
-              onRetry={handleGlobalRetry}
-            />
-          )}
+      </div>
 
-          {!error && currentConversation ? (
-            <ConversationView
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              loading={messagesLoading}
-              error={error}
-              onRetry={handleGlobalRetry}
-              conversationId={currentConversation}
-              adTitle={currentConversationDetails?.ad_title || "Conversation"}
-              emptyState={
-                <div className="text-center p-6">
-                  <MessageCircle className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                  <h3 className="text-lg font-medium">Commencer la conversation</h3>
-                  <p className="text-gray-500 mt-1">
-                    Envoyez un message ou une pièce jointe pour démarrer la conversation
-                  </p>
-                </div>
-              }
-            />
-          ) : !error && (
-            <MessagesEmptyState />
-          )}
-        </div>
+      {/* Main conversation area */}
+      <div className="flex-1 flex flex-col">
+        {currentConversation ? (
+          <ConversationView
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            loading={messagesLoading}
+            adTitle={currentConversationData?.ad_title}
+            error={error}
+            onRetry={retryLoadMessages}
+            conversationId={currentConversation}
+          />
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Sélectionnez une conversation
+              </h3>
+              <p className="text-gray-500">
+                Choisissez une conversation dans la liste pour commencer à échanger
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
