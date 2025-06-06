@@ -17,14 +17,20 @@ import MessageReportDialog from "./MessageReportDialog";
 
 interface MessageBubbleProps {
   message: any;
-  isOwn: boolean;
+  isSender: boolean;
+  currentUserId?: string;
   showTimestamp?: boolean;
+  onAddReaction: (messageId: string, emoji: string) => void;
+  onRemoveReaction: (messageId: string, emoji: string) => void;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
-  isOwn,
-  showTimestamp = false
+  isSender,
+  currentUserId,
+  showTimestamp = false,
+  onAddReaction,
+  onRemoveReaction
 }) => {
   const [showReportDialog, setShowReportDialog] = useState(false);
 
@@ -36,16 +42,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <>
       <div className={cn(
         "flex mb-4",
-        isOwn ? "justify-end" : "justify-start"
+        isSender ? "justify-end" : "justify-start"
       )}>
         <div className={cn(
           "max-w-[70%] rounded-lg px-3 py-2 relative group",
-          isOwn 
+          isSender 
             ? "bg-mboa-orange text-white" 
             : "bg-gray-100 text-gray-900"
         )}>
           {/* Message actions dropdown */}
-          {!isOwn && (
+          {!isSender && (
             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -93,15 +99,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
 
           {/* Message reactions */}
-          <MessageReactions messageId={message.id} />
+          {currentUserId && (
+            <MessageReactions 
+              messageId={message.id}
+              reactions={message.reactions}
+              currentUserId={currentUserId}
+              onAddReaction={onAddReaction}
+              onRemoveReaction={onRemoveReaction}
+            />
+          )}
 
           {/* Timestamp and status */}
           <div className={cn(
             "flex items-center justify-between mt-1 text-xs",
-            isOwn ? "text-white/70" : "text-gray-500"
+            isSender ? "text-white/70" : "text-gray-500"
           )}>
             <span>{formatTime(message.created_at)}</span>
-            {isOwn && <MessageStatus status={message.status} />}
+            {isSender && <MessageStatus status={message.status} />}
           </div>
 
           {showTimestamp && (
