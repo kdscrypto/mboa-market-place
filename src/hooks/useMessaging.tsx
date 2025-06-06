@@ -1,10 +1,10 @@
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useConversations } from './messaging/useConversations';
 import { useConversationMessages } from './messaging/useConversationMessages';
-import { useMessageNotifications } from './messaging/useMessageNotifications';
-import { useSendMessage } from './messaging/useSendMessage';
 import { useMessagingState } from './messaging/useMessagingState';
+import { useMessagingActions } from './messaging/useMessagingActions';
+import { useMessagingIntegration } from './messaging/useMessagingIntegration';
 
 export const useMessaging = () => {
   const { currentConversation, selectConversation } = useMessagingState();
@@ -27,7 +27,6 @@ export const useMessaging = () => {
     messages,
     loading: messagesLoading,
     error: messagesError,
-    loadMessages: loadMessagesInternal,
     retryLoading
   } = useConversationMessages(currentConversation, handleMarkAsRead);
 
@@ -40,21 +39,15 @@ export const useMessaging = () => {
       }
       
       console.log(`[MESSAGING DEBUG] loadMessages called with: ${conversationId}`);
-      console.log(`[MESSAGING DEBUG] Current conversation: ${currentConversation}`);
-      
-      // Always select the conversation - the useConversationMessages hook will handle loading
-      console.log(`[MESSAGING DEBUG] Setting current conversation to: ${conversationId}`);
       selectConversation(conversationId);
     } catch (error) {
       console.error("[MESSAGING DEBUG] Error in loadMessages:", error);
     }
-  }, [currentConversation, selectConversation]);
+  }, [selectConversation]);
 
   // Enhanced retry functionality
   const retryLoadMessages = useCallback(() => {
     console.log(`[MESSAGING DEBUG] retryLoadMessages called`);
-    console.log(`[MESSAGING DEBUG] Current conversation: ${currentConversation}`);
-    console.log(`[MESSAGING DEBUG] retryLoading function available: ${!!retryLoading}`);
     
     if (retryLoading) {
       console.log(`[MESSAGING DEBUG] Calling retryLoading function`);
@@ -67,10 +60,10 @@ export const useMessaging = () => {
     }
   }, [currentConversation, loadMessages, retryLoading]);
 
-  const { sendMessage } = useSendMessage();
+  const { sendMessage } = useMessagingActions(currentConversation);
 
-  // Setup notifications for new messages
-  useMessageNotifications(
+  // Setup messaging integration
+  useMessagingIntegration(
     conversations,
     currentConversation,
     loadConversations,
@@ -79,17 +72,6 @@ export const useMessaging = () => {
 
   // Determine the final error state to show
   const error = messagesError || conversationsError;
-
-  // Debug logging for state changes
-  useEffect(() => {
-    console.log(`[MESSAGING DEBUG] State update:`, {
-      currentConversation,
-      messagesCount: messages.length,
-      messagesLoading,
-      messagesError,
-      conversationsError
-    });
-  }, [currentConversation, messages.length, messagesLoading, messagesError, conversationsError]);
 
   return {
     conversations,
