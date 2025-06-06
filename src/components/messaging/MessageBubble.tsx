@@ -5,6 +5,8 @@ import { Message } from "@/services/messaging/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import MessageStatus from "./MessageStatus";
+import AttachmentPreview from "./AttachmentPreview";
 
 interface MessageBubbleProps {
   message: Message;
@@ -13,6 +15,8 @@ interface MessageBubbleProps {
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSender }) => {
   const formattedTime = format(new Date(message.created_at), "HH:mm", { locale: fr });
+
+  const hasAttachment = message.attachment_url && message.attachment_name && message.attachment_type;
 
   return (
     <div 
@@ -37,15 +41,41 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isSender }) => {
             : "theme-bg-surface theme-border border theme-text-primary rounded-bl-none"
         )}
       >
-        <p className="text-sm">{message.content}</p>
-        <p 
-          className={cn(
-            "text-xs mt-1 text-right",
-            isSender ? "text-white/80" : "theme-text-secondary"
+        {/* Message content */}
+        {message.content && (
+          <p className="text-sm">{message.content}</p>
+        )}
+        
+        {/* Attachment preview */}
+        {hasAttachment && (
+          <AttachmentPreview
+            attachmentUrl={message.attachment_url!}
+            attachmentName={message.attachment_name!}
+            attachmentType={message.attachment_type!}
+            attachmentSize={message.attachment_size}
+          />
+        )}
+
+        {/* Time and status */}
+        <div className="flex items-center justify-between mt-1 gap-2">
+          <p 
+            className={cn(
+              "text-xs",
+              isSender ? "text-white/80" : "theme-text-secondary"
+            )}
+          >
+            {formattedTime}
+          </p>
+          
+          {isSender && (
+            <MessageStatus 
+              status={message.status}
+              className={cn(
+                "text-white/80"
+              )}
+            />
           )}
-        >
-          {formattedTime}
-        </p>
+        </div>
       </div>
 
       {isSender && (

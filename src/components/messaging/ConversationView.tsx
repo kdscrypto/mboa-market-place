@@ -6,15 +6,17 @@ import MessageForm from "./MessageForm";
 import { Loader2Icon, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { markMessagesAsDelivered } from "@/services/messaging/messageService";
 
 interface ConversationViewProps {
   messages: Message[];
-  onSendMessage: (message: string) => Promise<void>;
+  onSendMessage: (message: string, attachment?: { file: File; type: string }) => Promise<void>;
   loading?: boolean;
   adTitle?: string;
   emptyState?: React.ReactNode;
   error?: string | null;
   onRetry?: () => void;
+  conversationId?: string;
 }
 
 const ConversationView: React.FC<ConversationViewProps> = ({
@@ -24,7 +26,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   adTitle,
   emptyState,
   error = null,
-  onRetry
+  onRetry,
+  conversationId
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -45,6 +48,13 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     previousLoadingState.current = loading;
     previousErrorState.current = error;
   }, [messages, loading, error]);
+
+  // Mark messages as delivered when conversation is viewed
+  useEffect(() => {
+    if (conversationId && loadedMessages.length > 0) {
+      markMessagesAsDelivered(conversationId);
+    }
+  }, [conversationId, loadedMessages.length]);
 
   // Fetch current user ID
   useEffect(() => {

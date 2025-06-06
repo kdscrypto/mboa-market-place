@@ -61,8 +61,11 @@ const MessagesContent: React.FC = () => {
     navigate(`/messages/${id}`);
   }, [navigate]);
 
-  // Handle sending a message
-  const handleSendMessage = useCallback(async (content: string): Promise<void> => {
+  // Handle sending a message with optional attachment
+  const handleSendMessage = useCallback(async (
+    content: string, 
+    attachment?: { file: File; type: string }
+  ): Promise<void> => {
     if (!currentConversation) {
       console.error("[MESSAGES PAGE DEBUG] No current conversation for sending message");
       toast.error("Aucune conversation sélectionnée");
@@ -71,7 +74,7 @@ const MessagesContent: React.FC = () => {
     
     try {
       console.log(`[MESSAGES PAGE DEBUG] Sending message to conversation: ${currentConversation}`);
-      await sendMessage(currentConversation, content);
+      await sendMessage(currentConversation, content, attachment);
       console.log(`[MESSAGES PAGE DEBUG] Message sent successfully`);
     } catch (error) {
       console.error("[MESSAGES PAGE DEBUG] Error sending message:", error);
@@ -127,13 +130,14 @@ const MessagesContent: React.FC = () => {
               loading={messagesLoading}
               error={error}
               onRetry={handleGlobalRetry}
+              conversationId={currentConversation}
               adTitle={currentConversationDetails?.ad_title || "Conversation"}
               emptyState={
                 <div className="text-center p-6">
                   <MessageCircle className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                   <h3 className="text-lg font-medium">Commencer la conversation</h3>
                   <p className="text-gray-500 mt-1">
-                    Envoyez un message pour démarrer la conversation
+                    Envoyez un message ou une pièce jointe pour démarrer la conversation
                   </p>
                 </div>
               }

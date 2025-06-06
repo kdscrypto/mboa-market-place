@@ -138,28 +138,52 @@ export type Database = {
       }
       messages: {
         Row: {
+          attachment_name: string | null
+          attachment_size: number | null
+          attachment_type: string | null
+          attachment_url: string | null
           content: string
           conversation_id: string
           created_at: string
+          delivered_at: string | null
           id: string
+          message_type: string
           read: boolean
+          read_at: string | null
           sender_id: string
+          status: string
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           content: string
           conversation_id: string
           created_at?: string
+          delivered_at?: string | null
           id?: string
+          message_type?: string
           read?: boolean
+          read_at?: string | null
           sender_id: string
+          status?: string
         }
         Update: {
+          attachment_name?: string | null
+          attachment_size?: number | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           content?: string
           conversation_id?: string
           created_at?: string
+          delivered_at?: string | null
           id?: string
+          message_type?: string
           read?: boolean
+          read_at?: string | null
           sender_id?: string
+          status?: string
         }
         Relationships: [
           {
@@ -204,6 +228,10 @@ export type Database = {
       is_admin_or_moderator: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      mark_messages_as_delivered: {
+        Args: { conversation_uuid: string }
+        Returns: undefined
       }
       validate_image_extension: {
         Args: { filename: string }

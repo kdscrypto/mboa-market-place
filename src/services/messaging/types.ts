@@ -23,6 +23,16 @@ export interface Message {
   created_at: string;
   read: boolean;
   is_system_message?: boolean;
+  // New message status fields
+  status: 'sent' | 'delivered' | 'read';
+  delivered_at?: string | null;
+  read_at?: string | null;
+  // New attachment fields
+  message_type: 'text' | 'image' | 'document';
+  attachment_url?: string | null;
+  attachment_name?: string | null;
+  attachment_size?: number | null;
+  attachment_type?: string | null;
 }
 
 export interface ConversationWithDetails extends Conversation {
