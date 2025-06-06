@@ -1,7 +1,10 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ModerationTable from "@/components/moderation/ModerationTable";
+import ModerationDashboard from "@/components/moderation/ModerationDashboard";
+import ModerationFilters from "@/components/moderation/ModerationFilters";
+import QuickActions from "@/components/moderation/QuickActions";
 import { Ad } from "@/types/adTypes";
 
 interface ModerationTabsProps {
@@ -27,6 +30,21 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
   onBulkApprove,
   onBulkDelete
 }) => {
+  // Filtered ads state
+  const [filteredPendingAds, setFilteredPendingAds] = useState<Ad[]>(pendingAds);
+  const [filteredApprovedAds, setFilteredApprovedAds] = useState<Ad[]>(approvedAds);
+  const [filteredRejectedAds, setFilteredRejectedAds] = useState<Ad[]>(rejectedAds);
+  
+  // Selected ads for bulk actions
+  const [selectedAds, setSelectedAds] = useState<string[]>([]);
+
+  // Update filtered ads when original ads change
+  useEffect(() => {
+    setFilteredPendingAds(pendingAds);
+    setFilteredApprovedAds(approvedAds);
+    setFilteredRejectedAds(rejectedAds);
+  }, [pendingAds, approvedAds, rejectedAds]);
+
   // Add debug logging to track when props change
   useEffect(() => {
     console.log("ModerationTabs updated with:");
@@ -35,51 +53,112 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
     console.log("- Rejected ads:", rejectedAds?.length || 0);
     console.log("- isLoading:", isLoading);
   }, [pendingAds, approvedAds, rejectedAds, isLoading]);
-  
+
+  // Enhanced bulk reject function
+  const handleBulkReject = (adIds: string[], message: string) => {
+    adIds.forEach(adId => {
+      onReject(adId, message);
+    });
+    setSelectedAds([]);
+  };
+
   return (
-    <Tabs defaultValue="pending" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 mb-8">
-        <TabsTrigger value="pending" className="relative">
-          En attente
-          {(pendingAds?.length || 0) > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-              {pendingAds?.length || 0}
-            </span>
-          )}
-        </TabsTrigger>
-        <TabsTrigger value="approved">Approuvées</TabsTrigger>
-        <TabsTrigger value="rejected">Rejetées</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="pending">
-        <ModerationTable 
-          ads={pendingAds || []} 
-          status="pending" 
-          isLoading={isLoading}
-          onApprove={onApprove}
-          onReject={onReject}
-          onBulkApprove={onBulkApprove}
-        />
-      </TabsContent>
-      
-      <TabsContent value="approved">
-        <ModerationTable 
-          ads={approvedAds || []} 
-          status="approved" 
-          isLoading={isLoading}
-        />
-      </TabsContent>
-      
-      <TabsContent value="rejected">
-        <ModerationTable 
-          ads={rejectedAds || []} 
-          status="rejected" 
-          isLoading={isLoading}
-          onDelete={onDelete}
-          onBulkDelete={onBulkDelete}
-        />
-      </TabsContent>
-    </Tabs>
+    <div className="space-y-6">
+      {/* Dashboard Overview */}
+      <ModerationDashboard
+        pendingAds={pendingAds}
+        approvedAds={approvedAds}
+        rejectedAds={rejectedAds}
+        isLoading={isLoading}
+      />
+
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="pending" className="relative">
+            En attente
+            {(filteredPendingAds?.length || 0) > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                {filteredPendingAds?.length || 0}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="approved">
+            Approuvées
+            {(filteredApprovedAds?.length || 0) > 0 && (
+              <span className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                {filteredApprovedAds?.length || 0}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="rejected">
+            Rejetées
+            {(filteredRejectedAds?.length || 0) > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                {filteredRejectedAds?.length || 0}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pending" className="space-y-6">
+          <QuickActions
+            pendingCount={filteredPendingAds.length}
+            onBulkApprove={onBulkApprove}
+            onBulkReject={handleBulkReject}
+            selectedAds={selectedAds}
+          />
+          
+          <ModerationFilters
+            onFiltersChange={setFilteredPendingAds}
+            allAds={pendingAds}
+            status="pending"
+          />
+          
+          <ModerationTable 
+            ads={filteredPendingAds || []} 
+            status="pending" 
+            isLoading={isLoading}
+            onApprove={onApprove}
+            onReject={onReject}
+            onBulkApprove={onBulkApprove}
+            selectedAds={selectedAds}
+            onSelectedAdsChange={setSelectedAds}
+          />
+        </TabsContent>
+        
+        <TabsContent value="approved" className="space-y-6">
+          <ModerationFilters
+            onFiltersChange={setFilteredApprovedAds}
+            allAds={approvedAds}
+            status="approved"
+          />
+          
+          <ModerationTable 
+            ads={filteredApprovedAds || []} 
+            status="approved" 
+            isLoading={isLoading}
+          />
+        </TabsContent>
+        
+        <TabsContent value="rejected" className="space-y-6">
+          <ModerationFilters
+            onFiltersChange={setFilteredRejectedAds}
+            allAds={rejectedAds}
+            status="rejected"
+          />
+          
+          <ModerationTable 
+            ads={filteredRejectedAds || []} 
+            status="rejected" 
+            isLoading={isLoading}
+            onDelete={onDelete}
+            onBulkDelete={onBulkDelete}
+            selectedAds={selectedAds}
+            onSelectedAdsChange={setSelectedAds}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

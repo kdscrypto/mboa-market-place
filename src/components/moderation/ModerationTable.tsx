@@ -28,6 +28,8 @@ interface ModerationTableProps {
   onDelete?: (adId: string) => void;
   onBulkApprove?: (adIds: string[]) => void;
   onBulkDelete?: (adIds: string[]) => void;
+  selectedAds?: string[];
+  onSelectedAdsChange?: (selectedAds: string[]) => void;
 }
 
 const ModerationTable: React.FC<ModerationTableProps> = ({ 
@@ -38,12 +40,18 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   onReject,
   onDelete,
   onBulkApprove,
-  onBulkDelete
+  onBulkDelete,
+  selectedAds = [],
+  onSelectedAdsChange
 }) => {
   const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
   const [rejectAdId, setRejectAdId] = useState<string | null>(null);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [selectedAds, setSelectedAds] = useState<string[]>([]);
+  const [localSelectedAds, setLocalSelectedAds] = useState<string[]>([]);
+  
+  // Use external selectedAds if provided, otherwise use local state
+  const currentSelectedAds = onSelectedAdsChange ? selectedAds : localSelectedAds;
+  const setCurrentSelectedAds = onSelectedAdsChange || setLocalSelectedAds;
   
   // Add debug logging
   useEffect(() => {
@@ -55,8 +63,8 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
 
   // Reset selected ads when ads change
   useEffect(() => {
-    setSelectedAds([]);
-  }, [ads]);
+    setCurrentSelectedAds([]);
+  }, [ads, setCurrentSelectedAds]);
   
   const handleRejectClick = (adId: string) => {
     console.log("Opening reject dialog for ad:", adId);
@@ -82,42 +90,42 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedAds(ads.map(ad => ad.id));
+      setCurrentSelectedAds(ads.map(ad => ad.id));
     } else {
-      setSelectedAds([]);
+      setCurrentSelectedAds([]);
     }
   };
 
   const handleSelectAd = (adId: string, checked: boolean) => {
     if (checked) {
-      setSelectedAds(prev => [...prev, adId]);
+      setCurrentSelectedAds(prev => [...prev, adId]);
     } else {
-      setSelectedAds(prev => prev.filter(id => id !== adId));
+      setCurrentSelectedAds(prev => prev.filter(id => id !== adId));
     }
   };
 
   const handleBulkApprove = () => {
-    if (selectedAds.length > 0 && onBulkApprove) {
-      const confirmed = window.confirm(`Êtes-vous sûr de vouloir approuver ${selectedAds.length} annonce(s) ?`);
+    if (currentSelectedAds.length > 0 && onBulkApprove) {
+      const confirmed = window.confirm(`Êtes-vous sûr de vouloir approuver ${currentSelectedAds.length} annonce(s) ?`);
       if (confirmed) {
-        onBulkApprove(selectedAds);
-        setSelectedAds([]);
+        onBulkApprove(currentSelectedAds);
+        setCurrentSelectedAds([]);
       }
     }
   };
 
   const handleBulkDelete = () => {
-    if (selectedAds.length > 0 && onBulkDelete) {
-      const confirmed = window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement ${selectedAds.length} annonce(s) ? Cette action est irréversible.`);
+    if (currentSelectedAds.length > 0 && onBulkDelete) {
+      const confirmed = window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement ${currentSelectedAds.length} annonce(s) ? Cette action est irréversible.`);
       if (confirmed) {
-        onBulkDelete(selectedAds);
-        setSelectedAds([]);
+        onBulkDelete(currentSelectedAds);
+        setCurrentSelectedAds([]);
       }
     }
   };
 
-  const isAllSelected = ads.length > 0 && selectedAds.length === ads.length;
-  const isSomeSelected = selectedAds.length > 0 && selectedAds.length < ads.length;
+  const isAllSelected = ads.length > 0 && currentSelectedAds.length === ads.length;
+  const isSomeSelected = currentSelectedAds.length > 0 && currentSelectedAds.length < ads.length;
   
   if (isLoading) {
     return <p className="text-center py-10">Chargement des annonces...</p>;
@@ -148,11 +156,11 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
               className={isSomeSelected ? "data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted" : ""}
             />
             <span className="text-sm text-gray-600">
-              {selectedAds.length > 0 ? `${selectedAds.length} sélectionnée(s)` : "Tout sélectionner"}
+              {currentSelectedAds.length > 0 ? `${currentSelectedAds.length} sélectionnée(s)` : "Tout sélectionner"}
             </span>
           </div>
           
-          {selectedAds.length > 0 && (
+          {currentSelectedAds.length > 0 && (
             <div className="flex gap-2">
               {status === "pending" && onBulkApprove && (
                 <Button
@@ -161,7 +169,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
                   size="sm"
                 >
                   <Check className="h-4 w-4 mr-2" />
-                  Approuver ({selectedAds.length})
+                  Approuver ({currentSelectedAds.length})
                 </Button>
               )}
               
@@ -172,7 +180,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
                   size="sm"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Supprimer ({selectedAds.length})
+                  Supprimer ({currentSelectedAds.length})
                 </Button>
               )}
             </div>
@@ -209,7 +217,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
                 {showBulkActions && (
                   <TableCell>
                     <Checkbox
-                      checked={selectedAds.includes(ad.id)}
+                      checked={currentSelectedAds.includes(ad.id)}
                       onCheckedChange={(checked) => handleSelectAd(ad.id, checked as boolean)}
                     />
                   </TableCell>
