@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import AuthGuard from "@/components/auth/AuthGuard";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -15,6 +16,8 @@ import Categories from "./pages/Categories";
 import CategoryPage from "./pages/CategoryPage";
 import AdDetail from "./pages/AdDetail";
 import PremiumAds from "./pages/PremiumAds";
+import CreateAd from "./pages/CreateAd";
+import UserDashboard from "./pages/UserDashboard";
 import About from "./pages/About";
 import Help from "./pages/Help";
 import TermsOfService from "./pages/TermsOfService";
@@ -42,6 +45,10 @@ const App = () => (
             <Route path="/categorie/:slug" element={<CategoryPage />} />
             <Route path="/annonce/:id" element={<AdDetail />} />
             <Route path="/premium" element={<PremiumAds />} />
+            <Route path="/publier" element={<AuthGuard><CreateAd /></AuthGuard>} />
+            <Route path="/publier-annonce" element={<AuthGuard><CreateAd /></AuthGuard>} />
+            <Route path="/mes-annonces" element={<AuthGuard><UserDashboard /></AuthGuard>} />
+            <Route path="/dashboard" element={<AuthGuard><UserDashboard /></AuthGuard>} />
             <Route path="/a-propos" element={<About />} />
             <Route path="/aide" element={<Help />} />
             <Route path="/conditions" element={<TermsOfService />} />
