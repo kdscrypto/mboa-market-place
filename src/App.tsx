@@ -19,6 +19,7 @@ import PremiumAds from "./pages/PremiumAds";
 import CreateAd from "./pages/CreateAd";
 import UserDashboard from "./pages/UserDashboard";
 import AdminModeration from "./pages/AdminModeration";
+import Messages from "./pages/Messages";
 import About from "./pages/About";
 import Help from "./pages/Help";
 import TermsOfService from "./pages/TermsOfService";
@@ -51,6 +52,8 @@ const App = () => (
             <Route path="/mes-annonces" element={<AuthGuard><UserDashboard /></AuthGuard>} />
             <Route path="/dashboard" element={<AuthGuard><UserDashboard /></AuthGuard>} />
             <Route path="/admin/moderation" element={<AdminModeration />} />
+            <Route path="/messages" element={<AuthGuard><Messages /></AuthGuard>} />
+            <Route path="/messages/:conversationId" element={<AuthGuard><Messages /></AuthGuard>} />
             <Route path="/a-propos" element={<About />} />
             <Route path="/aide" element={<Help />} />
             <Route path="/conditions" element={<TermsOfService />} />
