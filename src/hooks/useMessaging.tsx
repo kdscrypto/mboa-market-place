@@ -31,7 +31,7 @@ export const useMessaging = () => {
     retryLoading
   } = useConversationMessages(currentConversation, handleMarkAsRead);
 
-  // Enhanced load messages handler
+  // Simplified load messages handler - just select conversation
   const loadMessages = useCallback((conversationId: string) => {
     try {
       if (!conversationId) {
@@ -42,11 +42,7 @@ export const useMessaging = () => {
       console.log(`[MESSAGING DEBUG] loadMessages called with: ${conversationId}`);
       console.log(`[MESSAGING DEBUG] Current conversation: ${currentConversation}`);
       
-      if (currentConversation === conversationId) {
-        console.log(`[MESSAGING DEBUG] Same conversation already selected, skipping: ${conversationId}`);
-        return;
-      }
-      
+      // Always select the conversation - the useConversationMessages hook will handle loading
       console.log(`[MESSAGING DEBUG] Setting current conversation to: ${conversationId}`);
       selectConversation(conversationId);
     } catch (error) {
