@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { Ad } from "@/types/adTypes";
@@ -40,7 +41,6 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   
   // Use external selectedAds if provided, otherwise use local state
   const currentSelectedAds = onSelectedAdsChange ? selectedAds : localSelectedAds;
-  const setCurrentSelectedAds = onSelectedAdsChange ? onSelectedAdsChange : setLocalSelectedAds;
   
   // Add debug logging
   useEffect(() => {
@@ -52,8 +52,12 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
 
   // Reset selected ads when ads change
   useEffect(() => {
-    setCurrentSelectedAds([]);
-  }, [ads, setCurrentSelectedAds]);
+    if (onSelectedAdsChange) {
+      onSelectedAdsChange([]);
+    } else {
+      setLocalSelectedAds([]);
+    }
+  }, [ads, onSelectedAdsChange]);
   
   const handleRejectClick = (adId: string) => {
     console.log("Opening reject dialog for ad:", adId);
@@ -78,18 +82,26 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setCurrentSelectedAds(ads.map(ad => ad.id));
+    const newSelection = checked ? ads.map(ad => ad.id) : [];
+    if (onSelectedAdsChange) {
+      onSelectedAdsChange(newSelection);
     } else {
-      setCurrentSelectedAds([]);
+      setLocalSelectedAds(newSelection);
     }
   };
 
   const handleSelectAd = (adId: string, checked: boolean) => {
-    if (checked) {
-      setCurrentSelectedAds(prev => [...prev, adId]);
+    if (onSelectedAdsChange) {
+      const newSelection = checked 
+        ? [...currentSelectedAds, adId]
+        : currentSelectedAds.filter(id => id !== adId);
+      onSelectedAdsChange(newSelection);
     } else {
-      setCurrentSelectedAds(prev => prev.filter(id => id !== adId));
+      if (checked) {
+        setLocalSelectedAds(prev => [...prev, adId]);
+      } else {
+        setLocalSelectedAds(prev => prev.filter(id => id !== adId));
+      }
     }
   };
 
@@ -98,7 +110,11 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
       const confirmed = window.confirm(`Êtes-vous sûr de vouloir approuver ${currentSelectedAds.length} annonce(s) ?`);
       if (confirmed) {
         onBulkApprove(currentSelectedAds);
-        setCurrentSelectedAds([]);
+        if (onSelectedAdsChange) {
+          onSelectedAdsChange([]);
+        } else {
+          setLocalSelectedAds([]);
+        }
       }
     }
   };
@@ -108,7 +124,11 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
       const confirmed = window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement ${currentSelectedAds.length} annonce(s) ? Cette action est irréversible.`);
       if (confirmed) {
         onBulkDelete(currentSelectedAds);
-        setCurrentSelectedAds([]);
+        if (onSelectedAdsChange) {
+          onSelectedAdsChange([]);
+        } else {
+          setLocalSelectedAds([]);
+        }
       }
     }
   };
