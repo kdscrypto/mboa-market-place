@@ -13,6 +13,7 @@ interface AdPreviewDialogProps {
   formData: AdFormData;
   imageURLs: string[];
   isLoading: boolean;
+  isSubmitted?: boolean;
   onSubmit: () => void;
 }
 
@@ -21,7 +22,8 @@ const AdPreviewDialog = ({
   onOpenChange, 
   formData, 
   imageURLs, 
-  isLoading, 
+  isLoading,
+  isSubmitted = false,
   onSubmit 
 }: AdPreviewDialogProps) => {
   return (
@@ -130,15 +132,16 @@ const AdPreviewDialog = ({
               variant="outline"
               onClick={() => onOpenChange(false)}
               className="flex-1"
+              disabled={isLoading}
             >
               Modifier l'annonce
             </Button>
             <Button
               onClick={onSubmit}
               className="flex-1 bg-mboa-orange hover:bg-mboa-orange/90"
-              disabled={isLoading}
+              disabled={isLoading || isSubmitted}
             >
-              {isLoading ? "Traitement..." : "Publier définitivement"}
+              {isLoading ? "Traitement..." : isSubmitted ? "Déjà soumise" : "Publier définitivement"}
             </Button>
           </div>
         </div>

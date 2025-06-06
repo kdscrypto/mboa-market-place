@@ -19,10 +19,9 @@ const CreateAd = () => {
   const [imageURLs, setImageURLs] = useState<string[]>([]);
   const [citiesList, setCitiesList] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const maxImages = 5;
   const { toast } = useToast();
-  const { handleSubmit: handleAdSubmission } = useAdSubmission();
+  const { handleSubmit: handleAdSubmission, isLoading, isSubmitted, resetSubmissionState } = useAdSubmission();
   
   // Initialize form with react-hook-form and zod validation
   const form = useForm<AdFormData>({
@@ -41,7 +40,7 @@ const CreateAd = () => {
     }
   });
   
-  const { handleSubmit, setValue, watch, formState } = form;
+  const { handleSubmit, setValue, watch, formState, reset } = form;
   const formValues = watch();
   
   // Handle image change
@@ -94,6 +93,14 @@ const CreateAd = () => {
       variant: "destructive"
     });
   });
+
+  // Reset form and submission state
+  const handleNewAd = () => {
+    reset();
+    setImageURLs([]);
+    setCitiesList([]);
+    resetSubmissionState();
+  };
   
   // Clean up object URLs when component unmounts
   React.useEffect(() => {
@@ -109,44 +116,72 @@ const CreateAd = () => {
       <main className="flex-grow py-8 bg-mboa-gray">
         <div className="mboa-container max-w-3xl">
           <div className="bg-white rounded-lg shadow p-6">
-            <h1 className="text-2xl font-bold mb-6">Publier une annonce</h1>
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold">Publier une annonce</h1>
+              {isSubmitted && (
+                <Button 
+                  onClick={handleNewAd}
+                  variant="outline"
+                  className="text-sm"
+                >
+                  Nouvelle annonce
+                </Button>
+              )}
+            </div>
             
-            <Form {...form}>
-              <form onSubmit={onPreview} className="space-y-6">
-                {/* Core form fields */}
-                <AdFormFields 
-                  control={form.control}
-                  citiesList={citiesList}
-                  setCitiesList={setCitiesList}
-                />
-                
-                {/* Ad Plans */}
-                <AdPlanSelector 
-                  value={formValues.adType}
-                  onChange={(value) => setValue('adType', value)}
-                />
-                
-                {/* Images */}
-                <ImageUploader 
-                  images={formValues.images}
-                  imageURLs={imageURLs}
-                  onImageChange={handleImageChange}
-                  onRemoveImage={removeImage}
-                  maxImages={maxImages}
-                  error={formState.errors.images?.message as string}
-                />
-                
-                {/* Submit Button */}
-                <div className="pt-4">
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-mboa-orange hover:bg-mboa-orange/90 text-white py-3"
-                  >
-                    Prévisualiser mon annonce
-                  </Button>
+            {isSubmitted ? (
+              <div className="text-center py-8">
+                <div className="mb-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Annonce soumise avec succès !</h2>
+                  <p className="text-gray-600">
+                    Votre annonce a été soumise pour approbation. Vous pouvez suivre son statut dans votre tableau de bord.
+                  </p>
                 </div>
-              </form>
-            </Form>
+              </div>
+            ) : (
+              <Form {...form}>
+                <form onSubmit={onPreview} className="space-y-6">
+                  {/* Core form fields */}
+                  <AdFormFields 
+                    control={form.control}
+                    citiesList={citiesList}
+                    setCitiesList={setCitiesList}
+                  />
+                  
+                  {/* Ad Plans */}
+                  <AdPlanSelector 
+                    value={formValues.adType}
+                    onChange={(value) => setValue('adType', value)}
+                  />
+                  
+                  {/* Images */}
+                  <ImageUploader 
+                    images={formValues.images}
+                    imageURLs={imageURLs}
+                    onImageChange={handleImageChange}
+                    onRemoveImage={removeImage}
+                    maxImages={maxImages}
+                    error={formState.errors.images?.message as string}
+                  />
+                  
+                  {/* Submit Button */}
+                  <div className="pt-4">
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-mboa-orange hover:bg-mboa-orange/90 text-white py-3"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Traitement..." : "Prévisualiser mon annonce"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            )}
           </div>
         </div>
       </main>
@@ -158,6 +193,7 @@ const CreateAd = () => {
         formData={formValues}
         imageURLs={imageURLs}
         isLoading={isLoading}
+        isSubmitted={isSubmitted}
         onSubmit={() => handleAdSubmission(formValues, setShowPreview)}
       />
       

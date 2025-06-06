@@ -11,8 +11,28 @@ export const useAdSubmission = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   
   const handleSubmit = async (formData: AdFormData, setShowPreview: (show: boolean) => void) => {
+    // Vérifier si une soumission est déjà en cours ou terminée
+    if (isLoading) {
+      toast({
+        title: "Soumission en cours",
+        description: "Votre annonce est en cours de traitement, veuillez patienter.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isSubmitted) {
+      toast({
+        title: "Annonce déjà soumise",
+        description: "Cette annonce a déjà été soumise pour approbation. Vous pouvez consulter son statut dans votre tableau de bord.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -141,6 +161,9 @@ export const useAdSubmission = () => {
         }
       }
       
+      // Marquer comme soumis avec succès
+      setIsSubmitted(true);
+      
       toast({
         title: "Annonce soumise",
         description: "Votre annonce a été soumise pour approbation.",
@@ -170,11 +193,17 @@ export const useAdSubmission = () => {
       setIsLoading(false);
     }
   };
+
+  const resetSubmissionState = () => {
+    setIsSubmitted(false);
+    setIsLoading(false);
+  };
   
   return {
     isLoading,
+    isSubmitted,
     setIsLoading,
-    handleSubmit
+    handleSubmit,
+    resetSubmissionState
   };
 };
-
