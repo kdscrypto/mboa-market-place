@@ -17,6 +17,8 @@ const AdminModeration = () => {
     handleApproveAd,
     handleRejectAd,
     handleDeleteAd,
+    handleBulkApprove,
+    handleBulkDelete,
     isAuthenticated,
     isAdmin
   } = useModerationAds();
@@ -82,6 +84,8 @@ const AdminModeration = () => {
         onApprove={handleApproveAd}
         onReject={handleRejectAd}
         onDelete={handleDeleteAd}
+        onBulkApprove={handleBulkApprove}
+        onBulkDelete={handleBulkDelete}
       />
     </ModerationLayout>
   );

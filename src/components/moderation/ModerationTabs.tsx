@@ -12,6 +12,8 @@ interface ModerationTabsProps {
   onApprove: (adId: string) => void;
   onReject: (adId: string, message?: string) => void;
   onDelete: (adId: string) => void;
+  onBulkApprove: (adIds: string[]) => void;
+  onBulkDelete: (adIds: string[]) => void;
 }
 
 const ModerationTabs: React.FC<ModerationTabsProps> = ({
@@ -21,7 +23,9 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
   isLoading,
   onApprove,
   onReject,
-  onDelete
+  onDelete,
+  onBulkApprove,
+  onBulkDelete
 }) => {
   // Add debug logging to track when props change
   useEffect(() => {
@@ -54,6 +58,7 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
           isLoading={isLoading}
           onApprove={onApprove}
           onReject={onReject}
+          onBulkApprove={onBulkApprove}
         />
       </TabsContent>
       
@@ -71,6 +76,7 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
           status="rejected" 
           isLoading={isLoading}
           onDelete={onDelete}
+          onBulkDelete={onBulkDelete}
         />
       </TabsContent>
     </Tabs>
