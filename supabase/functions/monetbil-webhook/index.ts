@@ -6,12 +6,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { 
   parseWebhookFormData, 
   validateWebhookSignature, 
-  validateRequiredFields 
+  validateRequiredFields,
+  validateWebhookSecurity
 } from "./modules/webhookValidation.ts"
 import { 
   checkWebhookRateLimit, 
   detectSuspiciousWebhookActivity, 
-  logSecurityViolation 
+  logSecurityViolation,
+  validateWebhookOrigin
 } from "./modules/webhookSecurity.ts"
 import { 
   acquireTransactionLock, 
@@ -21,7 +23,8 @@ import {
   validateTransactionExists, 
   processSuccessfulPayment, 
   updateTransactionStatus, 
-  createTransactionUpdateData 
+  createTransactionUpdateData,
+  validateTransactionSecurity
 } from "./modules/webhookProcessing.ts"
 import { 
   logWebhookProcessingStart, 
@@ -53,17 +56,37 @@ serve(async (req) => {
     
     if (!serviceSecret) {
       console.error('Monetbil service secret not configured')
-      return new Response('Service not properly configured', { status: 500 })
+      return new Response('Service configuration error', { status: 500 })
     }
 
     // Extract security information for enhanced audit logging
     const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
     const userAgent = req.headers.get('user-agent') || 'unknown'
 
-    // Enhanced rate limiting for webhook calls
+    // Validate webhook origin first
+    const { valid: originValid, reason: originReason } = await validateWebhookOrigin(
+      supabase, 
+      clientIP, 
+      userAgent
+    )
+    
+    if (!originValid) {
+      console.error('Invalid webhook origin:', originReason)
+      await logSecurityViolation(
+        supabase,
+        'unknown',
+        'invalid_origin',
+        { reason: originReason },
+        { clientIP, userAgent, rateLimitInfo: null, suspiciousActivity: null }
+      )
+      return new Response('Forbidden', { status: 403 })
+    }
+
+    // Enhanced rate limiting for webhook calls - FAIL SECURE
     const { allowed: rateLimitAllowed, rateLimitInfo } = await checkWebhookRateLimit(supabase, clientIP)
     
     if (!rateLimitAllowed) {
+      console.error('Webhook rate limit exceeded for IP:', clientIP)
       return new Response('Rate limit exceeded', { status: 429 })
     }
 
@@ -71,20 +94,34 @@ serve(async (req) => {
     const formData = await req.formData()
     const webhookData = await parseWebhookFormData(req)
 
-    console.log('Enhanced webhook received:', { 
+    console.log('Secure webhook received:', { 
       status: webhookData.status, 
       transactionId: webhookData.transactionId, 
       monetbilTransactionId: webhookData.monetbilTransactionId,
       hasSignature: !!webhookData.signature,
       clientIP,
-      rateLimitInfo
+      timestamp: new Date().toISOString()
     })
 
-    // Validate required fields
+    // CRITICAL: Validate required fields with enhanced security
     const validationError = validateRequiredFields(webhookData)
     if (validationError) {
-      console.error(validationError)
+      console.error('Webhook validation failed:', validationError)
       return new Response(validationError, { status: 400 })
+    }
+
+    // CRITICAL: Validate webhook security (signature is now mandatory)
+    const securityError = validateWebhookSecurity(webhookData, !!webhookData.signature)
+    if (securityError) {
+      console.error('Webhook security validation failed:', securityError)
+      await logSecurityViolation(
+        supabase,
+        webhookData.transactionId!,
+        'security_validation_failed',
+        { error: securityError },
+        { clientIP, userAgent, rateLimitInfo, suspiciousActivity: null }
+      )
+      return new Response('Security validation failed', { status: 403 })
     }
 
     // Enhanced suspicious activity detection for webhooks
@@ -102,10 +139,55 @@ serve(async (req) => {
     )
 
     if (shouldBlock) {
-      return new Response('Webhook blocked due to suspicious activity', { status: 403 })
+      console.error('Webhook blocked due to suspicious activity')
+      await logSecurityViolation(
+        supabase,
+        webhookData.transactionId!,
+        'suspicious_activity_blocked',
+        { activityData },
+        { ...securityContext, suspiciousActivity: activityData }
+      )
+      return new Response('Request blocked due to suspicious activity', { status: 403 })
     }
 
     securityContext.suspiciousActivity = activityData
+
+    // CRITICAL: Webhook signature verification is now MANDATORY
+    if (!webhookData.signature) {
+      console.error('Missing required webhook signature')
+      await logSecurityViolation(
+        supabase,
+        webhookData.transactionId!,
+        'missing_signature',
+        { timestamp: new Date().toISOString() },
+        securityContext
+      )
+      return new Response('Webhook signature required', { status: 401 })
+    }
+
+    const isValidSignature = await validateWebhookSignature(
+      formData, 
+      webhookData.signature, 
+      serviceSecret
+    )
+    
+    if (!isValidSignature) {
+      console.error('Invalid webhook signature detected')
+      
+      await logSecurityViolation(
+        supabase,
+        webhookData.transactionId!,
+        'invalid_signature',
+        {
+          provided_signature_length: webhookData.signature.length,
+          timestamp: new Date().toISOString()
+        },
+        securityContext
+      )
+      
+      return new Response('Invalid webhook signature', { status: 401 })
+    }
+    console.log('Webhook signature verified successfully')
 
     // Acquire processing lock
     const { acquired: lockAcquired, lockIdentifier } = await acquireTransactionLock(
@@ -114,37 +196,11 @@ serve(async (req) => {
     )
 
     if (!lockAcquired) {
-      return new Response('Transaction locked or expired', { status: 409 })
+      console.error('Failed to acquire transaction lock')
+      return new Response('Transaction processing conflict', { status: 409 })
     }
 
     try {
-      // Enhanced webhook verification with signature if provided
-      if (webhookData.signature) {
-        const isValidSignature = await validateWebhookSignature(
-          formData, 
-          webhookData.signature, 
-          serviceSecret
-        )
-        
-        if (!isValidSignature) {
-          console.error('Invalid webhook signature')
-          
-          await logSecurityViolation(
-            supabase,
-            webhookData.transactionId!,
-            'signature_mismatch',
-            {
-              provided_signature: webhookData.signature,
-              timestamp: new Date().toISOString()
-            },
-            securityContext
-          )
-          
-          return new Response('Invalid signature', { status: 401 })
-        }
-        console.log('Webhook signature verified successfully')
-      }
-
       // Get and validate the payment transaction
       const { valid: transactionValid, transaction, isExpired } = await validateTransactionExists(
         supabase, 
@@ -152,6 +208,7 @@ serve(async (req) => {
       )
 
       if (!transactionValid) {
+        console.error('Transaction not found:', webhookData.transactionId)
         return new Response('Transaction not found', { status: 404 })
       }
 
@@ -164,6 +221,25 @@ serve(async (req) => {
           securityContext
         )
         return new Response('Transaction expired', { status: 410 })
+      }
+
+      // Additional transaction security validation
+      const { valid: securityValid, error: securityValidationError } = await validateTransactionSecurity(
+        supabase,
+        transaction,
+        webhookData
+      )
+
+      if (!securityValid) {
+        console.error('Transaction security validation failed:', securityValidationError)
+        await logSecurityViolation(
+          supabase,
+          webhookData.transactionId!,
+          'transaction_security_failed',
+          { error: securityValidationError },
+          { ...securityContext, transaction }
+        )
+        return new Response('Transaction security validation failed', { status: 403 })
       }
 
       // Add transaction to security context
@@ -194,6 +270,9 @@ serve(async (req) => {
 
         if (!adCreated) {
           updateData.status = 'failed'
+          console.error('Ad creation failed:', adError)
+        } else {
+          console.log('Ad created successfully:', adId)
         }
 
         await logAdCreationResult(
@@ -226,8 +305,8 @@ serve(async (req) => {
       )
 
       if (!updateSuccess) {
-        console.error('Error updating transaction:', updateError)
-        return new Response('Error updating transaction', { status: 500 })
+        console.error('Critical error updating transaction:', updateError)
+        return new Response('Transaction update failed', { status: 500 })
       }
 
       // Enhanced successful webhook processing logging
@@ -237,11 +316,12 @@ serve(async (req) => {
         updateData.status!, 
         { 
           ...securityContext, 
-          signatureVerified: !!webhookData.signature 
+          signatureVerified: true,
+          securityLevel: 'enhanced'
         }
       )
 
-      console.log('Enhanced secure webhook processed successfully for transaction:', webhookData.transactionId)
+      console.log('Secure webhook processed successfully for transaction:', webhookData.transactionId)
       return new Response('OK', { status: 200 })
 
     } finally {
@@ -252,7 +332,7 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Webhook processing error:', error)
+    console.error('Critical webhook processing error:', error)
     return new Response('Internal Server Error', { status: 500 })
   }
 })

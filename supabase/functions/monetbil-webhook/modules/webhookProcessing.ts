@@ -48,9 +48,25 @@ export async function processSuccessfulPayment(
 ): Promise<{ success: boolean; adId?: string; error?: string }> {
   console.log('Payment successful, creating ad...');
 
+  // Validate transaction amount against expected limits
+  if (transaction.amount <= 0 || transaction.amount > 1000000) {
+    return { 
+      success: false, 
+      error: `Invalid transaction amount: ${transaction.amount}` 
+    };
+  }
+
   // Create the ad from stored data
   const adData = transaction.payment_data.adData;
   const adType = transaction.payment_data.adType;
+
+  // Validate ad data integrity
+  if (!adData || !adData.title || !adData.description) {
+    return { 
+      success: false, 
+      error: 'Invalid ad data in transaction' 
+    };
+  }
 
   const { data: ad, error: adError } = await supabase
     .from('ads')
@@ -73,7 +89,7 @@ export async function processSuccessfulPayment(
 
   if (adError) {
     console.error('Error creating ad:', adError);
-    return { success: false, error: adError.message };
+    return { success: false, error: `Database error: ${adError.message}` };
   }
 
   console.log('Ad created successfully:', ad.id);
@@ -91,6 +107,12 @@ export async function updateTransactionStatus(
   transactionId: string,
   updateData: TransactionUpdateData
 ): Promise<{ success: boolean; error?: string }> {
+  
+  // Validate update data
+  if (!updateData.monetbil_transaction_id) {
+    return { success: false, error: 'Missing Monetbil transaction ID' };
+  }
+
   const { error: updateError } = await supabase
     .from('payment_transactions')
     .update(updateData)
@@ -98,7 +120,7 @@ export async function updateTransactionStatus(
 
   if (updateError) {
     console.error('Error updating transaction:', updateError);
-    return { success: false, error: updateError.message };
+    return { success: false, error: `Database update failed: ${updateError.message}` };
   }
 
   return { success: true };
@@ -106,22 +128,75 @@ export async function updateTransactionStatus(
 
 export function createTransactionUpdateData(
   status: string,
-  monetbilTransactionId: string,
-  isSuccessful: boolean = false
+  monetbilTransactionId: string
 ): TransactionUpdateData {
+  if (!monetbilTransactionId) {
+    throw new Error('Monetbil transaction ID is required');
+  }
+
   const updateData: TransactionUpdateData = {
     monetbil_transaction_id: monetbilTransactionId,
     updated_at: new Date().toISOString()
   };
 
-  if (status === '1' && isSuccessful) {
-    // Payment successful
-    updateData.status = 'completed';
-    updateData.completed_at = new Date().toISOString();
-  } else {
-    // Payment failed or cancelled
-    updateData.status = 'failed';
+  // Map Monetbil status codes to our internal status
+  switch (status) {
+    case '1':
+      updateData.status = 'completed';
+      updateData.completed_at = new Date().toISOString();
+      break;
+    case '0':
+      updateData.status = 'pending';
+      break;
+    case '2':
+    case '3':
+    default:
+      updateData.status = 'failed';
+      break;
   }
 
   return updateData;
+}
+
+export async function validateTransactionSecurity(
+  supabase: any,
+  transaction: any,
+  webhookData: any
+): Promise<{ valid: boolean; error?: string }> {
+  
+  // Check if transaction is already completed to prevent replay attacks
+  if (transaction.status === 'completed') {
+    return { 
+      valid: false, 
+      error: 'Transaction already completed - potential replay attack' 
+    };
+  }
+
+  // Validate transaction hasn't been processed multiple times
+  const { data: auditLogs } = await supabase
+    .from('payment_audit_logs')
+    .select('id')
+    .eq('transaction_id', transaction.id)
+    .eq('event_type', 'webhook_processed')
+    .limit(1);
+
+  if (auditLogs && auditLogs.length > 0) {
+    return { 
+      valid: false, 
+      error: 'Transaction already processed - duplicate webhook' 
+    };
+  }
+
+  // Validate Monetbil transaction ID format if provided
+  if (webhookData.monetbilTransactionId) {
+    // Basic validation - Monetbil transaction IDs should be numeric
+    if (!/^\d+$/.test(webhookData.monetbilTransactionId)) {
+      return { 
+        valid: false, 
+        error: 'Invalid Monetbil transaction ID format' 
+      };
+    }
+  }
+
+  return { valid: true };
 }
