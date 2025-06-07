@@ -1,197 +1,206 @@
 
-import React from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Edit, Trash, Clock } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import PaymentStatusBadge from "@/components/ads/PaymentStatusBadge";
+import { Eye, Edit, Trash2, RefreshCw } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 
-interface Ad {
+interface UserAd {
   id: string;
   title: string;
+  category: string;
   price: number;
   status: string;
+  ad_type: string;
   created_at: string;
-  imageUrl: string;
+  payment_transaction_id?: string;
+  payment_transactions?: {
+    status: string;
+  };
 }
 
-interface UserAdsTableProps {
-  ads: Ad[];
-  tabValue: string;
-}
-
-const UserAdsTable = ({ ads, tabValue }: UserAdsTableProps) => {
+const UserAdsTable = () => {
+  const [ads, setAds] = useState<UserAd[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const getStatusBadge = (status: string) => {
+  const fetchUserAds = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('ads')
+        .select(`
+          *,
+          payment_transactions (
+            status
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setAds(data || []);
+    } catch (error) {
+      console.error('Error fetching user ads:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger vos annonces.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserAds();
+  }, []);
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case "active":
-        return <Badge className="bg-green-500">Active</Badge>;
-      case "sold":
-        return <Badge className="bg-blue-500">Vendue</Badge>;
-      case "expired":
-        return <Badge className="bg-gray-500">Expirée</Badge>;
-      case "pending":
-        return <Badge className="bg-amber-500 flex items-center gap-1">
-          <Clock className="h-3 w-3" /> En attente
-        </Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('ads')
-        .delete()
-        .eq('id', id);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Annonce supprimée",
-        description: "Votre annonce a été supprimée avec succès.",
-        duration: 3000
-      });
-    } catch (error) {
-      console.error("Erreur lors de la suppression de l'annonce:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer l'annonce.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  const handleMarkAsSold = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('ads')
-        .update({ status: 'sold' })
-        .eq('id', id);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "Annonce mise à jour",
-        description: "Votre annonce a été marquée comme vendue.",
-        duration: 3000
-      });
-    } catch (error) {
-      console.error("Erreur lors du marquage de l'annonce comme vendue:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour l'annonce.",
-        variant: "destructive"
-      });
+  const getAdTypeColor = (adType: string) => {
+    switch (adType) {
+      case 'standard': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-purple-100 text-purple-800';
     }
   };
 
-  const filteredAds = ads.filter(ad => tabValue === "all" || ad.status === tabValue);
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'XAF',
+      minimumFractionDigits: 0
+    }).format(price);
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Mes annonces</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <RefreshCw className="h-6 w-6 animate-spin" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Annonce
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Prix
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Statut
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Date
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {filteredAds.map((ad) => (
-            <tr key={ad.id}>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 h-10 w-10">
-                    <img 
-                      className="h-10 w-10 rounded-md object-cover" 
-                      src={ad.imageUrl}
-                      alt={ad.title}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder.svg';
-                      }}
-                    />
-                  </div>
-                  <div className="ml-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      <Link to={`/annonce/${ad.id}`} className="hover:underline">
-                        {ad.title}
-                      </Link>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Mes annonces</CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchUserAds}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          Actualiser
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {ads.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p className="mb-4">Vous n'avez pas encore d'annonces</p>
+            <Button 
+              onClick={() => navigate('/publier-annonce')}
+              className="bg-mboa-orange hover:bg-mboa-orange/90"
+            >
+              Créer ma première annonce
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {ads.map((ad) => (
+              <div
+                key={ad.id}
+                className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-medium text-lg">{ad.title}</h3>
+                      <Badge className={getStatusColor(ad.status)}>
+                        {ad.status === 'approved' && 'Approuvée'}
+                        {ad.status === 'pending' && 'En attente'}
+                        {ad.status === 'rejected' && 'Rejetée'}
+                      </Badge>
+                      <Badge className={getAdTypeColor(ad.ad_type)}>
+                        {ad.ad_type === 'standard' ? 'Gratuite' : 'Premium'}
+                      </Badge>
                     </div>
+                    
+                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                      <span>Catégorie: {ad.category}</span>
+                      <span>Prix: {formatPrice(ad.price)}</span>
+                      <span>
+                        Créée {formatDistanceToNow(new Date(ad.created_at), { 
+                          addSuffix: true, 
+                          locale: fr 
+                        })}
+                      </span>
+                    </div>
+
+                    {/* Payment Status for Premium Ads */}
+                    {ad.payment_transaction_id && (
+                      <div className="mt-2">
+                        <PaymentStatusBadge
+                          transactionId={ad.payment_transaction_id}
+                          status={ad.payment_transactions?.status as any}
+                          showTrackingButton={true}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/annonce/${ad.id}`)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    {ad.status === 'rejected' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/publier-annonce?edit=${ad.id}`)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">
-                  {new Intl.NumberFormat('fr-FR').format(ad.price)} XAF
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {getStatusBadge(ad.status)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {new Date(ad.created_at).toLocaleDateString('fr-FR')}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                >
-                  <Link to={`/modifier-annonce/${ad.id}`}>
-                    <Edit className="h-4 w-4 mr-1" /> Modifier
-                  </Link>
-                </Button>
-                
-                {ad.status === "active" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleMarkAsSold(ad.id)}
-                  >
-                    Marquer comme vendu
-                  </Button>
-                )}
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDelete(ad.id)}
-                  className="text-red-500 border-red-300 hover:bg-red-50"
-                >
-                  <Trash className="h-4 w-4 mr-1" /> Supprimer
-                </Button>
-              </td>
-            </tr>
-          ))}
-            
-          {filteredAds.length === 0 && (
-            <tr>
-              <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
-                Aucune annonce trouvée dans cette catégorie.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
