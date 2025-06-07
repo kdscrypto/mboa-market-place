@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -9,23 +10,16 @@ import {
   User, 
   LogOut, 
   Plus, 
-  MessageCircle, 
-  LayoutDashboard,
-  Shield,
-  Bell,
-  Settings
+  MessageCircle,
+  Search
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
-import SecurityAlertSystem from "@/components/security/SecurityAlertSystem";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showAlerts, setShowAlerts] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAdmin } = useAdminAuth();
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -33,26 +27,6 @@ const Header = () => {
       const { data: { user } } = await supabase.auth.getUser();
       return user;
     },
-  });
-
-  // Compter les alertes de sécurité critiques pour les admins
-  const { data: criticalAlertsCount } = useQuery({
-    queryKey: ['critical-alerts-count'],
-    queryFn: async () => {
-      if (!isAdmin) return 0;
-      
-      const { data, error } = await supabase
-        .from('payment_security_events')
-        .select('id')
-        .eq('severity', 'critical')
-        .eq('reviewed', false)
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-      
-      if (error) return 0;
-      return data.length;
-    },
-    refetchInterval: 30000,
-    enabled: isAdmin
   });
 
   const handleSignOut = async () => {
@@ -74,114 +48,56 @@ const Header = () => {
 
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-      {/* Système d'alertes de sécurité */}
-      {isAdmin && (
-        <div className="bg-gray-50 border-b">
-          <div className="mboa-container">
-            <SecurityAlertSystem />
-          </div>
-        </div>
-      )}
-
       <nav className="mboa-container py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-mboa-orange">
-            Mboa
+            Mboa Market
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/categories" className="text-gray-700 hover:text-mboa-orange transition-colors">
-              Catégories
-            </Link>
-            <Link to="/premium-ads" className="text-gray-700 hover:text-mboa-orange transition-colors">
-              Annonces Premium
-            </Link>
+          <div className="hidden md:flex items-center flex-1 max-w-2xl mx-8">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Rechercher une annonce..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mboa-orange focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center space-x-4">
+            <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90">
+              <Link to="/publier-annonce">
+                <Plus className="mr-2 h-4 w-4" />
+                Publier une annonce
+              </Link>
+            </Button>
+            
+            <ThemeToggleButton />
             
             {user ? (
-              <div className="flex items-center space-x-4">
-                <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90">
-                  <Link to="/publier-annonce">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Publier
-                  </Link>
-                </Button>
-                
+              <>
                 <Link to="/messages" className="text-gray-700 hover:text-mboa-orange transition-colors">
                   <MessageCircle className="h-5 w-5" />
                 </Link>
-                
-                {isAdmin && (
-                  <>
-                    <div className="relative">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowAlerts(!showAlerts)}
-                        className="relative"
-                      >
-                        <Bell className="h-4 w-4" />
-                        {criticalAlertsCount > 0 && (
-                          <Badge 
-                            variant="destructive" 
-                            className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                          >
-                            {criticalAlertsCount}
-                          </Badge>
-                        )}
-                      </Button>
-                    </div>
-                    
-                    <Link 
-                      to="/admin/dashboard" 
-                      className="text-gray-700 hover:text-mboa-orange transition-colors"
-                      title="Tableau de bord administrateur"
-                    >
-                      <LayoutDashboard className="h-5 w-5" />
-                    </Link>
-                    
-                    <Link 
-                      to="/security-dashboard" 
-                      className="text-gray-700 hover:text-mboa-orange transition-colors"
-                      title="Tableau de bord sécurité"
-                    >
-                      <Shield className="h-5 w-5" />
-                    </Link>
-                    
-                    <Link 
-                      to="/admin/moderation" 
-                      className="text-gray-700 hover:text-mboa-orange transition-colors"
-                    >
-                      <Settings className="h-5 w-5" />
-                    </Link>
-                  </>
-                )}
                 
                 <Link to="/dashboard" className="text-gray-700 hover:text-mboa-orange transition-colors">
                   <User className="h-5 w-5" />
                 </Link>
                 
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={handleSignOut}
                   className="text-gray-700 hover:text-mboa-orange"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
                   Déconnexion
                 </Button>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center space-x-4">
-                <Button variant="outline" asChild>
-                  <Link to="/login">Connexion</Link>
-                </Button>
-                <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90">
-                  <Link to="/publier-annonce">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Publier
-                  </Link>
-                </Button>
-              </div>
+              <Button variant="outline" asChild>
+                <Link to="/login">Connexion</Link>
+              </Button>
             )}
           </div>
 
@@ -201,30 +117,24 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t pt-4">
             <div className="flex flex-col space-y-4">
-              <Link 
-                to="/categories" 
-                className="text-gray-700 hover:text-mboa-orange transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Catégories
-              </Link>
-              <Link 
-                to="/premium-ads" 
-                className="text-gray-700 hover:text-mboa-orange transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Annonces Premium
-              </Link>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Rechercher une annonce..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mboa-orange focus:border-transparent"
+                />
+              </div>
+              
+              <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90 w-full">
+                <Link to="/publier-annonce" onClick={() => setIsMenuOpen(false)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Publier une annonce
+                </Link>
+              </Button>
               
               {user ? (
                 <div className="flex flex-col space-y-4">
-                  <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90 w-full">
-                    <Link to="/publier-annonce" onClick={() => setIsMenuOpen(false)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Publier
-                    </Link>
-                  </Button>
-                  
                   <Link 
                     to="/messages" 
                     className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
@@ -233,42 +143,6 @@ const Header = () => {
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Messages
                   </Link>
-                  
-                  {isAdmin && (
-                    <>
-                      <Link 
-                        to="/admin/dashboard" 
-                        className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        Admin Dashboard
-                      </Link>
-                      
-                      <Link 
-                        to="/security-dashboard" 
-                        className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Shield className="mr-2 h-4 w-4" />
-                        Sécurité
-                        {criticalAlertsCount > 0 && (
-                          <Badge variant="destructive" className="ml-2">
-                            {criticalAlertsCount}
-                          </Badge>
-                        )}
-                      </Link>
-                      
-                      <Link 
-                        to="/admin/moderation" 
-                        className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Settings className="mr-2 h-4 w-4" />
-                        Modération
-                      </Link>
-                    </>
-                  )}
                   
                   <Link 
                     to="/dashboard" 
@@ -292,17 +166,9 @@ const Header = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col space-y-4">
-                  <Button variant="outline" asChild className="w-full">
-                    <Link to="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
-                  </Button>
-                  <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90 w-full">
-                    <Link to="/publier-annonce" onClick={() => setIsMenuOpen(false)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Publier
-                    </Link>
-                  </Button>
-                </div>
+                <Button variant="outline" asChild className="w-full">
+                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
+                </Button>
               )}
             </div>
           </div>
