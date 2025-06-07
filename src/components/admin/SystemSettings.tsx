@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Save,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Activity
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
