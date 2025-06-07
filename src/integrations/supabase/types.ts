@@ -342,14 +342,98 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_rate_limits: {
+        Row: {
+          action_type: string
+          blocked_until: string | null
+          created_at: string
+          id: string
+          identifier: string
+          identifier_type: string
+          request_count: number
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          action_type: string
+          blocked_until?: string | null
+          created_at?: string
+          id?: string
+          identifier: string
+          identifier_type: string
+          request_count?: number
+          updated_at?: string
+          window_start?: string
+        }
+        Update: {
+          action_type?: string
+          blocked_until?: string | null
+          created_at?: string
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          request_count?: number
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      payment_security_events: {
+        Row: {
+          auto_blocked: boolean | null
+          created_at: string
+          event_data: Json
+          event_type: string
+          id: string
+          identifier: string
+          identifier_type: string
+          reviewed: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_score: number | null
+          severity: string
+        }
+        Insert: {
+          auto_blocked?: boolean | null
+          created_at?: string
+          event_data?: Json
+          event_type: string
+          id?: string
+          identifier: string
+          identifier_type: string
+          reviewed?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          severity: string
+        }
+        Update: {
+          auto_blocked?: boolean | null
+          created_at?: string
+          event_data?: Json
+          event_type?: string
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          reviewed?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          severity?: string
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           ad_id: string | null
           amount: number
           cancel_url: string | null
+          client_fingerprint: string | null
           completed_at: string | null
           created_at: string
           currency: string
+          data_encryption_key_id: string | null
+          encrypted_payment_data: string | null
           expires_at: string
           id: string
           locked_at: string | null
@@ -362,6 +446,7 @@ export type Database = {
           payment_url: string | null
           processing_lock: boolean | null
           return_url: string | null
+          security_score: number | null
           status: string
           updated_at: string
           user_id: string
@@ -370,9 +455,12 @@ export type Database = {
           ad_id?: string | null
           amount: number
           cancel_url?: string | null
+          client_fingerprint?: string | null
           completed_at?: string | null
           created_at?: string
           currency?: string
+          data_encryption_key_id?: string | null
+          encrypted_payment_data?: string | null
           expires_at: string
           id?: string
           locked_at?: string | null
@@ -385,6 +473,7 @@ export type Database = {
           payment_url?: string | null
           processing_lock?: boolean | null
           return_url?: string | null
+          security_score?: number | null
           status?: string
           updated_at?: string
           user_id: string
@@ -393,9 +482,12 @@ export type Database = {
           ad_id?: string | null
           amount?: number
           cancel_url?: string | null
+          client_fingerprint?: string | null
           completed_at?: string | null
           created_at?: string
           currency?: string
+          data_encryption_key_id?: string | null
+          encrypted_payment_data?: string | null
           expires_at?: string
           id?: string
           locked_at?: string | null
@@ -408,6 +500,7 @@ export type Database = {
           payment_url?: string | null
           processing_lock?: boolean | null
           return_url?: string | null
+          security_score?: number | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -487,9 +580,23 @@ export type Database = {
         Args: { transaction_uuid: string; lock_identifier: string }
         Returns: boolean
       }
+      check_rate_limit: {
+        Args: {
+          p_identifier: string
+          p_identifier_type: string
+          p_action_type: string
+          p_max_requests?: number
+          p_window_minutes?: number
+        }
+        Returns: Json
+      }
       cleanup_expired_transactions: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      cleanup_payment_system: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       create_system_message: {
         Args: {
@@ -499,6 +606,14 @@ export type Database = {
           msg_metadata?: Json
         }
         Returns: string
+      }
+      detect_suspicious_activity: {
+        Args: {
+          p_identifier: string
+          p_identifier_type: string
+          p_event_data: Json
+        }
+        Returns: Json
       }
       is_admin: {
         Args: { user_id: string }

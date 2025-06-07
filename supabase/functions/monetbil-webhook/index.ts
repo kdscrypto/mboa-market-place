@@ -27,27 +27,88 @@ serve(async (req) => {
       return new Response('Service not properly configured', { status: 500 })
     }
 
+    // Extract security information for enhanced audit logging
+    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+    const userAgent = req.headers.get('user-agent') || 'unknown'
+
+    // Enhanced rate limiting for webhook calls
+    console.log('Checking webhook rate limits for IP:', clientIP)
+    
+    const { data: ipRateLimit, error: rateLimitError } = await supabase
+      .rpc('check_rate_limit', {
+        p_identifier: clientIP,
+        p_identifier_type: 'ip',
+        p_action_type: 'webhook_call',
+        p_max_requests: 50, // 50 webhook calls per hour per IP
+        p_window_minutes: 60
+      })
+
+    if (rateLimitError) {
+      console.error('Webhook rate limit check error:', rateLimitError)
+    } else if (ipRateLimit && !ipRateLimit.allowed) {
+      console.log('Webhook rate limit exceeded for IP:', clientIP, ipRateLimit)
+      
+      // Log security event for excessive webhook calls
+      await supabase
+        .from('payment_security_events')
+        .insert({
+          event_type: 'webhook_rate_limit_exceeded',
+          severity: 'medium',
+          identifier: clientIP,
+          identifier_type: 'ip',
+          event_data: {
+            rate_limit_info: ipRateLimit,
+            timestamp: new Date().toISOString()
+          },
+          risk_score: 40
+        })
+
+      return new Response('Rate limit exceeded', { status: 429 })
+    }
+
     const formData = await req.formData()
     const status = formData.get('status')
     const transactionId = formData.get('item_ref')
     const monetbilTransactionId = formData.get('transaction_id')
     const signature = formData.get('signature')
 
-    // Extract security information for audit logging
-    const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
-    const userAgent = req.headers.get('user-agent') || 'unknown'
-
-    console.log('Secure webhook received:', { 
+    console.log('Enhanced webhook received:', { 
       status, 
       transactionId, 
       monetbilTransactionId,
       hasSignature: !!signature,
-      clientIP
+      clientIP,
+      rateLimitInfo: ipRateLimit
     })
 
     if (!transactionId) {
       console.error('Missing transaction ID in webhook')
       return new Response('Missing transaction ID', { status: 400 })
+    }
+
+    // Enhanced suspicious activity detection for webhooks
+    const webhookActivityData = {
+      transaction_id: transactionId,
+      monetbil_transaction_id: monetbilTransactionId,
+      status,
+      client_ip: clientIP,
+      user_agent: userAgent,
+      has_signature: !!signature,
+      timestamp: new Date().toISOString()
+    }
+
+    const { data: suspiciousActivity, error: suspiciousActivityError } = await supabase
+      .rpc('detect_suspicious_activity', {
+        p_identifier: clientIP,
+        p_identifier_type: 'ip',
+        p_event_data: webhookActivityData
+      })
+
+    if (suspiciousActivityError) {
+      console.error('Webhook suspicious activity detection error:', suspiciousActivityError)
+    } else if (suspiciousActivity && suspiciousActivity.auto_block) {
+      console.log('Suspicious webhook activity detected, blocking:', suspiciousActivity)
+      return new Response('Webhook blocked due to suspicious activity', { status: 403 })
     }
 
     // Generate unique lock identifier for this webhook processing
@@ -79,7 +140,24 @@ serve(async (req) => {
         if (signature !== expectedSignature) {
           console.error('Invalid webhook signature')
           
-          // Log security violation
+          // Enhanced security violation logging
+          await supabase
+            .from('payment_security_events')
+            .insert({
+              event_type: 'webhook_signature_mismatch',
+              severity: 'high',
+              identifier: clientIP,
+              identifier_type: 'ip',
+              event_data: {
+                transaction_id: transactionId,
+                provided_signature: signature,
+                expected_signature: expectedSignature,
+                timestamp: new Date().toISOString()
+              },
+              risk_score: 70,
+              auto_blocked: false
+            })
+          
           await supabase
             .from('payment_audit_logs')
             .insert({
@@ -89,11 +167,15 @@ serve(async (req) => {
                 violation_type: 'invalid_signature',
                 provided_signature: signature,
                 client_ip: clientIP,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                suspicious_activity: suspiciousActivity
               },
               ip_address: clientIP,
               user_agent: userAgent,
-              security_flags: { 'signature_mismatch': true }
+              security_flags: { 
+                'signature_mismatch': true,
+                'high_risk': true
+              }
             })
           
           return new Response('Invalid signature', { status: 401 })
@@ -127,7 +209,7 @@ serve(async (req) => {
           })
           .eq('id', transactionId)
 
-        // Log expiration
+        // Enhanced expiration logging
         await supabase
           .from('payment_audit_logs')
           .insert({
@@ -136,16 +218,21 @@ serve(async (req) => {
             event_data: {
               expired_at: now.toISOString(),
               original_expires_at: transaction.expires_at,
-              webhook_status: status
+              webhook_status: status,
+              security_context: {
+                client_ip: clientIP,
+                suspicious_activity: suspiciousActivity
+              }
             },
             ip_address: clientIP,
-            user_agent: userAgent
+            user_agent: userAgent,
+            security_flags: { 'transaction_expired': true }
           })
 
         return new Response('Transaction expired', { status: 410 })
       }
 
-      // Log webhook processing start
+      // Enhanced webhook processing start logging
       await supabase
         .from('payment_audit_logs')
         .insert({
@@ -155,10 +242,21 @@ serve(async (req) => {
             status,
             monetbil_transaction_id: monetbilTransactionId,
             lock_identifier: lockIdentifier,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            security_context: {
+              client_ip: clientIP,
+              user_agent: userAgent,
+              security_score: transaction.security_score,
+              suspicious_activity: suspiciousActivity,
+              rate_limit_info: ipRateLimit
+            }
           },
           ip_address: clientIP,
-          user_agent: userAgent
+          user_agent: userAgent,
+          security_flags: {
+            'webhook_processing': true,
+            'secure_transaction': transaction.security_score >= 80
+          }
         })
 
       // Update transaction status
@@ -201,7 +299,7 @@ serve(async (req) => {
           console.error('Error creating ad:', adError)
           updateData.status = 'failed'
           
-          // Log ad creation failure
+          // Enhanced ad creation failure logging
           await supabase
             .from('payment_audit_logs')
             .insert({
@@ -209,15 +307,20 @@ serve(async (req) => {
               event_type: 'ad_creation_failed',
               event_data: {
                 error: adError.message,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                security_context: {
+                  transaction_security_score: transaction.security_score,
+                  client_fingerprint: transaction.client_fingerprint
+                }
               },
               ip_address: clientIP,
-              user_agent: userAgent
+              user_agent: userAgent,
+              security_flags: { 'ad_creation_failed': true }
             })
         } else {
           console.log('Ad created successfully:', ad.id)
           
-          // Log successful ad creation
+          // Enhanced successful ad creation logging
           await supabase
             .from('payment_audit_logs')
             .insert({
@@ -226,10 +329,19 @@ serve(async (req) => {
               event_data: {
                 ad_id: ad.id,
                 ad_type: adType,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                security_context: {
+                  transaction_security_score: transaction.security_score,
+                  client_fingerprint: transaction.client_fingerprint,
+                  verified_payment: true
+                }
               },
               ip_address: clientIP,
-              user_agent: userAgent
+              user_agent: userAgent,
+              security_flags: { 
+                'ad_created': true,
+                'secure_payment': true
+              }
             })
           
           // Handle images if present
@@ -242,7 +354,7 @@ serve(async (req) => {
         updateData.status = 'failed'
         console.log('Payment failed or cancelled, status:', status)
         
-        // Log payment failure
+        // Enhanced payment failure logging
         await supabase
           .from('payment_audit_logs')
           .insert({
@@ -251,10 +363,16 @@ serve(async (req) => {
             event_data: {
               monetbil_status: status,
               monetbil_transaction_id: monetbilTransactionId,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              security_context: {
+                client_ip: clientIP,
+                user_agent: userAgent,
+                transaction_security_score: transaction.security_score
+              }
             },
             ip_address: clientIP,
-            user_agent: userAgent
+            user_agent: userAgent,
+            security_flags: { 'payment_failed': true }
           })
       }
 
@@ -269,7 +387,7 @@ serve(async (req) => {
         return new Response('Error updating transaction', { status: 500 })
       }
 
-      // Log successful webhook processing
+      // Enhanced successful webhook processing logging
       await supabase
         .from('payment_audit_logs')
         .insert({
@@ -277,13 +395,24 @@ serve(async (req) => {
           event_type: 'webhook_processing_complete',
           event_data: {
             final_status: updateData.status,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            security_summary: {
+              client_ip: clientIP,
+              transaction_security_score: transaction.security_score,
+              signature_verified: !!signature,
+              suspicious_activity_risk: suspiciousActivity?.risk_score || 0,
+              rate_limit_status: ipRateLimit
+            }
           },
           ip_address: clientIP,
-          user_agent: userAgent
+          user_agent: userAgent,
+          security_flags: { 
+            'processing_complete': true,
+            'secure_processing': true
+          }
         })
 
-      console.log('Secure webhook processed successfully for transaction:', transactionId)
+      console.log('Enhanced secure webhook processed successfully for transaction:', transactionId)
       return new Response('OK', { status: 200 })
 
     } finally {
