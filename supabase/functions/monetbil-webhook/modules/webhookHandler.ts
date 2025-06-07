@@ -11,6 +11,11 @@ import {
   detectSuspiciousWebhookActivity, 
   logSecurityViolation,
   validateWebhookOrigin,
+  performAdvancedSecurityCheck,
+  encryptTransactionData,
+  performSecurityCleanup,
+  shouldPerformCleanup,
+  markCleanupCompleted,
   type SecurityContext
 } from "./security/index.ts"
 import { 
@@ -37,6 +42,16 @@ export async function handleWebhookRequest(req: Request): Promise<Response> {
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   )
+
+  // Perform periodic security cleanup if needed
+  if (await shouldPerformCleanup()) {
+    console.log('Performing periodic security cleanup...');
+    const cleanupResult = await performSecurityCleanup(supabase);
+    if (cleanupResult.success) {
+      markCleanupCompleted();
+      console.log('Security cleanup completed successfully');
+    }
+  }
 
   // Get Monetbil credentials for webhook verification
   const serviceSecret = Deno.env.get('MONETBIL_SERVICE_SECRET')
@@ -229,8 +244,38 @@ export async function handleWebhookRequest(req: Request): Promise<Response> {
       return new Response('Transaction security validation failed', { status: 403 })
     }
 
-    // Add transaction to security context
+    // Perform advanced security analysis
+    const advancedSecurityCheck = await performAdvancedSecurityCheck(
+      supabase,
+      webhookData.transactionId!,
+      transaction.user_id,
+      clientIP,
+      transaction.amount,
+      {
+        webhook_data: webhookData,
+        user_agent: userAgent,
+        transaction_type: transaction.payment_data?.adType
+      }
+    )
+
+    if (advancedSecurityCheck.shouldBlock) {
+      console.error('Transaction blocked by advanced security analysis')
+      await logSecurityViolation(
+        supabase,
+        webhookData.transactionId!,
+        'advanced_security_block',
+        { 
+          risk_score: advancedSecurityCheck.riskScore,
+          anomalies: advancedSecurityCheck.anomalies
+        },
+        { ...securityContext, transaction }
+      )
+      return new Response('Transaction blocked by security analysis', { status: 403 })
+    }
+
+    // Add transaction and security analysis to security context
     securityContext.transaction = transaction
+    securityContext.advancedSecurity = advancedSecurityCheck
 
     // Enhanced webhook processing start logging
     await logWebhookProcessingStart(
@@ -260,6 +305,21 @@ export async function handleWebhookRequest(req: Request): Promise<Response> {
         console.error('Ad creation failed:', adError)
       } else {
         console.log('Ad created successfully:', adId)
+        
+        // Encrypt transaction data for successful payments
+        if (transaction.payment_data && !transaction.encrypted_payment_data) {
+          const encryptionResult = await encryptTransactionData(
+            supabase,
+            webhookData.transactionId!,
+            transaction.payment_data
+          )
+          
+          if (encryptionResult.success) {
+            console.log('Transaction data encrypted successfully')
+          } else {
+            console.error('Failed to encrypt transaction data:', encryptionResult.error)
+          }
+        }
       }
 
       await logAdCreationResult(
@@ -304,11 +364,12 @@ export async function handleWebhookRequest(req: Request): Promise<Response> {
       { 
         ...securityContext, 
         signatureVerified: true,
-        securityLevel: 'enhanced'
+        securityLevel: 'enhanced',
+        riskScore: advancedSecurityCheck.riskScore
       }
     )
 
-    console.log('Secure webhook processed successfully for transaction:', webhookData.transactionId)
+    console.log('Enhanced secure webhook processed successfully for transaction:', webhookData.transactionId)
     return new Response('OK', { status: 200 })
 
   } finally {

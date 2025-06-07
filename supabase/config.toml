@@ -63,3 +63,6 @@ verify_jwt = true
 
 [functions.monetbil-webhook]
 verify_jwt = false
+
+[functions.security-cleanup]
+verify_jwt = false
