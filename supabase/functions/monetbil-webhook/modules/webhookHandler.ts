@@ -22,7 +22,7 @@ import {
   updateTransactionStatus, 
   createTransactionUpdateData,
   validateTransactionSecurity
-} from "./webhookProcessing.ts"
+} from "./paymentProcessing.ts"
 import { 
   logWebhookProcessingStart, 
   logTransactionExpired, 
