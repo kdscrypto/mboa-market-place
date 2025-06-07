@@ -10,8 +10,9 @@ import {
   checkWebhookRateLimit, 
   detectSuspiciousWebhookActivity, 
   logSecurityViolation,
-  validateWebhookOrigin
-} from "./webhookSecurity.ts"
+  validateWebhookOrigin,
+  type SecurityContext
+} from "./security/index.ts"
 import { 
   acquireTransactionLock, 
   releaseTransactionLock 
