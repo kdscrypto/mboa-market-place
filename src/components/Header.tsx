@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -47,10 +48,11 @@ const Header = () => {
 
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-      <nav className="mboa-container py-4">
+      <nav className="mboa-container py-2">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-mboa-orange">
-            Mboa Market
+          <Link to="/" className="text-xl font-bold">
+            <span className="text-mboa-orange">Mboa</span>
+            <span className="text-mboa-green"> Market</span>
           </Link>
 
           {/* Desktop Navigation */}
