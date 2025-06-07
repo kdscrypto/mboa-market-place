@@ -11,7 +11,7 @@ interface PaymentSummaryCardProps {
     id: string;
     amount: number;
     currency: string;
-    status: 'pending' | 'completed' | 'failed' | 'expired';
+    status: string; // Changed from union type to string to be more flexible
     created_at: string;
     expires_at?: string;
     payment_data?: {
@@ -53,12 +53,20 @@ const PaymentSummaryCard: React.FC<PaymentSummaryCardProps> = ({
   const isExpiringSoon = transaction.expires_at && 
     new Date(transaction.expires_at).getTime() - Date.now() < 3600000; // 1 hour
 
+  // Type guard to ensure status is valid for PaymentStatusIndicator
+  const getValidStatus = (status: string): 'pending' | 'completed' | 'failed' | 'expired' | 'processing' => {
+    if (['pending', 'completed', 'failed', 'expired', 'processing'].includes(status)) {
+      return status as 'pending' | 'completed' | 'failed' | 'expired' | 'processing';
+    }
+    return 'pending'; // fallback
+  };
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Résumé du paiement</CardTitle>
-          <PaymentStatusIndicator status={transaction.status} />
+          <PaymentStatusIndicator status={getValidStatus(transaction.status)} />
         </div>
       </CardHeader>
       

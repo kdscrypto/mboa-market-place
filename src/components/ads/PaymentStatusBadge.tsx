@@ -7,7 +7,7 @@ import { Eye } from 'lucide-react';
 
 interface PaymentStatusBadgeProps {
   transactionId?: string;
-  status?: 'pending' | 'completed' | 'failed' | 'expired';
+  status?: string; // Changed from union type to string for flexibility
   showTrackingButton?: boolean;
 }
 
@@ -26,9 +26,17 @@ const PaymentStatusBadge: React.FC<PaymentStatusBadgeProps> = ({
     navigate(`/payment-tracking/${transactionId}`);
   };
 
+  // Type guard to ensure status is valid for PaymentStatusIndicator
+  const getValidStatus = (status: string): 'pending' | 'completed' | 'failed' | 'expired' | 'processing' => {
+    if (['pending', 'completed', 'failed', 'expired', 'processing'].includes(status)) {
+      return status as 'pending' | 'completed' | 'failed' | 'expired' | 'processing';
+    }
+    return 'pending'; // fallback
+  };
+
   return (
     <div className="flex items-center gap-2">
-      <PaymentStatusIndicator status={status} />
+      <PaymentStatusIndicator status={getValidStatus(status)} />
       {showTrackingButton && status !== 'completed' && (
         <Button
           variant="outline"

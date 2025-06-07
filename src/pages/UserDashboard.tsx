@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,6 @@ const UserDashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [userAds, setUserAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
   
   useEffect(() => {
     const checkAuth = async () => {
@@ -151,12 +149,7 @@ const UserDashboard = () => {
               </Button>
             </div>
             
-            <UserDashboardTabs
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              user={user}
-              userAds={userAds}
-            />
+            <UserDashboardTabs user={user} />
           </div>
         </div>
       </main>
