@@ -19,15 +19,41 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Get Monetbil credentials for webhook verification
+    const serviceSecret = Deno.env.get('MONETBIL_SERVICE_SECRET')
+    
+    if (!serviceSecret) {
+      console.error('Monetbil service secret not configured')
+      return new Response('Service not properly configured', { status: 500 })
+    }
+
     const formData = await req.formData()
     const status = formData.get('status')
     const transactionId = formData.get('item_ref')
     const monetbilTransactionId = formData.get('transaction_id')
+    const signature = formData.get('signature')
 
-    console.log('Webhook received:', { status, transactionId, monetbilTransactionId })
+    console.log('Webhook received:', { 
+      status, 
+      transactionId, 
+      monetbilTransactionId,
+      hasSignature: !!signature 
+    })
 
     if (!transactionId) {
+      console.error('Missing transaction ID in webhook')
       return new Response('Missing transaction ID', { status: 400 })
+    }
+
+    // Enhanced webhook verification with signature if provided
+    if (signature) {
+      // Verify webhook signature for enhanced security
+      const expectedSignature = await generateWebhookSignature(formData, serviceSecret)
+      if (signature !== expectedSignature) {
+        console.error('Invalid webhook signature')
+        return new Response('Invalid signature', { status: 401 })
+      }
+      console.log('Webhook signature verified successfully')
     }
 
     // Get the payment transaction
@@ -90,16 +116,23 @@ serve(async (req) => {
         }
       }
     } else {
-      // Payment failed
+      // Payment failed or cancelled
       updateData.status = 'failed'
+      console.log('Payment failed or cancelled, status:', status)
     }
 
     // Update the transaction
-    await supabase
+    const { error: updateError } = await supabase
       .from('payment_transactions')
       .update(updateData)
       .eq('id', transactionId)
 
+    if (updateError) {
+      console.error('Error updating transaction:', updateError)
+      return new Response('Error updating transaction', { status: 500 })
+    }
+
+    console.log('Webhook processed successfully for transaction:', transactionId)
     return new Response('OK', { status: 200 })
 
   } catch (error) {
@@ -107,3 +140,29 @@ serve(async (req) => {
     return new Response('Internal Server Error', { status: 500 })
   }
 })
+
+// Helper function to generate webhook signature for verification
+async function generateWebhookSignature(formData: FormData, secret: string): Promise<string> {
+  try {
+    // Create a string from form data for signature generation
+    const sortedParams = Array.from(formData.entries())
+      .filter(([key]) => key !== 'signature')
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&')
+    
+    const dataToSign = sortedParams + secret
+    
+    // Generate SHA256 hash
+    const encoder = new TextEncoder()
+    const data = encoder.encode(dataToSign)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    
+    return hashHex
+  } catch (error) {
+    console.error('Error generating signature:', error)
+    return ''
+  }
+}

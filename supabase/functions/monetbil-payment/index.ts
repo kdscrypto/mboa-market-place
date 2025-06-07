@@ -112,8 +112,18 @@ serve(async (req) => {
       throw new Error('Failed to create payment transaction')
     }
 
-    // Prepare Monetbil payment request
+    // Get Monetbil API credentials
+    const serviceKey = Deno.env.get('MONETBIL_SERVICE_KEY')
+    const serviceSecret = Deno.env.get('MONETBIL_SERVICE_SECRET')
+
+    if (!serviceKey || !serviceSecret) {
+      console.error('Monetbil API credentials not configured')
+      throw new Error('Payment service not properly configured')
+    }
+
+    // Prepare Monetbil payment request using the official API
     const monetbilData = {
+      service: serviceKey,
       amount: amount.toString(),
       phone: adData.phone,
       locale: 'fr',
@@ -129,22 +139,36 @@ serve(async (req) => {
       email: user.email || `${user.id}@mboa.cm`
     }
 
-    console.log('Sending request to Monetbil:', monetbilData)
+    console.log('Sending request to Monetbil with credentials:', { 
+      serviceKey: serviceKey.substring(0, 8) + '...', 
+      amount: monetbilData.amount,
+      phone: monetbilData.phone 
+    })
 
-    // Call Monetbil API
+    // Call Monetbil API with authentication
+    const formBody = new URLSearchParams()
+    Object.entries(monetbilData).forEach(([key, value]) => {
+      formBody.append(key, value)
+    })
+
     const monetbilResponse = await fetch('https://api.monetbil.com/widget/v2.1/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Service-Secret': serviceSecret,
       },
-      body: new URLSearchParams(monetbilData).toString()
+      body: formBody.toString()
     })
 
     const monetbilResult = await monetbilResponse.text()
-    console.log('Monetbil response:', monetbilResult)
+    console.log('Monetbil API response:', { 
+      status: monetbilResponse.status, 
+      result: monetbilResult.substring(0, 100) + '...' 
+    })
 
     if (!monetbilResponse.ok) {
-      throw new Error(`Monetbil API error: ${monetbilResult}`)
+      console.error('Monetbil API error:', monetbilResult)
+      throw new Error(`Monetbil API error: ${monetbilResponse.status}`)
     }
 
     // Update transaction with Monetbil response
