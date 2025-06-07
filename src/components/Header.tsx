@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +13,7 @@ import {
   Search
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import ThemeToggleButton from "@/components/ThemeToggleButton";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
