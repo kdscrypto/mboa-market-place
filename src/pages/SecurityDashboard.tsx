@@ -27,7 +27,7 @@ import SecurityEventsList from '@/components/security/SecurityEventsList';
 import SecurityStressTest from '@/components/security/SecurityStressTest';
 
 const SecurityDashboard = () => {
-  const { isAdmin, isLoading: authLoading } = useAdminAuth();
+  const { isAdmin, isAuthLoading } = useAdminAuth();
   const [activeAlerts, setActiveAlerts] = useState(0);
   const [isRunningCleanup, setIsRunningCleanup] = useState(false);
 
@@ -83,6 +83,10 @@ const SecurityDashboard = () => {
     }
   };
 
+  const handleRefreshMetrics = async () => {
+    await refetchMetrics();
+  };
+
   const exportSecurityReport = async () => {
     try {
       const report = {
@@ -110,7 +114,7 @@ const SecurityDashboard = () => {
     }
   };
 
-  if (authLoading) {
+  if (isAuthLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -155,7 +159,7 @@ const SecurityDashboard = () => {
                 <p className="text-gray-600 mt-2">Surveillance et gestion de la sécurité des paiements</p>
               </div>
               <div className="flex gap-4">
-                <Button onClick={refetchMetrics} variant="outline">
+                <Button onClick={handleRefreshMetrics} variant="outline">
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Actualiser
                 </Button>

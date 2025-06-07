@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,6 @@ import {
   CheckCircle,
   Activity
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface TestResult {
   testName: string;
@@ -75,12 +73,16 @@ const SecurityStressTest = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ test: 'rate-limit', sequence: i })
-        }).catch(() => ({ blocked: true }))
+        }).then(response => ({ 
+          status: response.status, 
+          ok: response.ok,
+          blocked: response.status === 429 
+        })).catch(() => ({ status: 429, ok: false, blocked: true }))
       );
 
       const responses = await Promise.all(promises);
-      const blockedRequests = responses.filter(r => r.blocked).length;
-      const successfulRequests = responses.length - blockedRequests;
+      const blockedRequests = responses.filter(r => r.blocked || r.status === 429).length;
+      const successfulRequests = responses.filter(r => r.ok).length;
 
       result = {
         ...result,
