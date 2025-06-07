@@ -133,6 +133,14 @@ const Header = () => {
                     </div>
                     
                     <Link 
+                      to="/admin/dashboard" 
+                      className="text-gray-700 hover:text-mboa-orange transition-colors"
+                      title="Tableau de bord administrateur"
+                    >
+                      <LayoutDashboard className="h-5 w-5" />
+                    </Link>
+                    
+                    <Link 
                       to="/security-dashboard" 
                       className="text-gray-700 hover:text-mboa-orange transition-colors"
                       title="Tableau de bord sécurité"
@@ -150,7 +158,7 @@ const Header = () => {
                 )}
                 
                 <Link to="/dashboard" className="text-gray-700 hover:text-mboa-orange transition-colors">
-                  <LayoutDashboard className="h-5 w-5" />
+                  <User className="h-5 w-5" />
                 </Link>
                 
                 <Button
@@ -229,6 +237,15 @@ const Header = () => {
                   {isAdmin && (
                     <>
                       <Link 
+                        to="/admin/dashboard" 
+                        className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Admin Dashboard
+                      </Link>
+                      
+                      <Link 
                         to="/security-dashboard" 
                         className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
                         onClick={() => setIsMenuOpen(false)}
@@ -248,7 +265,7 @@ const Header = () => {
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <Settings className="mr-2 h-4 w-4" />
-                        Administration
+                        Modération
                       </Link>
                     </>
                   )}
@@ -258,8 +275,8 @@ const Header = () => {
                     className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Tableau de bord
+                    <User className="mr-2 h-4 w-4" />
+                    Mon Compte
                   </Link>
                   
                   <Button

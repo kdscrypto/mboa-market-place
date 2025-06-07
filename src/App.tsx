@@ -14,6 +14,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import UserDashboard from "@/pages/UserDashboard";
 import Messages from "@/pages/Messages";
 import AdminModeration from "@/pages/AdminModeration";
+import AdminDashboard from "@/pages/AdminDashboard";
 import SearchResults from "@/pages/SearchResults";
 import PremiumAds from "@/pages/PremiumAds";
 import PaymentReturn from "@/pages/PaymentReturn";
@@ -49,6 +50,7 @@ function App() {
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/admin/moderation" element={<AdminModeration />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/search" element={<SearchResults />} />
               <Route path="/premium-ads" element={<PremiumAds />} />
               <Route path="/payment-return" element={<PaymentReturn />} />
