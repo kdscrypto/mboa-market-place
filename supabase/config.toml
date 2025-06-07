@@ -66,3 +66,6 @@ verify_jwt = false
 
 [functions.security-cleanup]
 verify_jwt = false
+
+[functions.security-test-suite]
+verify_jwt = false

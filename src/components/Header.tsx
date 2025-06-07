@@ -1,165 +1,296 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { User2, MessageSquare, Search, Menu } from "lucide-react";
-import UnreadBadge from "@/components/messaging/UnreadBadge";
-import ThemeToggleButton from "@/components/ThemeToggleButton";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { 
+  Menu, 
+  X, 
+  User, 
+  LogOut, 
+  Plus, 
+  MessageCircle, 
+  LayoutDashboard,
+  Shield,
+  Bell,
+  Settings
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import SecurityAlertSystem from "@/components/security/SecurityAlertSystem";
 
 const Header = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { isAdmin } = useAdminAuth();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-    };
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
 
-    checkAuth();
+  // Compter les alertes de sécurité critiques pour les admins
+  const { data: criticalAlertsCount } = useQuery({
+    queryKey: ['critical-alerts-count'],
+    queryFn: async () => {
+      if (!isAdmin) return 0;
+      
+      const { data, error } = await supabase
+        .from('payment_security_events')
+        .select('id')
+        .eq('severity', 'critical')
+        .eq('reviewed', false)
+        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      
+      if (error) return 0;
+      return data.length;
+    },
+    refetchInterval: 30000,
+    enabled: isAdmin
+  });
 
-    supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/connexion");
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de se déconnecter",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Déconnexion réussie",
+        description: "Vous avez été déconnecté avec succès",
+      });
+      navigate('/');
+    }
   };
 
   return (
-    <header className="theme-bg-surface shadow-sm sticky top-0 z-20">
-      <div className="border-b theme-border">
-        <nav className="mboa-container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center font-semibold text-lg">
-              <span className="text-mboa-orange mr-1 font-bold">Mboa</span>
-              <span className="text-mboa-green font-bold">Market</span>
+    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+      {/* Système d'alertes de sécurité */}
+      {isAdmin && (
+        <div className="bg-gray-50 border-b">
+          <div className="mboa-container">
+            <SecurityAlertSystem />
+          </div>
+        </div>
+      )}
+
+      <nav className="mboa-container py-4">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="text-2xl font-bold text-mboa-orange">
+            Mboa
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/categories" className="text-gray-700 hover:text-mboa-orange transition-colors">
+              Catégories
+            </Link>
+            <Link to="/premium-ads" className="text-gray-700 hover:text-mboa-orange transition-colors">
+              Annonces Premium
             </Link>
             
-            <div className="hidden md:block w-[380px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 theme-text-secondary h-4 w-4" />
-                <Input
-                  type="text"
-                  placeholder="Rechercher une annonce..."
-                  className="pl-9 py-1 h-9 text-sm theme-bg-surface theme-border theme-text-primary"
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-3">
-            <Button
-              asChild
-              size="sm"
-              variant="default"
-              className="bg-mboa-orange hover:bg-mboa-orange/90 text-white h-8"
-            >
-              <Link to="/publier">Publier une annonce</Link>
-            </Button>
-            
-            <ThemeToggleButton />
-            
-            {!isAuthenticated ? (
-              <Button
-                asChild
-                size="sm"
-                variant="ghost"
-                className="theme-text-secondary hover:text-mboa-orange h-8"
-              >
-                <Link to="/connexion">Connexion / Inscription</Link>
-              </Button>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Link to="/messages" className="theme-text-secondary hover:text-mboa-orange p-1.5 rounded-full hover:bg-gray-100 relative flex items-center">
-                  <MessageSquare className="h-4 w-4" />
-                  <UnreadBadge />
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90">
+                  <Link to="/publier-annonce">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Publier
+                  </Link>
+                </Button>
+                
+                <Link to="/messages" className="text-gray-700 hover:text-mboa-orange transition-colors">
+                  <MessageCircle className="h-5 w-5" />
                 </Link>
-                <Link to="/dashboard" className="theme-text-secondary hover:text-mboa-orange p-1.5 rounded-full hover:bg-gray-100">
-                  <User2 className="h-4 w-4" />
+                
+                {isAdmin && (
+                  <>
+                    <div className="relative">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAlerts(!showAlerts)}
+                        className="relative"
+                      >
+                        <Bell className="h-4 w-4" />
+                        {criticalAlertsCount > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                          >
+                            {criticalAlertsCount}
+                          </Badge>
+                        )}
+                      </Button>
+                    </div>
+                    
+                    <Link 
+                      to="/security-dashboard" 
+                      className="text-gray-700 hover:text-mboa-orange transition-colors"
+                      title="Tableau de bord sécurité"
+                    >
+                      <Shield className="h-5 w-5" />
+                    </Link>
+                    
+                    <Link 
+                      to="/admin/moderation" 
+                      className="text-gray-700 hover:text-mboa-orange transition-colors"
+                    >
+                      <Settings className="h-5 w-5" />
+                    </Link>
+                  </>
+                )}
+                
+                <Link to="/dashboard" className="text-gray-700 hover:text-mboa-orange transition-colors">
+                  <LayoutDashboard className="h-5 w-5" />
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="theme-text-secondary hover:text-mboa-orange text-xs px-2 py-1 hover:bg-gray-100 rounded"
+                
+                <Button
+                  variant="outline"
+                  onClick={handleSignOut}
+                  className="text-gray-700 hover:text-mboa-orange"
                 >
+                  <LogOut className="mr-2 h-4 w-4" />
                   Déconnexion
-                </button>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Button variant="outline" asChild>
+                  <Link to="/login">Connexion</Link>
+                </Button>
+                <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90">
+                  <Link to="/publier-annonce">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Publier
+                  </Link>
+                </Button>
               </div>
             )}
           </div>
-          
+
           {/* Mobile menu button */}
-          <button 
-            className="md:hidden theme-text-secondary hover:text-mboa-orange"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-        </nav>
-        
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden px-4 py-2 border-t theme-border theme-bg-surface">
-            <div className="flex flex-col space-y-2">
-              <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 theme-text-secondary h-4 w-4" />
-                <Input
-                  type="text"
-                  placeholder="Rechercher une annonce..."
-                  className="pl-9 py-1 h-9 text-sm"
-                />
-              </div>
-              
-              <Button
-                asChild
-                size="sm"
-                variant="default"
-                className="bg-mboa-orange hover:bg-mboa-orange/90 text-white h-8 w-full"
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-700"
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden mt-4 pb-4 border-t pt-4">
+            <div className="flex flex-col space-y-4">
+              <Link 
+                to="/categories" 
+                className="text-gray-700 hover:text-mboa-orange transition-colors"
+                onClick={() => setIsMenuOpen(false)}
               >
-                <Link to="/publier">Publier une annonce</Link>
-              </Button>
+                Catégories
+              </Link>
+              <Link 
+                to="/premium-ads" 
+                className="text-gray-700 hover:text-mboa-orange transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Annonces Premium
+              </Link>
               
-              <div className="flex justify-between items-center">
-                <ThemeToggleButton />
-                
-                {!isAuthenticated ? (
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 ml-2"
-                  >
-                    <Link to="/connexion">Connexion / Inscription</Link>
+              {user ? (
+                <div className="flex flex-col space-y-4">
+                  <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90 w-full">
+                    <Link to="/publier-annonce" onClick={() => setIsMenuOpen(false)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Publier
+                    </Link>
                   </Button>
-                ) : (
-                  <div className="flex justify-between flex-1 ml-2 border-t pt-2">
-                    <Link to="/messages" className="theme-text-secondary hover:text-mboa-orange flex items-center gap-1">
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="text-sm">Messages</span>
-                      <UnreadBadge />
+                  
+                  <Link 
+                    to="/messages" 
+                    className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Messages
+                  </Link>
+                  
+                  {isAdmin && (
+                    <>
+                      <Link 
+                        to="/security-dashboard" 
+                        className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Shield className="mr-2 h-4 w-4" />
+                        Sécurité
+                        {criticalAlertsCount > 0 && (
+                          <Badge variant="destructive" className="ml-2">
+                            {criticalAlertsCount}
+                          </Badge>
+                        )}
+                      </Link>
+                      
+                      <Link 
+                        to="/admin/moderation" 
+                        className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        Administration
+                      </Link>
+                    </>
+                  )}
+                  
+                  <Link 
+                    to="/dashboard" 
+                    className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Tableau de bord
+                  </Link>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMenuOpen(false);
+                    }}
+                    className="text-gray-700 hover:text-mboa-orange w-full justify-start"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Déconnexion
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col space-y-4">
+                  <Button variant="outline" asChild className="w-full">
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
+                  </Button>
+                  <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90 w-full">
+                    <Link to="/publier-annonce" onClick={() => setIsMenuOpen(false)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Publier
                     </Link>
-                    <Link to="/dashboard" className="theme-text-secondary hover:text-mboa-orange flex items-center gap-1">
-                      <User2 className="h-4 w-4" />
-                      <span className="text-sm">Profil</span>
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="theme-text-secondary hover:text-mboa-orange text-sm"
-                    >
-                      Déconnexion
-                    </button>
-                  </div>
-                )}
-              </div>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
-      </div>
+      </nav>
     </header>
   );
 };
