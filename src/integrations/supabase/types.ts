@@ -49,6 +49,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          payment_transaction_id: string | null
           phone: string
           price: number
           region: string
@@ -66,6 +67,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          payment_transaction_id?: string | null
           phone: string
           price: number
           region: string
@@ -83,6 +85,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          payment_transaction_id?: string | null
           phone?: string
           price?: number
           region?: string
@@ -93,7 +96,15 @@ export type Database = {
           user_id?: string
           whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ads_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversation_labels: {
         Row: {
@@ -294,6 +305,77 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          ad_id: string | null
+          amount: number
+          cancel_url: string | null
+          completed_at: string | null
+          created_at: string
+          currency: string
+          expires_at: string | null
+          id: string
+          monetbil_payment_token: string | null
+          monetbil_transaction_id: string | null
+          notify_url: string | null
+          payment_data: Json | null
+          payment_method: string
+          payment_url: string | null
+          return_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ad_id?: string | null
+          amount: number
+          cancel_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          monetbil_payment_token?: string | null
+          monetbil_transaction_id?: string | null
+          notify_url?: string | null
+          payment_data?: Json | null
+          payment_method?: string
+          payment_url?: string | null
+          return_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ad_id?: string | null
+          amount?: number
+          cancel_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          monetbil_payment_token?: string | null
+          monetbil_transaction_id?: string | null
+          notify_url?: string | null
+          payment_data?: Json | null
+          payment_method?: string
+          payment_url?: string | null
+          return_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
             referencedColumns: ["id"]
           },
         ]
