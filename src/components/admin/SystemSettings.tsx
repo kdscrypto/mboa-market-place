@@ -18,12 +18,11 @@ const SystemSettings = () => {
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
 
-  // État local pour les paramètres
+  // État local pour les paramètres - updated to match component expectations
   const [settings, setSettings] = useState({
     maintenance_mode: false,
-    registration_enabled: true,
-    max_ads_per_user: 10,
-    auto_approve_ads: false,
+    auto_moderation: true,
+    email_notifications: true,
     security_alerts: true,
     rate_limiting: true,
     backup_enabled: true
