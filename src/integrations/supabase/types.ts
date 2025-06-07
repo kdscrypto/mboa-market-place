@@ -309,6 +309,39 @@ export type Database = {
           },
         ]
       }
+      payment_audit_logs: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          security_flags: Json | null
+          transaction_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          security_flags?: Json | null
+          transaction_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          security_flags?: Json | null
+          transaction_id?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           ad_id: string | null
@@ -317,14 +350,17 @@ export type Database = {
           completed_at: string | null
           created_at: string
           currency: string
-          expires_at: string | null
+          expires_at: string
           id: string
+          locked_at: string | null
+          locked_by: string | null
           monetbil_payment_token: string | null
           monetbil_transaction_id: string | null
           notify_url: string | null
           payment_data: Json | null
           payment_method: string
           payment_url: string | null
+          processing_lock: boolean | null
           return_url: string | null
           status: string
           updated_at: string
@@ -337,14 +373,17 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           currency?: string
-          expires_at?: string | null
+          expires_at: string
           id?: string
+          locked_at?: string | null
+          locked_by?: string | null
           monetbil_payment_token?: string | null
           monetbil_transaction_id?: string | null
           notify_url?: string | null
           payment_data?: Json | null
           payment_method?: string
           payment_url?: string | null
+          processing_lock?: boolean | null
           return_url?: string | null
           status?: string
           updated_at?: string
@@ -357,14 +396,17 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           currency?: string
-          expires_at?: string | null
+          expires_at?: string
           id?: string
+          locked_at?: string | null
+          locked_by?: string | null
           monetbil_payment_token?: string | null
           monetbil_transaction_id?: string | null
           notify_url?: string | null
           payment_data?: Json | null
           payment_method?: string
           payment_url?: string | null
+          processing_lock?: boolean | null
           return_url?: string | null
           status?: string
           updated_at?: string
@@ -441,6 +483,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acquire_transaction_lock: {
+        Args: { transaction_uuid: string; lock_identifier: string }
+        Returns: boolean
+      }
+      cleanup_expired_transactions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_system_message: {
         Args: {
           conversation_uuid: string
@@ -461,6 +511,10 @@ export type Database = {
       mark_messages_as_delivered: {
         Args: { conversation_uuid: string }
         Returns: undefined
+      }
+      release_transaction_lock: {
+        Args: { transaction_uuid: string; lock_identifier: string }
+        Returns: boolean
       }
       validate_image_extension: {
         Args: { filename: string }

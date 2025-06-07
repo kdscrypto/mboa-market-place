@@ -35,7 +35,7 @@ serve(async (req) => {
     const { adData, adType } = await req.json()
     console.log('Payment request received:', { userId: user.id, adType, adData: adData.title })
 
-    // Get plan pricing
+    // Get plan pricing (using validation that will be caught by the trigger)
     const planPrices: Record<string, number> = {
       'standard': 0,
       'premium_24h': 1000,
@@ -84,14 +84,14 @@ serve(async (req) => {
       )
     }
 
-    // For premium ads, create payment transaction
-    console.log('Creating payment transaction for premium ad...')
+    // For premium ads, create payment transaction with security features
+    console.log('Creating secure payment transaction for premium ad...')
     
     const returnUrl = `${req.headers.get('origin')}/payment-return`
     const cancelUrl = `${req.headers.get('origin')}/publier-annonce`
     const notifyUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/monetbil-webhook`
 
-    // Create payment transaction record
+    // Create payment transaction record with automatic validation and expiration
     const { data: transaction, error: transactionError } = await supabase
       .from('payment_transactions')
       .insert({
@@ -102,15 +102,35 @@ serve(async (req) => {
         return_url: returnUrl,
         cancel_url: cancelUrl,
         notify_url: notifyUrl,
-        payment_data: { adData, adType }
+        payment_data: { adData, adType },
+        // expires_at will be set automatically by the trigger
       })
-      .select('id')
+      .select('id, expires_at')
       .single()
 
     if (transactionError) {
       console.error('Error creating payment transaction:', transactionError)
-      throw new Error('Failed to create payment transaction')
+      throw new Error('Failed to create payment transaction: ' + transactionError.message)
     }
+
+    console.log('Payment transaction created with expiration:', transaction.expires_at)
+
+    // Log the transaction creation for audit purposes
+    await supabase
+      .from('payment_audit_logs')
+      .insert({
+        transaction_id: transaction.id,
+        event_type: 'transaction_created',
+        event_data: {
+          user_id: user.id,
+          amount,
+          ad_type: adType,
+          ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          user_agent: req.headers.get('user-agent')
+        },
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+        user_agent: req.headers.get('user-agent')
+      })
 
     // Get Monetbil API credentials
     const serviceKey = Deno.env.get('MONETBIL_SERVICE_KEY')
@@ -121,7 +141,7 @@ serve(async (req) => {
       throw new Error('Payment service not properly configured')
     }
 
-    // Prepare Monetbil payment request using the official API
+    // Prepare Monetbil payment request
     const monetbilData = {
       service: serviceKey,
       amount: amount.toString(),
@@ -139,13 +159,9 @@ serve(async (req) => {
       email: user.email || `${user.id}@mboa.cm`
     }
 
-    console.log('Sending request to Monetbil with credentials:', { 
-      serviceKey: serviceKey.substring(0, 8) + '...', 
-      amount: monetbilData.amount,
-      phone: monetbilData.phone 
-    })
+    console.log('Sending request to Monetbil with security logging')
 
-    // Call Monetbil API with authentication
+    // Call Monetbil API
     const formBody = new URLSearchParams()
     Object.entries(monetbilData).forEach(([key, value]) => {
       formBody.append(key, value)
@@ -161,13 +177,24 @@ serve(async (req) => {
     })
 
     const monetbilResult = await monetbilResponse.text()
-    console.log('Monetbil API response:', { 
-      status: monetbilResponse.status, 
-      result: monetbilResult.substring(0, 100) + '...' 
-    })
+    console.log('Monetbil API response status:', monetbilResponse.status)
 
     if (!monetbilResponse.ok) {
       console.error('Monetbil API error:', monetbilResult)
+      
+      // Log the API error for audit
+      await supabase
+        .from('payment_audit_logs')
+        .insert({
+          transaction_id: transaction.id,
+          event_type: 'monetbil_api_error',
+          event_data: {
+            status: monetbilResponse.status,
+            error: monetbilResult,
+            timestamp: new Date().toISOString()
+          }
+        })
+      
       throw new Error(`Monetbil API error: ${monetbilResponse.status}`)
     }
 
@@ -180,12 +207,25 @@ serve(async (req) => {
       })
       .eq('id', transaction.id)
 
+    // Log successful payment initiation
+    await supabase
+      .from('payment_audit_logs')
+      .insert({
+        transaction_id: transaction.id,
+        event_type: 'payment_initiated',
+        event_data: {
+          monetbil_token: monetbilResult,
+          timestamp: new Date().toISOString()
+        }
+      })
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         paymentRequired: true,
         paymentUrl: `https://api.monetbil.com/widget/v2.1/${monetbilResult}`,
-        transactionId: transaction.id
+        transactionId: transaction.id,
+        expiresAt: transaction.expires_at
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
