@@ -1,207 +1,196 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
 export interface SecurityContext {
   clientIP: string
   userAgent: string
-  user: any
 }
 
 export interface RateLimitResult {
   allowed: boolean
-  current_count?: number
-  max_requests?: number
-  blocked_until?: string
-  retryAfter?: string
+  retryAfter?: number
 }
 
 export interface SuspiciousActivityResult {
-  risk_score: number
-  severity: string
   auto_block: boolean
-  event_type: string
+  risk_score: number
 }
 
-export async function extractSecurityInfo(req: Request): Promise<Omit<SecurityContext, 'user'>> {
-  const clientIP = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
-  const userAgent = req.headers.get('user-agent') || 'unknown'
+export async function extractSecurityInfo(req: Request): Promise<SecurityContext> {
+  // Extract and clean IP address - take only the first valid IP
+  const forwardedFor = req.headers.get('x-forwarded-for')
+  const realIP = req.headers.get('x-real-ip')
+  const remoteAddr = req.headers.get('cf-connecting-ip')
+  
+  let clientIP = '127.0.0.1' // Default fallback
+  
+  // Parse X-Forwarded-For header which can contain multiple IPs
+  if (forwardedFor) {
+    const ips = forwardedFor.split(',').map(ip => ip.trim())
+    // Take the first valid IPv4 address
+    const validIP = ips.find(ip => /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip))
+    if (validIP) {
+      clientIP = validIP
+    }
+  } else if (realIP && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(realIP)) {
+    clientIP = realIP
+  } else if (remoteAddr && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(remoteAddr)) {
+    clientIP = remoteAddr
+  }
+  
+  const userAgent = req.headers.get('user-agent') || 'Unknown'
+  
+  console.log('Extracted security info:', { clientIP, userAgent: userAgent.substring(0, 50) + '...' })
   
   return { clientIP, userAgent }
 }
 
-export async function verifyUserAuthentication(supabase: any, authHeader: string | null): Promise<any> {
+export async function verifyUserAuthentication(supabase: any, authHeader: string | null) {
   if (!authHeader) {
-    throw new Error('Authentication required - missing authorization header')
+    throw new Error('Token d\'authentification manquant')
   }
 
   const token = authHeader.replace('Bearer ', '')
-  
-  if (!token || token.length < 10) {
-    throw new Error('Invalid authentication token format')
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+
+  if (error || !user) {
+    console.error('Authentication error:', error)
+    throw new Error('Token d\'authentification invalide')
   }
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-  
-  if (authError || !user) {
-    console.error('Authentication failed:', authError)
-    throw new Error('Authentication failed - invalid or expired token')
-  }
-  
   return user
 }
 
 export async function checkRateLimit(
-  supabase: any, 
-  identifier: string, 
-  identifierType: string, 
-  maxRequests: number = 3, // Reduced from 5 to 3
-  windowMinutes: number = 60
+  supabase: any,
+  identifier: string,
+  identifierType: string,
+  maxRequests: number,
+  windowMinutes: number
 ): Promise<RateLimitResult> {
-  const { data: rateLimit, error } = await supabase
-    .rpc('check_rate_limit', {
-      p_identifier: identifier,
-      p_identifier_type: identifierType,
-      p_action_type: 'payment_request',
-      p_max_requests: maxRequests,
-      p_window_minutes: windowMinutes
-    })
+  const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString()
+  
+  console.log(`Checking rate limit for ${identifierType}: ${identifier}`)
+  
+  try {
+    const { data: rateLimits, error } = await supabase
+      .from('payment_rate_limits')
+      .select('*')
+      .eq('identifier', identifier)
+      .eq('identifier_type', identifierType)
+      .gte('window_start', windowStart)
+      .order('window_start', { ascending: false })
 
-  if (error) {
-    console.error(`Rate limit check error for ${identifierType}:`, error)
-    // Fail secure - if we can't check rate limits, block the request
-    return { 
-      allowed: false, 
-      retryAfter: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
+    if (error) {
+      console.error('Rate limit check error:', error)
+      return { allowed: true }
     }
-  }
 
-  if (rateLimit && !rateLimit.allowed) {
-    return {
-      allowed: false,
-      retryAfter: rateLimit.blocked_until
+    const totalRequests = rateLimits?.reduce((sum: number, limit: any) => sum + limit.request_count, 0) || 0
+    
+    if (totalRequests >= maxRequests) {
+      const retryAfter = Math.ceil((new Date(rateLimits[0]?.window_start).getTime() + windowMinutes * 60 * 1000 - Date.now()) / 1000)
+      return { allowed: false, retryAfter: Math.max(retryAfter, 60) }
     }
-  }
 
-  return { allowed: true, ...rateLimit }
+    // Update or create rate limit record
+    const now = new Date().toISOString()
+    const { error: upsertError } = await supabase
+      .from('payment_rate_limits')
+      .upsert({
+        identifier,
+        identifier_type: identifierType,
+        action_type: 'payment_attempt',
+        request_count: 1,
+        window_start: now,
+        updated_at: now
+      }, {
+        onConflict: 'identifier,identifier_type,action_type',
+        ignoreDuplicates: false
+      })
+
+    if (upsertError) {
+      console.error('Rate limit update error:', upsertError)
+    }
+
+    return { allowed: true }
+  } catch (err) {
+    console.error('Rate limiting error:', err)
+    return { allowed: true }
+  }
 }
 
 export async function detectSuspiciousActivity(
   supabase: any,
   identifier: string,
   identifierType: string,
-  eventData: any
+  activityData: any
 ): Promise<SuspiciousActivityResult> {
-  
-  // Enhanced event data with security markers
-  const enhancedEventData = {
-    ...eventData,
-    timestamp: new Date().toISOString(),
-    security_check_version: '2.0'
-  };
+  try {
+    let riskScore = 0
+    
+    // Check for rapid successive requests
+    const recentActivity = await supabase
+      .from('payment_security_events')
+      .select('*')
+      .eq('identifier', identifier)
+      .eq('identifier_type', identifierType)
+      .gte('created_at', new Date(Date.now() - 300000).toISOString()) // Last 5 minutes
+      .order('created_at', { ascending: false })
+      .limit(10)
 
-  const { data: suspiciousActivity, error } = await supabase
-    .rpc('detect_suspicious_activity', {
-      p_identifier: identifier,
-      p_identifier_type: identifierType,
-      p_event_data: enhancedEventData
-    })
-
-  if (error) {
-    console.error('Suspicious activity detection error:', error)
-    // Fail secure - if we can't detect suspicious activity, treat as suspicious
-    return { 
-      risk_score: 60, 
-      severity: 'high', 
-      auto_block: true, 
-      event_type: 'detection_failure' 
+    if (recentActivity.data && recentActivity.data.length > 5) {
+      riskScore += 30
     }
-  }
 
-  return suspiciousActivity || { 
-    risk_score: 0, 
-    severity: 'low', 
-    auto_block: false, 
-    event_type: 'normal' 
+    // Check for amount anomalies
+    if (activityData.amount > 50000) { // Very high amount
+      riskScore += 20
+    }
+
+    // Log security event
+    await supabase
+      .from('payment_security_events')
+      .insert({
+        identifier,
+        identifier_type: identifierType,
+        event_type: 'payment_attempt',
+        severity: riskScore > 50 ? 'high' : riskScore > 20 ? 'medium' : 'low',
+        risk_score: riskScore,
+        event_data: activityData,
+        auto_blocked: riskScore > 80
+      })
+
+    return {
+      auto_block: riskScore > 80,
+      risk_score: riskScore
+    }
+  } catch (err) {
+    console.error('Suspicious activity detection error:', err)
+    return { auto_block: false, risk_score: 0 }
   }
 }
 
-export function calculateSecurityScore(suspiciousActivity: any, userRateLimit: any, ipRateLimit: any): number {
-  let score = 100 // Start with perfect score
-
-  // Reduce score based on suspicious activity
-  if (suspiciousActivity?.risk_score) {
-    score -= suspiciousActivity.risk_score
-  }
-
-  // Reduce score based on rate limit proximity
-  if (userRateLimit?.current_count) {
-    const userLimitRatio = userRateLimit.current_count / userRateLimit.max_requests
-    score -= Math.floor(userLimitRatio * 25) // Increased penalty
-  }
-
-  if (ipRateLimit?.current_count) {
-    const ipLimitRatio = ipRateLimit.current_count / ipRateLimit.max_requests
-    score -= Math.floor(ipLimitRatio * 20) // Increased penalty
-  }
-
-  return Math.max(0, Math.min(100, score)) // Ensure score is between 0 and 100
+export function calculateSecurityScore(
+  suspiciousActivity: SuspiciousActivityResult,
+  userRateLimit: RateLimitResult,
+  ipRateLimit: RateLimitResult
+): number {
+  let score = 100
+  
+  // Deduct based on suspicious activity
+  score -= suspiciousActivity.risk_score
+  
+  // Deduct if approaching rate limits
+  if (!userRateLimit.allowed) score -= 30
+  if (!ipRateLimit.allowed) score -= 20
+  
+  return Math.max(score, 0)
 }
 
 export async function generateClientFingerprint(userAgent: string, clientIP: string): Promise<string> {
-  try {
-    const timestamp = Math.floor(Date.now() / (5 * 60 * 1000)) // 5-minute windows
-    const data = `${userAgent}|${clientIP}|${timestamp}`
-    const encoder = new TextEncoder()
-    const dataBuffer = encoder.encode(data)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16)
-  } catch (error) {
-    console.error('Error generating client fingerprint:', error)
-    throw new Error('Failed to generate client fingerprint')
-  }
-}
-
-export async function validatePaymentAmount(amount: number): Promise<{ valid: boolean; error?: string }> {
-  // Strict amount validation
-  if (!Number.isInteger(amount) || amount <= 0) {
-    return { valid: false, error: 'Amount must be a positive integer' }
-  }
-
-  // Minimum amount check (e.g., 100 XAF minimum)
-  if (amount < 100) {
-    return { valid: false, error: 'Amount is below minimum threshold (100 XAF)' }
-  }
-
-  // Maximum amount check (e.g., 1M XAF maximum)
-  if (amount > 1000000) {
-    return { valid: false, error: 'Amount exceeds maximum threshold (1,000,000 XAF)' }
-  }
-
-  return { valid: true }
-}
-
-export async function validateAdTypeAndAmount(adType: string, amount: number): Promise<{ valid: boolean; error?: string }> {
-  // Define expected amounts for each ad type
-  const validAmounts: Record<string, number> = {
-    'standard': 0,
-    'premium_24h': 1000,
-    'premium_7d': 5000,
-    'premium_15d': 10000,
-    'premium_30d': 18000
-  }
-
-  if (!validAmounts.hasOwnProperty(adType)) {
-    return { valid: false, error: `Invalid ad type: ${adType}` }
-  }
-
-  const expectedAmount = validAmounts[adType]
-  if (amount !== expectedAmount) {
-    return { 
-      valid: false, 
-      error: `Amount mismatch for ${adType}: expected ${expectedAmount}, got ${amount}` 
-    }
-  }
-
-  return { valid: true }
+  // Create a simple fingerprint from user agent and IP
+  const data = userAgent + clientIP + Date.now().toString()
+  const encoder = new TextEncoder()
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(data))
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16)
 }
