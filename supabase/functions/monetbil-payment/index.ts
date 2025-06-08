@@ -2,6 +2,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// CORS headers
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 // Import our modules
 import {
   extractSecurityInfo,
@@ -167,7 +173,7 @@ serve(async (req) => {
 
     if (!serviceKey || !serviceSecret) {
       console.error('Monetbil API credentials not configured')
-      throw new Error('Payment service not properly configured')
+      return createErrorResponse('Service de paiement non configuré. Veuillez contacter l\'administrateur.')
     }
 
     try {
@@ -200,14 +206,18 @@ serve(async (req) => {
         userAgent
       )
 
+      const paymentUrl = `https://api.monetbil.com/widget/v2.1/${monetbilResult}`
+      
       return createPremiumAdResponse(
-        `https://api.monetbil.com/widget/v2.1/${monetbilResult}`,
+        paymentUrl,
         transaction.id,
         transaction.expires_at,
         securityScore
       )
 
     } catch (monetbilError) {
+      console.error('Monetbil API error:', monetbilError)
+      
       // Enhanced API error logging
       await logMonetbilApiError(
         supabase,
@@ -219,11 +229,17 @@ serve(async (req) => {
         securityScore
       )
       
-      throw monetbilError
+      return createErrorResponse(
+        `Erreur de paiement: ${monetbilError.message}`,
+        500
+      )
     }
 
   } catch (error) {
     console.error('Payment processing error:', error)
-    return createErrorResponse(error.message || 'Payment processing failed')
+    return createErrorResponse(
+      error.message || 'Erreur lors du traitement du paiement',
+      500
+    )
   }
 })

@@ -60,6 +60,12 @@ export async function processStandardAd(supabase: any, adData: AdData, adType: s
   return ad.id
 }
 
+function isValidMonetbilToken(token: string): boolean {
+  // Un token Monetbil valide est généralement alphanumerique et ne contient pas de HTML
+  const htmlPattern = /<[^>]*>/
+  return !htmlPattern.test(token) && token.length > 10 && /^[a-zA-Z0-9_-]+$/.test(token)
+}
+
 export async function callMonetbilAPI(
   serviceKey: string,
   serviceSecret: string,
@@ -72,6 +78,8 @@ export async function callMonetbilAPI(
   cancelUrl: string,
   notifyUrl: string
 ): Promise<string> {
+  console.log('Preparing Monetbil API request with enhanced validation')
+  
   const monetbilData = {
     service: serviceKey,
     amount: amount.toString(),
@@ -89,12 +97,20 @@ export async function callMonetbilAPI(
     email: userEmail || `${userId}@mboa.cm`
   }
 
-  console.log('Sending request to Monetbil with enhanced security logging')
+  console.log('Monetbil request data:', {
+    service: serviceKey,
+    amount: amount.toString(),
+    currency: 'XAF',
+    item_ref: transactionId,
+    payment_ref: `MBOA_${transactionId}`
+  })
 
   const formBody = new URLSearchParams()
   Object.entries(monetbilData).forEach(([key, value]) => {
     formBody.append(key, value)
   })
+
+  console.log('Calling Monetbil API...')
 
   const monetbilResponse = await fetch('https://api.monetbil.com/widget/v2.1/', {
     method: 'POST',
@@ -106,12 +122,37 @@ export async function callMonetbilAPI(
   })
 
   const monetbilResult = await monetbilResponse.text()
-  console.log('Monetbil API response status:', monetbilResponse.status)
+  
+  console.log('Monetbil API response:', {
+    status: monetbilResponse.status,
+    statusText: monetbilResponse.statusText,
+    resultLength: monetbilResult.length,
+    resultPreview: monetbilResult.substring(0, 100)
+  })
 
   if (!monetbilResponse.ok) {
-    console.error('Monetbil API error:', monetbilResult)
-    throw new Error(`Monetbil API error: ${monetbilResponse.status}`)
+    console.error('Monetbil API HTTP error:', {
+      status: monetbilResponse.status,
+      statusText: monetbilResponse.statusText,
+      response: monetbilResult
+    })
+    throw new Error(`Erreur de l'API Monetbil (${monetbilResponse.status}): ${monetbilResponse.statusText}`)
   }
 
+  // Vérifier si la réponse est un token valide ou une erreur HTML
+  if (!isValidMonetbilToken(monetbilResult)) {
+    console.error('Invalid Monetbil response received:', monetbilResult)
+    
+    // Si c'est du HTML, extraire le message d'erreur
+    if (monetbilResult.includes('<h1>')) {
+      const errorMatch = monetbilResult.match(/<h1>(.*?)<\/h1>/)
+      const errorMessage = errorMatch ? errorMatch[1] : 'Erreur inconnue de Monetbil'
+      throw new Error(`Erreur Monetbil: ${errorMessage}`)
+    }
+    
+    throw new Error('Réponse invalide de l\'API Monetbil. Veuillez vérifier vos clés API et réessayer.')
+  }
+
+  console.log('Valid Monetbil token received:', monetbilResult)
   return monetbilResult
 }

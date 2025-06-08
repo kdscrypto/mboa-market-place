@@ -1,14 +1,21 @@
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+import { corsHeaders } from '../index.ts'
+
+export function createOptionsResponse(): Response {
+  return new Response(null, { 
+    headers: corsHeaders 
+  })
 }
 
-export function createCorsResponse(data: any, status: number = 200): Response {
+export function createErrorResponse(message: string, status: number = 500): Response {
+  console.error('Creating error response:', message)
   return new Response(
-    JSON.stringify(data),
+    JSON.stringify({ 
+      success: false, 
+      error: message 
+    }), 
     { 
-      status, 
+      status,
       headers: { 
         ...corsHeaders, 
         'Content-Type': 'application/json' 
@@ -17,51 +24,95 @@ export function createCorsResponse(data: any, status: number = 200): Response {
   )
 }
 
-export function createOptionsResponse(): Response {
-  return new Response(null, { headers: corsHeaders })
-}
-
-export function createErrorResponse(message: string, status: number = 500, extraData?: any): Response {
-  const errorData = { error: message, ...extraData }
-  return createCorsResponse(errorData, status)
-}
-
-export function createSuccessResponse(data: any): Response {
-  return createCorsResponse(data)
-}
-
-export function createRateLimitResponse(message: string, retryAfter?: string): Response {
-  const data = retryAfter ? { error: message, retryAfter } : { error: message }
-  return createCorsResponse(data, 429)
+export function createRateLimitResponse(message: string, retryAfter?: number): Response {
+  const headers = { 
+    ...corsHeaders, 
+    'Content-Type': 'application/json' 
+  }
+  
+  if (retryAfter) {
+    headers['Retry-After'] = retryAfter.toString()
+  }
+  
+  return new Response(
+    JSON.stringify({ 
+      success: false, 
+      error: message,
+      code: 'RATE_LIMIT_EXCEEDED'
+    }), 
+    { 
+      status: 429,
+      headers 
+    }
+  )
 }
 
 export function createSuspiciousActivityResponse(): Response {
-  return createCorsResponse({
-    error: 'Transaction bloquée pour des raisons de sécurité. Veuillez contacter le support.',
-    securityCode: 'BLOCKED_SUSPICIOUS'
-  }, 403)
+  return new Response(
+    JSON.stringify({ 
+      success: false, 
+      error: 'Activité suspecte détectée. Veuillez réessayer plus tard.',
+      code: 'SUSPICIOUS_ACTIVITY'
+    }), 
+    { 
+      status: 403,
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json' 
+      } 
+    }
+  )
 }
 
 export function createStandardAdResponse(adId: string): Response {
-  return createSuccessResponse({
-    success: true,
-    adId,
-    paymentRequired: false
-  })
+  return new Response(
+    JSON.stringify({ 
+      success: true, 
+      paymentRequired: false,
+      adId: adId,
+      message: 'Annonce gratuite créée avec succès'
+    }), 
+    { 
+      status: 200,
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json' 
+      } 
+    }
+  )
 }
 
 export function createPremiumAdResponse(
-  paymentUrl: string,
-  transactionId: string,
-  expiresAt: string,
+  paymentUrl: string, 
+  transactionId: string, 
+  expiresAt: string, 
   securityScore: number
 ): Response {
-  return createSuccessResponse({
-    success: true,
-    paymentRequired: true,
-    paymentUrl,
-    transactionId,
-    expiresAt,
-    securityScore
-  })
+  // Validation de l'URL de paiement
+  if (!paymentUrl || paymentUrl.includes('%3Ch1%3E') || paymentUrl.includes('<h1>')) {
+    console.error('Invalid payment URL detected:', paymentUrl)
+    return createErrorResponse(
+      'Erreur lors de la génération du lien de paiement. Veuillez vérifier votre configuration Monetbil.',
+      500
+    )
+  }
+
+  return new Response(
+    JSON.stringify({ 
+      success: true, 
+      paymentRequired: true,
+      paymentUrl: paymentUrl,
+      transactionId: transactionId,
+      expiresAt: expiresAt,
+      securityScore: securityScore,
+      message: 'Redirection vers le paiement Monetbil'
+    }), 
+    { 
+      status: 200,
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json' 
+      } 
+    }
+  )
 }
