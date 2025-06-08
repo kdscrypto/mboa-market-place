@@ -60,6 +60,16 @@ export async function processStandardAd(supabase: any, adData: AdData, adType: s
   return ad.id
 }
 
+function validateMonetbilCredentials(serviceKey: string, serviceSecret: string): void {
+  if (!serviceKey || serviceKey.length < 20) {
+    throw new Error('Clé de service Monetbil invalide ou manquante')
+  }
+  
+  if (!serviceSecret || serviceSecret.length < 20) {
+    throw new Error('Secret de service Monetbil invalide ou manquant')
+  }
+}
+
 function isValidMonetbilToken(token: string): boolean {
   // Un token Monetbil valide est généralement alphanumerique et ne contient pas de HTML
   const htmlPattern = /<[^>]*>/
@@ -78,12 +88,33 @@ export async function callMonetbilAPI(
   cancelUrl: string,
   notifyUrl: string
 ): Promise<string> {
-  console.log('Preparing Monetbil API request with enhanced validation')
+  console.log('Starting Monetbil API call with enhanced validation...')
+  
+  // Validate credentials first
+  try {
+    validateMonetbilCredentials(serviceKey, serviceSecret)
+  } catch (error) {
+    console.error('Monetbil credentials validation failed:', error.message)
+    throw new Error('Configuration Monetbil invalide. Veuillez vérifier vos clés API.')
+  }
+  
+  // Validate amount
+  if (amount <= 0) {
+    throw new Error('Montant de paiement invalide')
+  }
+  
+  // Prepare phone number (ensure it's valid for Cameroon)
+  let phoneNumber = adData.phone
+  if (phoneNumber.startsWith('0')) {
+    phoneNumber = '237' + phoneNumber.substring(1)
+  } else if (!phoneNumber.startsWith('237')) {
+    phoneNumber = '237' + phoneNumber
+  }
   
   const monetbilData = {
     service: serviceKey,
     amount: amount.toString(),
-    phone: adData.phone,
+    phone: phoneNumber,
     locale: 'fr',
     currency: 'XAF',
     return: returnUrl,
@@ -98,8 +129,9 @@ export async function callMonetbilAPI(
   }
 
   console.log('Monetbil request data:', {
-    service: serviceKey,
+    service: serviceKey.substring(0, 8) + '...',
     amount: amount.toString(),
+    phone: phoneNumber,
     currency: 'XAF',
     item_ref: transactionId,
     payment_ref: `MBOA_${transactionId}`
@@ -112,47 +144,95 @@ export async function callMonetbilAPI(
 
   console.log('Calling Monetbil API...')
 
-  const monetbilResponse = await fetch('https://api.monetbil.com/widget/v2.1/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-Service-Secret': serviceSecret,
-    },
-    body: formBody.toString()
-  })
+  try {
+    const monetbilResponse = await fetch('https://api.monetbil.com/widget/v2.1/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Service-Secret': serviceSecret,
+        'User-Agent': 'MBOA-Market/1.0',
+        'Accept': 'text/plain, */*'
+      },
+      body: formBody.toString()
+    })
 
-  const monetbilResult = await monetbilResponse.text()
-  
-  console.log('Monetbil API response:', {
-    status: monetbilResponse.status,
-    statusText: monetbilResponse.statusText,
-    resultLength: monetbilResult.length,
-    resultPreview: monetbilResult.substring(0, 100)
-  })
-
-  if (!monetbilResponse.ok) {
-    console.error('Monetbil API HTTP error:', {
+    const monetbilResult = await monetbilResponse.text()
+    
+    console.log('Monetbil API response:', {
       status: monetbilResponse.status,
       statusText: monetbilResponse.statusText,
-      response: monetbilResult
+      resultLength: monetbilResult.length,
+      resultPreview: monetbilResult.substring(0, 200),
+      headers: Object.fromEntries(monetbilResponse.headers.entries())
     })
-    throw new Error(`Erreur de l'API Monetbil (${monetbilResponse.status}): ${monetbilResponse.statusText}`)
-  }
 
-  // Vérifier si la réponse est un token valide ou une erreur HTML
-  if (!isValidMonetbilToken(monetbilResult)) {
-    console.error('Invalid Monetbil response received:', monetbilResult)
+    // Enhanced error handling
+    if (!monetbilResponse.ok) {
+      console.error('Monetbil API HTTP error:', {
+        status: monetbilResponse.status,
+        statusText: monetbilResponse.statusText,
+        response: monetbilResult
+      })
+      
+      if (monetbilResponse.status === 404) {
+        throw new Error('Service Monetbil temporairement indisponible. Veuillez réessayer dans quelques minutes.')
+      } else if (monetbilResponse.status === 401 || monetbilResponse.status === 403) {
+        throw new Error('Clés API Monetbil invalides. Veuillez vérifier votre configuration.')
+      } else {
+        throw new Error(`Erreur du service de paiement (${monetbilResponse.status}). Veuillez réessayer.`)
+      }
+    }
+
+    // Check if response contains HTML error
+    if (monetbilResult.includes('<h1>') || monetbilResult.includes('<!DOCTYPE') || monetbilResult.includes('<html')) {
+      console.error('Monetbil returned HTML error page:', monetbilResult)
+      
+      // Extract error message from HTML if possible
+      const errorMatch = monetbilResult.match(/<h1[^>]*>(.*?)<\/h1>/i)
+      if (errorMatch) {
+        const errorMessage = errorMatch[1].trim()
+        if (errorMessage.toLowerCase().includes('not found')) {
+          throw new Error('Service de paiement temporairement indisponible. Veuillez réessayer plus tard.')
+        } else {
+          throw new Error(`Erreur Monetbil: ${errorMessage}`)
+        }
+      }
+      
+      throw new Error('Erreur du service de paiement. Veuillez vérifier votre configuration Monetbil.')
+    }
+
+    // Validate if we received a proper token
+    if (!isValidMonetbilToken(monetbilResult)) {
+      console.error('Invalid Monetbil token received:', {
+        token: monetbilResult,
+        length: monetbilResult.length,
+        containsHtml: /<[^>]*>/.test(monetbilResult)
+      })
+      
+      throw new Error('Réponse invalide du service de paiement. Veuillez vérifier votre configuration Monetbil.')
+    }
+
+    console.log('Valid Monetbil token received:', monetbilResult.substring(0, 20) + '...')
+    return monetbilResult
+
+  } catch (error) {
+    console.error('Monetbil API call failed:', error)
     
-    // Si c'est du HTML, extraire le message d'erreur
-    if (monetbilResult.includes('<h1>')) {
-      const errorMatch = monetbilResult.match(/<h1>(.*?)<\/h1>/)
-      const errorMessage = errorMatch ? errorMatch[1] : 'Erreur inconnue de Monetbil'
-      throw new Error(`Erreur Monetbil: ${errorMessage}`)
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de contacter le service de paiement. Vérifiez votre connexion internet.')
     }
     
-    throw new Error('Réponse invalide de l\'API Monetbil. Veuillez vérifier vos clés API et réessayer.')
+    // Re-throw our custom errors as-is
+    if (error.message.startsWith('Service Monetbil') || 
+        error.message.startsWith('Clés API Monetbil') || 
+        error.message.startsWith('Erreur Monetbil') ||
+        error.message.startsWith('Erreur du service de paiement') ||
+        error.message.startsWith('Réponse invalide') ||
+        error.message.startsWith('Impossible de contacter')) {
+      throw error
+    }
+    
+    // For any other errors, provide a generic message
+    throw new Error('Erreur lors de la communication avec le service de paiement. Veuillez réessayer.')
   }
-
-  console.log('Valid Monetbil token received:', monetbilResult)
-  return monetbilResult
 }

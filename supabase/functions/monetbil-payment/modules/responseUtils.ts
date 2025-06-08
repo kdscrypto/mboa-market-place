@@ -88,15 +88,8 @@ export function createPremiumAdResponse(
   expiresAt: string, 
   securityScore: number
 ): Response {
-  // Validation de l'URL de paiement
-  if (!paymentUrl || paymentUrl.includes('%3Ch1%3E') || paymentUrl.includes('<h1>')) {
-    console.error('Invalid payment URL detected:', paymentUrl)
-    return createErrorResponse(
-      'Erreur lors de la génération du lien de paiement. Veuillez vérifier votre configuration Monetbil.',
-      500
-    )
-  }
-
+  console.log('Creating premium ad response with payment URL:', paymentUrl.substring(0, 50) + '...')
+  
   return new Response(
     JSON.stringify({ 
       success: true, 
