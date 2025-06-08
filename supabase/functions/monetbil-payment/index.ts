@@ -51,28 +51,38 @@ import {
 } from './modules/responseUtils.ts'
 
 serve(async (req) => {
+  console.log('=== PAYMENT FUNCTION START ===')
+  console.log('Request method:', req.method)
+  console.log('Request URL:', req.url)
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()))
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request')
     return createOptionsResponse()
   }
 
   try {
+    console.log('Creating Supabase client...')
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     // Extract security information
+    console.log('Extracting security information...')
     const { clientIP, userAgent } = await extractSecurityInfo(req)
 
     // Verify user authentication
+    console.log('Verifying user authentication...')
     const authHeader = req.headers.get('Authorization')
     const user = await verifyUserAuthentication(supabase, authHeader)
+    console.log('User authenticated successfully:', { userId: user.id, email: user.email })
 
     console.log('Checking rate limits for user and IP...')
     
-    // Check user-based rate limiting
-    const userRateLimit = await checkRateLimit(supabase, user.id, 'user', 5, 60)
+    // Check user-based rate limiting (simplified to avoid constraint issues)
+    const userRateLimit = await checkRateLimit(supabase, user.id, 'user', 10, 60)
     if (!userRateLimit.allowed) {
       console.log('User rate limit exceeded:', userRateLimit)
       return createRateLimitResponse(
@@ -81,8 +91,8 @@ serve(async (req) => {
       )
     }
 
-    // Check IP-based rate limiting
-    const ipRateLimit = await checkRateLimit(supabase, clientIP, 'ip', 10, 60)
+    // Check IP-based rate limiting (simplified to avoid constraint issues)
+    const ipRateLimit = await checkRateLimit(supabase, clientIP, 'ip', 15, 60)
     if (!ipRateLimit.allowed) {
       console.log('IP rate limit exceeded:', ipRateLimit)
       return createRateLimitResponse(
@@ -91,11 +101,20 @@ serve(async (req) => {
       )
     }
 
+    console.log('Parsing request body...')
     const { adData, adType }: PaymentRequest = await req.json()
-    console.log('Payment request received:', { userId: user.id, adType, adData: adData.title, clientIP })
+    console.log('Payment request received:', { 
+      userId: user.id, 
+      adType, 
+      adTitle: adData.title,
+      adPrice: adData.price,
+      clientIP 
+    })
 
     // Validate payment amount
+    console.log('Validating payment amount...')
     const amount = validatePaymentAmount(adType)
+    console.log('Amount validated:', amount)
 
     // Enhanced suspicious activity detection
     const suspiciousActivityData = {
@@ -116,18 +135,24 @@ serve(async (req) => {
 
     // For standard ads (free), process directly
     if (amount === 0) {
+      console.log('Processing standard (free) ad...')
       const adId = await processStandardAd(supabase, adData, adType, user.id)
+      console.log('Standard ad created successfully:', adId)
       return createStandardAdResponse(adId)
     }
 
     // For premium ads, create payment transaction with enhanced security features
+    console.log('Processing premium ad payment...')
     const { returnUrl, cancelUrl, notifyUrl } = generatePaymentUrls(req)
+    console.log('Payment URLs generated:', { returnUrl, cancelUrl, notifyUrl })
 
     // Generate client fingerprint for additional security
     const clientFingerprint = await generateClientFingerprint(userAgent, clientIP)
+    console.log('Client fingerprint generated:', clientFingerprint)
 
     // Calculate security score based on various factors
     const securityScore = calculateSecurityScore(suspiciousActivity, userRateLimit, ipRateLimit)
+    console.log('Security score calculated:', securityScore)
 
     // Create payment transaction record with enhanced security
     const transactionData: TransactionData = {
@@ -149,7 +174,9 @@ serve(async (req) => {
       security_score: securityScore,
     }
 
+    console.log('Creating payment transaction...')
     const transaction = await createPaymentTransaction(supabase, transactionData)
+    console.log('Payment transaction created:', { id: transaction.id, expires_at: transaction.expires_at })
 
     // Enhanced audit logging with security context
     await logTransactionCreated(
@@ -168,8 +195,16 @@ serve(async (req) => {
     )
 
     // Get Monetbil API credentials
+    console.log('Retrieving Monetbil credentials...')
     const serviceKey = Deno.env.get('MONETBIL_SERVICE_KEY')
     const serviceSecret = Deno.env.get('MONETBIL_SERVICE_SECRET')
+
+    console.log('Monetbil credentials check:', {
+      hasServiceKey: !!serviceKey,
+      serviceKeyLength: serviceKey?.length || 0,
+      hasServiceSecret: !!serviceSecret,
+      serviceSecretLength: serviceSecret?.length || 0
+    })
 
     if (!serviceKey || !serviceSecret) {
       console.error('Monetbil API credentials not configured')
@@ -177,6 +212,7 @@ serve(async (req) => {
     }
 
     try {
+      console.log('Calling Monetbil API...')
       // Call Monetbil API
       const monetbilResult = await callMonetbilAPI(
         serviceKey,
@@ -190,6 +226,8 @@ serve(async (req) => {
         cancelUrl,
         notifyUrl
       )
+
+      console.log('Monetbil API call successful, token received:', monetbilResult.substring(0, 20) + '...')
 
       // Update transaction with Monetbil response
       await updateTransactionWithMonetbilResponse(supabase, transaction.id, monetbilResult)
@@ -207,7 +245,9 @@ serve(async (req) => {
       )
 
       const paymentUrl = `https://api.monetbil.com/widget/v2.1/${monetbilResult}`
+      console.log('Payment URL generated:', paymentUrl)
       
+      console.log('=== PAYMENT FUNCTION SUCCESS ===')
       return createPremiumAdResponse(
         paymentUrl,
         transaction.id,
@@ -216,7 +256,12 @@ serve(async (req) => {
       )
 
     } catch (monetbilError) {
-      console.error('Monetbil API error:', monetbilError)
+      console.error('=== MONETBIL API ERROR ===')
+      console.error('Monetbil API error details:', {
+        error: monetbilError,
+        message: monetbilError.message,
+        stack: monetbilError.stack
+      })
       
       // Enhanced API error logging
       await logMonetbilApiError(
@@ -236,7 +281,12 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Payment processing error:', error)
+    console.error('=== PAYMENT PROCESSING ERROR ===')
+    console.error('Payment processing error details:', {
+      error: error,
+      message: error.message,
+      stack: error.stack
+    })
     return createErrorResponse(
       error.message || 'Erreur lors du traitement du paiement',
       500

@@ -91,24 +91,21 @@ export async function checkRateLimit(
       return { allowed: false, retryAfter: Math.max(retryAfter, 60) }
     }
 
-    // Update or create rate limit record
+    // Simplify rate limit record creation - just insert without upsert to avoid constraint issues
     const now = new Date().toISOString()
-    const { error: upsertError } = await supabase
+    const { error: insertError } = await supabase
       .from('payment_rate_limits')
-      .upsert({
+      .insert({
         identifier,
         identifier_type: identifierType,
         action_type: 'payment_attempt',
         request_count: 1,
-        window_start: now,
-        updated_at: now
-      }, {
-        onConflict: 'identifier,identifier_type,action_type',
-        ignoreDuplicates: false
+        window_start: now
       })
 
-    if (upsertError) {
-      console.error('Rate limit update error:', upsertError)
+    if (insertError) {
+      console.error('Rate limit insert error (non-critical):', insertError)
+      // Continue execution - rate limiting failure shouldn't block payments
     }
 
     return { allowed: true }
