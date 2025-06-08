@@ -71,9 +71,16 @@ function validateMonetbilCredentials(serviceKey: string, serviceSecret: string):
 }
 
 function isValidMonetbilToken(token: string): boolean {
-  // Un token Monetbil valide est généralement alphanumerique et ne contient pas de HTML
+  // A valid Monetbil token should be alphanumeric and not contain HTML
   const htmlPattern = /<[^>]*>/
-  return !htmlPattern.test(token) && token.length > 5 && /^[a-zA-Z0-9_-]+$/.test(token)
+  const scriptPattern = /<script[^>]*>.*?<\/script>/i
+  
+  if (htmlPattern.test(token) || scriptPattern.test(token)) {
+    return false
+  }
+  
+  // Check if it's a reasonable token length and format
+  return token.length > 5 && token.length < 100 && /^[a-zA-Z0-9_-]+$/.test(token)
 }
 
 export async function callMonetbilAPI(
@@ -115,7 +122,7 @@ export async function callMonetbilAPI(
   }
   console.log('✓ Phone number formatted:', phoneNumber)
   
-  // Construct the Monetbil request data according to their API spec
+  // Construct the Monetbil request data according to their latest API spec
   const monetbilData = {
     service: serviceKey,
     amount: amount.toString(),
@@ -127,7 +134,7 @@ export async function callMonetbilAPI(
     notify: notifyUrl,
     item_ref: transactionId,
     payment_ref: `MBOA_${transactionId.substring(0, 8)}`,
-    user: userId.substring(0, 8), // Shorten user ID
+    user: userId.substring(0, 8),
     first_name: 'Utilisateur',
     last_name: 'MBOA',
     email: userEmail || `${userId.substring(0, 8)}@mboa.cm`
@@ -151,12 +158,12 @@ export async function callMonetbilAPI(
     formBody.append(key, value)
   })
 
-  console.log('Form data string:', formBody.toString().substring(0, 200) + '...')
+  console.log('Form data prepared for submission')
 
-  // Try multiple Monetbil endpoints if the first one fails
+  // Updated endpoints based on Monetbil's current API documentation
   const endpoints = [
+    'https://api.monetbil.com/payment/v1/placePayment',
     'https://api.monetbil.com/widget/v2.1/',
-    'https://api.monetbil.com/v1/widget',
     'https://monetbil.com/api/v1/widget'
   ]
 
@@ -164,62 +171,99 @@ export async function callMonetbilAPI(
 
   for (const endpoint of endpoints) {
     try {
-      console.log(`Trying endpoint: ${endpoint}`)
+      console.log(`Attempting payment with endpoint: ${endpoint}`)
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'MBOA-Market/1.0',
+        'Accept': 'application/json, text/plain, */*',
+        'Cache-Control': 'no-cache'
+      }
+
+      // Add service secret in header for newer API versions
+      if (endpoint.includes('payment/v1')) {
+        headers['Authorization'] = `Bearer ${serviceSecret}`
+        headers['X-Service-Key'] = serviceKey
+      } else {
+        headers['X-Service-Secret'] = serviceSecret
+      }
 
       const monetbilResponse = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Service-Secret': serviceSecret,
-          'User-Agent': 'MBOA-Market/1.0',
-          'Accept': 'text/plain, application/json, */*'
-        },
+        headers,
         body: formBody.toString()
       })
 
-      const monetbilResult = await monetbilResponse.text()
+      const responseText = await monetbilResponse.text()
       
       console.log(`Response from ${endpoint}:`, {
         status: monetbilResponse.status,
         statusText: monetbilResponse.statusText,
-        resultLength: monetbilResult.length,
-        resultPreview: monetbilResult.substring(0, 100),
-        headers: Object.fromEntries(monetbilResponse.headers.entries())
+        resultLength: responseText.length,
+        resultPreview: responseText.substring(0, 200),
+        contentType: monetbilResponse.headers.get('content-type')
       })
 
-      // Check if this endpoint worked
-      if (monetbilResponse.ok && !monetbilResult.includes('<h1>') && !monetbilResult.includes('<!DOCTYPE')) {
-        // Validate if we received a proper token
-        if (isValidMonetbilToken(monetbilResult.trim())) {
-          console.log('✓ Valid Monetbil token received from:', endpoint)
-          return monetbilResult.trim()
-        } else {
-          console.log('✗ Invalid token format from:', endpoint)
-          continue
+      // Check for successful response
+      if (monetbilResponse.ok) {
+        // Try to parse as JSON first
+        try {
+          const jsonResponse = JSON.parse(responseText)
+          if (jsonResponse.status === 'SUCCESS' && jsonResponse.token) {
+            console.log('✓ Valid JSON response with token received from:', endpoint)
+            return jsonResponse.token
+          } else if (jsonResponse.payment_url) {
+            console.log('✓ Valid JSON response with payment URL from:', endpoint)
+            // Extract token from payment URL if present
+            const urlMatch = jsonResponse.payment_url.match(/\/([a-zA-Z0-9_-]+)$/)
+            if (urlMatch) {
+              return urlMatch[1]
+            }
+          }
+        } catch (jsonError) {
+          // If not JSON, check if it's a direct token
+          const trimmedResponse = responseText.trim()
+          if (isValidMonetbilToken(trimmedResponse)) {
+            console.log('✓ Valid token received as plain text from:', endpoint)
+            return trimmedResponse
+          }
         }
       }
 
-      // If we get here, this endpoint didn't work
-      lastError = new Error(`Endpoint ${endpoint} returned: ${monetbilResult.substring(0, 100)}`)
+      // Log the specific error for this endpoint
+      lastError = new Error(`Endpoint ${endpoint} returned status ${monetbilResponse.status}: ${responseText.substring(0, 200)}`)
+      console.log(`✗ Endpoint failed: ${endpoint} - ${lastError.message}`)
       
     } catch (error) {
-      console.error(`Error with endpoint ${endpoint}:`, error)
+      console.error(`Network error with endpoint ${endpoint}:`, error)
       lastError = error instanceof Error ? error : new Error(String(error))
       continue
     }
   }
 
-  // If all endpoints failed
+  // All endpoints failed - provide detailed error information
   console.error('All Monetbil endpoints failed. Last error:', lastError?.message)
   
-  // Check if it's a network issue
-  if (lastError?.name === 'TypeError' && lastError.message.includes('fetch')) {
-    throw new Error('Impossible de contacter le service de paiement Monetbil. Vérifiez votre connexion internet.')
+  // Enhanced error analysis
+  if (lastError?.message.includes('401') || lastError?.message.includes('403')) {
+    throw new Error('Authentification Monetbil échouée. Vérifiez vos clés API dans les paramètres.')
   }
   
-  // Check if it's a configuration issue (403/401 errors typically mean bad credentials)
-  if (lastError?.message.includes('403') || lastError?.message.includes('401')) {
-    throw new Error('Clés API Monetbil invalides. Veuillez vérifier votre configuration.')
+  if (lastError?.message.includes('400')) {
+    throw new Error('Données de paiement invalides. Vérifiez le numéro de téléphone et le montant.')
+  }
+  
+  if (lastError?.message.includes('404')) {
+    throw new Error('Service Monetbil temporairement indisponible. L\'API pourrait être en maintenance.')
+  }
+  
+  if (lastError?.message.includes('500') || lastError?.message.includes('502') || lastError?.message.includes('503')) {
+    throw new Error('Erreur serveur Monetbil. Veuillez réessayer dans quelques minutes.')
+  }
+
+  // Network-related errors
+  if (lastError?.name === 'TypeError' && lastError.message.includes('fetch')) {
+    throw new Error('Impossible de contacter Monetbil. Vérifiez votre connexion internet.')
   }
 
   // Generic error for other cases

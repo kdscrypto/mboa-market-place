@@ -25,14 +25,24 @@ export async function extractSecurityInfo(req: Request): Promise<SecurityContext
   // Parse X-Forwarded-For header which can contain multiple IPs
   if (forwardedFor) {
     const ips = forwardedFor.split(',').map(ip => ip.trim())
-    // Take the first valid IPv4 address
-    const validIP = ips.find(ip => /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip))
+    // Take the first valid IPv4 or IPv6 address
+    const validIP = ips.find(ip => {
+      // Check for valid IPv4
+      if (/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip)) {
+        const octets = ip.split('.').map(Number)
+        return octets.every(octet => octet >= 0 && octet <= 255)
+      }
+      // Check for valid IPv6 (basic check)
+      return /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/.test(ip) || 
+             /^::1$/.test(ip) || 
+             /^::$/.test(ip)
+    })
     if (validIP) {
       clientIP = validIP
     }
-  } else if (realIP && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(realIP)) {
+  } else if (realIP) {
     clientIP = realIP
-  } else if (remoteAddr && /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(remoteAddr)) {
+  } else if (remoteAddr) {
     clientIP = remoteAddr
   }
   
@@ -71,47 +81,31 @@ export async function checkRateLimit(
   console.log(`Checking rate limit for ${identifierType}: ${identifier}`)
   
   try {
-    const { data: rateLimits, error } = await supabase
-      .from('payment_rate_limits')
-      .select('*')
-      .eq('identifier', identifier)
-      .eq('identifier_type', identifierType)
-      .gte('window_start', windowStart)
-      .order('window_start', { ascending: false })
+    // Use the Supabase function for rate limiting
+    const { data: rateLimitResult, error } = await supabase.rpc('check_rate_limit', {
+      p_identifier: identifier,
+      p_identifier_type: identifierType,
+      p_action_type: 'payment',
+      p_max_requests: maxRequests,
+      p_window_minutes: windowMinutes
+    })
 
     if (error) {
       console.error('Rate limit check error:', error)
-      return { allowed: true }
+      return { allowed: true } // Fail open for now
     }
 
-    const totalRequests = rateLimits?.reduce((sum: number, limit: any) => sum + limit.request_count, 0) || 0
-    
-    if (totalRequests >= maxRequests) {
-      const retryAfter = Math.ceil((new Date(rateLimits[0]?.window_start).getTime() + windowMinutes * 60 * 1000 - Date.now()) / 1000)
+    if (!rateLimitResult.allowed) {
+      const retryAfter = rateLimitResult.blocked_until 
+        ? Math.ceil((new Date(rateLimitResult.blocked_until).getTime() - Date.now()) / 1000)
+        : 60
       return { allowed: false, retryAfter: Math.max(retryAfter, 60) }
-    }
-
-    // Simplify rate limit record creation - just insert without upsert to avoid constraint issues
-    const now = new Date().toISOString()
-    const { error: insertError } = await supabase
-      .from('payment_rate_limits')
-      .insert({
-        identifier,
-        identifier_type: identifierType,
-        action_type: 'payment_attempt',
-        request_count: 1,
-        window_start: now
-      })
-
-    if (insertError) {
-      console.error('Rate limit insert error (non-critical):', insertError)
-      // Continue execution - rate limiting failure shouldn't block payments
     }
 
     return { allowed: true }
   } catch (err) {
     console.error('Rate limiting error:', err)
-    return { allowed: true }
+    return { allowed: true } // Fail open on errors
   }
 }
 
@@ -122,43 +116,21 @@ export async function detectSuspiciousActivity(
   activityData: any
 ): Promise<SuspiciousActivityResult> {
   try {
-    let riskScore = 0
-    
-    // Check for rapid successive requests
-    const recentActivity = await supabase
-      .from('payment_security_events')
-      .select('*')
-      .eq('identifier', identifier)
-      .eq('identifier_type', identifierType)
-      .gte('created_at', new Date(Date.now() - 300000).toISOString()) // Last 5 minutes
-      .order('created_at', { ascending: false })
-      .limit(10)
+    // Use the Supabase function for suspicious activity detection
+    const { data: result, error } = await supabase.rpc('detect_suspicious_activity', {
+      p_identifier: identifier,
+      p_identifier_type: identifierType,
+      p_event_data: activityData
+    })
 
-    if (recentActivity.data && recentActivity.data.length > 5) {
-      riskScore += 30
+    if (error) {
+      console.error('Suspicious activity detection error:', error)
+      return { auto_block: false, risk_score: 0 }
     }
-
-    // Check for amount anomalies
-    if (activityData.amount > 50000) { // Very high amount
-      riskScore += 20
-    }
-
-    // Log security event
-    await supabase
-      .from('payment_security_events')
-      .insert({
-        identifier,
-        identifier_type: identifierType,
-        event_type: 'payment_attempt',
-        severity: riskScore > 50 ? 'high' : riskScore > 20 ? 'medium' : 'low',
-        risk_score: riskScore,
-        event_data: activityData,
-        auto_blocked: riskScore > 80
-      })
 
     return {
-      auto_block: riskScore > 80,
-      risk_score: riskScore
+      auto_block: result.auto_block || false,
+      risk_score: result.risk_score || 0
     }
   } catch (err) {
     console.error('Suspicious activity detection error:', err)

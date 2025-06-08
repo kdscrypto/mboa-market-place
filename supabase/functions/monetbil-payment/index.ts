@@ -54,7 +54,6 @@ serve(async (req) => {
   console.log('=== PAYMENT FUNCTION START ===')
   console.log('Request method:', req.method)
   console.log('Request URL:', req.url)
-  console.log('Request headers:', Object.fromEntries(req.headers.entries()))
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -81,8 +80,8 @@ serve(async (req) => {
 
     console.log('Checking rate limits for user and IP...')
     
-    // Check user-based rate limiting (simplified to avoid constraint issues)
-    const userRateLimit = await checkRateLimit(supabase, user.id, 'user', 10, 60)
+    // Check user-based rate limiting using database function
+    const userRateLimit = await checkRateLimit(supabase, user.id, 'user', 5, 60)
     if (!userRateLimit.allowed) {
       console.log('User rate limit exceeded:', userRateLimit)
       return createRateLimitResponse(
@@ -91,8 +90,8 @@ serve(async (req) => {
       )
     }
 
-    // Check IP-based rate limiting (simplified to avoid constraint issues)
-    const ipRateLimit = await checkRateLimit(supabase, clientIP, 'ip', 15, 60)
+    // Check IP-based rate limiting using database function
+    const ipRateLimit = await checkRateLimit(supabase, clientIP, 'ip', 10, 60)
     if (!ipRateLimit.allowed) {
       console.log('IP rate limit exceeded:', ipRateLimit)
       return createRateLimitResponse(
@@ -213,7 +212,7 @@ serve(async (req) => {
 
     try {
       console.log('Calling Monetbil API...')
-      // Call Monetbil API
+      // Call Monetbil API with improved error handling
       const monetbilResult = await callMonetbilAPI(
         serviceKey,
         serviceSecret,

@@ -12,7 +12,8 @@ export function createErrorResponse(message: string, status: number = 500): Resp
   return new Response(
     JSON.stringify({ 
       success: false, 
-      error: message 
+      error: message,
+      timestamp: new Date().toISOString()
     }), 
     { 
       status,
@@ -38,7 +39,9 @@ export function createRateLimitResponse(message: string, retryAfter?: number): R
     JSON.stringify({ 
       success: false, 
       error: message,
-      code: 'RATE_LIMIT_EXCEEDED'
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: retryAfter || 60,
+      timestamp: new Date().toISOString()
     }), 
     { 
       status: 429,
@@ -52,7 +55,8 @@ export function createSuspiciousActivityResponse(): Response {
     JSON.stringify({ 
       success: false, 
       error: 'Activité suspecte détectée. Veuillez réessayer plus tard.',
-      code: 'SUSPICIOUS_ACTIVITY'
+      code: 'SUSPICIOUS_ACTIVITY',
+      timestamp: new Date().toISOString()
     }), 
     { 
       status: 403,
@@ -70,7 +74,8 @@ export function createStandardAdResponse(adId: string): Response {
       success: true, 
       paymentRequired: false,
       adId: adId,
-      message: 'Annonce gratuite créée avec succès'
+      message: 'Annonce gratuite créée avec succès',
+      timestamp: new Date().toISOString()
     }), 
     { 
       status: 200,
@@ -98,7 +103,8 @@ export function createPremiumAdResponse(
       transactionId: transactionId,
       expiresAt: expiresAt,
       securityScore: securityScore,
-      message: 'Redirection vers le paiement Monetbil'
+      message: 'Redirection vers le paiement Monetbil',
+      timestamp: new Date().toISOString()
     }), 
     { 
       status: 200,
