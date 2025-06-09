@@ -12,13 +12,13 @@ const Login = () => {
   const fromPage = (location.state as { from?: string })?.from || "/dashboard";
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col theme-bg">
       <Header />
       
-      <main className="flex-grow flex items-center justify-center py-12 bg-mboa-gray">
+      <main className="flex-grow flex items-center justify-center py-12 theme-bg-surface">
         <div className="mboa-container max-w-md">
-          <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-md">
-            <p className="text-sm text-orange-800">
+          <div className="mb-4 p-4 surface-elevated border theme-border rounded-md">
+            <p className="text-sm text-mboa-orange">
               {fromPage === "/publier-annonce" 
                 ? "Connectez-vous ou créez un compte pour publier votre annonce gratuitement."
                 : "Connectez-vous à votre compte Mboa Market."

@@ -73,9 +73,9 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 217.2 32.6% 17.5%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 217.2 32.6% 17.5%;
     --popover-foreground: 210 40% 98%;
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
@@ -96,37 +96,37 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    /* Modern Mboa colors - Dark mode */
+    /* Modern Mboa colors - Dark mode - Improved contrast */
     --color-primary-accent: #FF8A65;
     --color-green: #26D0CE;
     --color-blue: #64B5F6;
-    --color-surface-elevated: #2A2D3A;
+    --color-surface-elevated: #334155;
     --color-text-primary: #F1F5F9;
     --color-background: #0F1419;
-    --color-surface: #1E2028;
-    --color-text-secondary: #94A3B8;
-    --color-border: #334155;
-    --color-header-bg: #1E2028;
+    --color-surface: #1E293B;
+    --color-text-secondary: #CBD5E1;
+    --color-border: #475569;
+    --color-header-bg: #1E293B;
     --color-header-text: #F1F5F9;
-    --color-header-border: #334155;
+    --color-header-border: #475569;
     
-    /* Extended color palette - Dark mode */
-    --color-accent-light: #2A2D3A;
+    /* Extended color palette - Dark mode - Better visibility */
+    --color-accent-light: #334155;
     --color-accent-dark: #F1F5F9;
     --color-success: #34D399;
     --color-warning: #FBBF24;
     --color-error: #F87171;
     --color-info: #60A5FA;
     --color-neutral-50: #0F1419;
-    --color-neutral-100: #1E2028;
-    --color-neutral-200: #2A2D3A;
-    --color-neutral-300: #334155;
-    --color-neutral-400: #475569;
-    --color-neutral-500: #64748B;
-    --color-neutral-600: #94A3B8;
-    --color-neutral-700: #CBD5E1;
-    --color-neutral-800: #E2E8F0;
-    --color-neutral-900: #F1F5F9;
+    --color-neutral-100: #1E293B;
+    --color-neutral-200: #334155;
+    --color-neutral-300: #475569;
+    --color-neutral-400: #64748B;
+    --color-neutral-500: #94A3B8;
+    --color-neutral-600: #CBD5E1;
+    --color-neutral-700: #E2E8F0;
+    --color-neutral-800: #F1F5F9;
+    --color-neutral-900: #F8FAFC;
     
     /* Gradient colors - Dark mode */
     --color-gradient-start: #FF8A65;
@@ -227,6 +227,78 @@
   /* Theme-aware border utilities */
   .theme-border {
     border-color: var(--color-border);
+  }
+
+  /* Enhanced dark mode form styling */
+  .dark input[type="text"],
+  .dark input[type="email"], 
+  .dark input[type="password"],
+  .dark input[type="tel"],
+  .dark textarea,
+  .dark select {
+    background-color: var(--color-surface-elevated) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text-primary) !important;
+  }
+
+  .dark input[type="text"]::placeholder,
+  .dark input[type="email"]::placeholder,
+  .dark input[type="password"]::placeholder,
+  .dark input[type="tel"]::placeholder,
+  .dark textarea::placeholder {
+    color: var(--color-text-secondary) !important;
+    opacity: 0.7;
+  }
+
+  .dark input[type="text"]:focus,
+  .dark input[type="email"]:focus,
+  .dark input[type="password"]:focus,
+  .dark input[type="tel"]:focus,
+  .dark textarea:focus,
+  .dark select:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: var(--color-primary-accent);
+    border-color: var(--color-primary-accent) !important;
+  }
+
+  /* Dark mode card improvements */
+  .dark .bg-white {
+    background-color: var(--color-surface) !important;
+  }
+
+  .dark .bg-gray-50 {
+    background-color: var(--color-surface-elevated) !important;
+  }
+
+  .dark .bg-gray-100 {
+    background-color: var(--color-neutral-200) !important;
+  }
+
+  .dark .text-gray-600 {
+    color: var(--color-text-secondary) !important;
+  }
+
+  .dark .text-gray-700 {
+    color: var(--color-text-primary) !important;
+  }
+
+  .dark .text-gray-900 {
+    color: var(--color-text-primary) !important;
+  }
+
+  /* Button improvements for dark mode */
+  .dark .bg-orange-50 {
+    background-color: var(--color-surface-elevated) !important;
+  }
+
+  .dark .border-orange-200 {
+    border-color: var(--color-primary-accent) !important;
+    opacity: 0.3;
+  }
+
+  .dark .text-orange-800 {
+    color: var(--color-primary-accent) !important;
   }
 
   /* Accessibility features */
