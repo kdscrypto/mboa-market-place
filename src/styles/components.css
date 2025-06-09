@@ -1,0 +1,74 @@
+
+@layer utilities {
+  /* Enhanced dark mode form styling */
+  .dark input[type="text"],
+  .dark input[type="email"], 
+  .dark input[type="password"],
+  .dark input[type="tel"],
+  .dark textarea,
+  .dark select {
+    background-color: var(--color-surface-elevated) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text-primary) !important;
+  }
+
+  .dark input[type="text"]::placeholder,
+  .dark input[type="email"]::placeholder,
+  .dark input[type="password"]::placeholder,
+  .dark input[type="tel"]::placeholder,
+  .dark textarea::placeholder {
+    color: var(--color-text-secondary) !important;
+    opacity: 0.7;
+  }
+
+  .dark input[type="text"]:focus,
+  .dark input[type="email"]:focus,
+  .dark input[type="password"]:focus,
+  .dark input[type="tel"]:focus,
+  .dark textarea:focus,
+  .dark select:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: var(--color-primary-accent);
+    border-color: var(--color-primary-accent) !important;
+  }
+
+  /* Dark mode card improvements */
+  .dark .bg-white {
+    background-color: var(--color-surface) !important;
+  }
+
+  .dark .bg-gray-50 {
+    background-color: var(--color-surface-elevated) !important;
+  }
+
+  .dark .bg-gray-100 {
+    background-color: var(--color-neutral-200) !important;
+  }
+
+  .dark .text-gray-600 {
+    color: var(--color-text-secondary) !important;
+  }
+
+  .dark .text-gray-700 {
+    color: var(--color-text-primary) !important;
+  }
+
+  .dark .text-gray-900 {
+    color: var(--color-text-primary) !important;
+  }
+
+  /* Button improvements for dark mode */
+  .dark .bg-orange-50 {
+    background-color: var(--color-surface-elevated) !important;
+  }
+
+  .dark .border-orange-200 {
+    border-color: var(--color-primary-accent) !important;
+    opacity: 0.3;
+  }
+
+  .dark .text-orange-800 {
+    color: var(--color-primary-accent) !important;
+  }
+}
