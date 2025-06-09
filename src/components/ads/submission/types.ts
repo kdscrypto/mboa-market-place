@@ -18,7 +18,7 @@ export interface AdSubmissionData {
   region: string;
   city: string;
   phone: string;
-  whatsapp: string;
+  whatsapp?: string;
   adType: string;
   premiumExpiresAt?: string;
 }
