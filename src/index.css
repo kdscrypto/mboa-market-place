@@ -100,15 +100,15 @@
   }
   
   .accessibility-high-contrast * {
-    @apply !border-gray-900;
+    border-color: #111827 !important;
   }
   
   .accessibility-high-contrast .bg-white {
-    @apply !bg-gray-100;
+    background-color: #f3f4f6 !important;
   }
   
   .accessibility-high-contrast .text-gray-600 {
-    @apply !text-gray-900;
+    color: #111827 !important;
   }
   
   .accessibility-large-text {
@@ -120,15 +120,18 @@
   }
   
   .accessibility-large-text .text-xs {
-    @apply !text-sm;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
   }
   
   .accessibility-large-text .text-sm {
-    @apply !text-base;
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
   }
   
   .accessibility-large-text .text-base {
-    @apply !text-lg;
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
   }
 
   /* Enhanced focus styles for better accessibility */
@@ -138,7 +141,8 @@
   
   /* High contrast focus indicators */
   .accessibility-high-contrast *:focus {
-    @apply ring-4 ring-yellow-400 ring-offset-2 outline-none;
+    box-shadow: 0 0 0 4px rgb(251 191 36), 0 0 0 6px transparent !important;
+    outline: none !important;
   }
   
   /* Skip links for screen readers */
