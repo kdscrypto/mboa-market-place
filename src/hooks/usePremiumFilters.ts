@@ -1,7 +1,6 @@
-
 import { useState, useCallback } from "react";
 
-interface PremiumFilters {
+interface FeaturedFilters {
   query: string;
   category: string | null;
   city: string | null;
@@ -9,7 +8,7 @@ interface PremiumFilters {
   maxPrice: string;
 }
 
-const initialFilters: PremiumFilters = {
+const initialFilters: FeaturedFilters = {
   query: '',
   category: null,
   city: null,
@@ -17,10 +16,11 @@ const initialFilters: PremiumFilters = {
   maxPrice: ''
 };
 
+// Updated to reflect that all ads are now free, but we keep filtering functionality
 export const usePremiumFilters = () => {
-  const [filters, setFilters] = useState<PremiumFilters>(initialFilters);
+  const [filters, setFilters] = useState<FeaturedFilters>(initialFilters);
 
-  const updateFilter = useCallback((key: keyof PremiumFilters, value: string | null) => {
+  const updateFilter = useCallback((key: keyof FeaturedFilters, value: string | null) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
 

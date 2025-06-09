@@ -13,7 +13,7 @@ export const useAdFormState = () => {
     city: "",
     phone: "",
     whatsapp: "",
-    adType: "standard",
+    adType: "standard", // Default to standard since all are free
     images: []
   });
   

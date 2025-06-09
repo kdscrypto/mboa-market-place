@@ -14,22 +14,22 @@ export const usePremiumAdsData = () => {
   const [isRetrying, setIsRetrying] = useState<boolean>(false);
   const [hasActiveFilters, setHasActiveFilters] = useState<boolean>(false);
 
-  // Load all premium ads initially
+  // Load all featured ads (previously premium) - now all free
   useEffect(() => {
-    loadPremiumAds();
+    loadFeaturedAds();
   }, []);
 
-  const loadPremiumAds = async () => {
+  const loadFeaturedAds = async () => {
     setIsLoading(true);
     setError(false);
     try {
-      console.log("Loading all premium ads...");
-      const ads = await fetchPremiumAds(100); // Load more ads for filtering
-      console.log("Premium ads loaded:", ads.length);
+      console.log("Loading all featured ads...");
+      const ads = await fetchPremiumAds(100);
+      console.log("Featured ads loaded:", ads.length);
       setPremiumAds(ads);
       setFilteredAds(ads);
     } catch (err) {
-      console.error("Error loading premium ads:", err);
+      console.error("Error loading featured ads:", err);
       setError(true);
     } finally {
       setIsLoading(false);
@@ -37,7 +37,7 @@ export const usePremiumAdsData = () => {
   };
 
   const handleSearch = useCallback(async (filters: any) => {
-    console.log("Premium search filters:", filters);
+    console.log("Featured ads search filters:", filters);
     
     const hasFilters = Object.keys(filters).length > 0;
     setHasActiveFilters(hasFilters);
@@ -49,7 +49,6 @@ export const usePremiumAdsData = () => {
 
     setIsSearching(true);
     try {
-      // Convert the filters to match the premium search service format
       const searchParams: any = {};
       
       if (filters.query) searchParams.query = filters.query;
@@ -58,7 +57,7 @@ export const usePremiumAdsData = () => {
       if (filters.minPrice) searchParams.minPrice = parseInt(filters.minPrice);
       if (filters.maxPrice) searchParams.maxPrice = parseInt(filters.maxPrice);
       
-      console.log("Performing premium search with params:", searchParams);
+      console.log("Performing featured ads search with params:", searchParams);
       
       const results = await searchPremiumAds(searchParams);
       setFilteredAds(results);
@@ -68,7 +67,7 @@ export const usePremiumAdsData = () => {
         resultsCount: results.length
       });
     } catch (err) {
-      console.error("Error searching premium ads:", err);
+      console.error("Error searching featured ads:", err);
       toast({
         description: "Erreur lors de la recherche",
         variant: "destructive",
@@ -91,7 +90,7 @@ export const usePremiumAdsData = () => {
           description: "Données rafraîchies avec succès",
         });
       } catch (err) {
-        console.error("Error reloading premium ads:", err);
+        console.error("Error reloading featured ads:", err);
         setError(true);
         toast({
           description: "Impossible de charger les annonces",
