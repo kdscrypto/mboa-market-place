@@ -33,41 +33,41 @@
     --radius: 0.5rem;
 
     /* Modern Mboa colors - Light mode */
-    --color-primary-accent: #E97E4A;
-    --color-green: #4AE97E;
-    --color-blue: #4A7EE9;
-    --color-surface-elevated: #F8F9FA;
-    --color-text-primary: #1A202C;
+    --color-primary-accent: #FF6B35;
+    --color-green: #00C896;
+    --color-blue: #4A90E2;
+    --color-surface-elevated: #FAFBFC;
+    --color-text-primary: #1A1D29;
     --color-background: #FFFFFF;
-    --color-surface: #F7F8FC;
-    --color-text-secondary: #718096;
-    --color-border: #E2E8F0;
+    --color-surface: #F8F9FA;
+    --color-text-secondary: #6B7280;
+    --color-border: #E5E7EB;
     --color-header-bg: #FFFFFF;
-    --color-header-text: #2D3748;
-    --color-header-border: #E2E8F0;
+    --color-header-text: #1A1D29;
+    --color-header-border: #E5E7EB;
     
     /* Extended color palette */
-    --color-accent-light: #F7FAFC;
-    --color-accent-dark: #2D3748;
-    --color-success: #48BB78;
-    --color-warning: #ED8936;
-    --color-error: #F56565;
-    --color-info: #4299E1;
-    --color-neutral-50: #F7FAFC;
-    --color-neutral-100: #EDF2F7;
-    --color-neutral-200: #E2E8F0;
-    --color-neutral-300: #CBD5E0;
-    --color-neutral-400: #A0AEC0;
-    --color-neutral-500: #718096;
-    --color-neutral-600: #4A5568;
-    --color-neutral-700: #2D3748;
-    --color-neutral-800: #1A202C;
-    --color-neutral-900: #171923;
+    --color-accent-light: #FFF5F2;
+    --color-accent-dark: #1A1D29;
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-error: #EF4444;
+    --color-info: #3B82F6;
+    --color-neutral-50: #F9FAFB;
+    --color-neutral-100: #F3F4F6;
+    --color-neutral-200: #E5E7EB;
+    --color-neutral-300: #D1D5DB;
+    --color-neutral-400: #9CA3AF;
+    --color-neutral-500: #6B7280;
+    --color-neutral-600: #4B5563;
+    --color-neutral-700: #374151;
+    --color-neutral-800: #1F2937;
+    --color-neutral-900: #111827;
     
     /* Gradient colors */
-    --color-gradient-start: #E97E4A;
-    --color-gradient-end: #4A7EE9;
-    --color-gradient-accent: #4AE97E;
+    --color-gradient-start: #FF6B35;
+    --color-gradient-end: #4A90E2;
+    --color-gradient-accent: #00C896;
   }
 
   .dark {
@@ -97,41 +97,41 @@
     --chart-5: 340 75% 55%;
 
     /* Modern Mboa colors - Dark mode */
-    --color-primary-accent: #F0956B;
-    --color-green: #6BF095;
-    --color-blue: #6B95F0;
-    --color-surface-elevated: #2D3748;
-    --color-text-primary: #F7FAFC;
-    --color-background: #1A202C;
-    --color-surface: #2D3748;
-    --color-text-secondary: #A0AEC0;
-    --color-border: #4A5568;
-    --color-header-bg: #2D3748;
-    --color-header-text: #F7FAFC;
-    --color-header-border: #4A5568;
+    --color-primary-accent: #FF8A65;
+    --color-green: #26D0CE;
+    --color-blue: #64B5F6;
+    --color-surface-elevated: #2A2D3A;
+    --color-text-primary: #F1F5F9;
+    --color-background: #0F1419;
+    --color-surface: #1E2028;
+    --color-text-secondary: #94A3B8;
+    --color-border: #334155;
+    --color-header-bg: #1E2028;
+    --color-header-text: #F1F5F9;
+    --color-header-border: #334155;
     
     /* Extended color palette - Dark mode */
-    --color-accent-light: #2D3748;
-    --color-accent-dark: #F7FAFC;
-    --color-success: #68D391;
-    --color-warning: #F6AD55;
-    --color-error: #FC8181;
-    --color-info: #63B3ED;
-    --color-neutral-50: #171923;
-    --color-neutral-100: #1A202C;
-    --color-neutral-200: #2D3748;
-    --color-neutral-300: #4A5568;
-    --color-neutral-400: #718096;
-    --color-neutral-500: #A0AEC0;
-    --color-neutral-600: #CBD5E0;
-    --color-neutral-700: #E2E8F0;
-    --color-neutral-800: #EDF2F7;
-    --color-neutral-900: #F7FAFC;
+    --color-accent-light: #2A2D3A;
+    --color-accent-dark: #F1F5F9;
+    --color-success: #34D399;
+    --color-warning: #FBBF24;
+    --color-error: #F87171;
+    --color-info: #60A5FA;
+    --color-neutral-50: #0F1419;
+    --color-neutral-100: #1E2028;
+    --color-neutral-200: #2A2D3A;
+    --color-neutral-300: #334155;
+    --color-neutral-400: #475569;
+    --color-neutral-500: #64748B;
+    --color-neutral-600: #94A3B8;
+    --color-neutral-700: #CBD5E1;
+    --color-neutral-800: #E2E8F0;
+    --color-neutral-900: #F1F5F9;
     
     /* Gradient colors - Dark mode */
-    --color-gradient-start: #F0956B;
-    --color-gradient-end: #6B95F0;
-    --color-gradient-accent: #6BF095;
+    --color-gradient-start: #FF8A65;
+    --color-gradient-end: #64B5F6;
+    --color-gradient-accent: #26D0CE;
   }
 }
 
@@ -200,6 +200,33 @@
   
   .text-secondary {
     color: var(--color-text-secondary);
+  }
+
+  /* Theme-aware background utilities */
+  .theme-bg {
+    background-color: var(--color-background);
+  }
+  
+  .theme-bg-surface {
+    background-color: var(--color-surface);
+  }
+  
+  .theme-bg-elevated {
+    background-color: var(--color-surface-elevated);
+  }
+
+  /* Theme-aware text utilities */
+  .theme-text-primary {
+    color: var(--color-text-primary);
+  }
+  
+  .theme-text-secondary {
+    color: var(--color-text-secondary);
+  }
+
+  /* Theme-aware border utilities */
+  .theme-border {
+    border-color: var(--color-border);
   }
 
   /* Accessibility features */

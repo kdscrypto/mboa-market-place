@@ -105,6 +105,44 @@ export default {
 				'gradient-start': 'var(--color-gradient-start)',
 				'gradient-end': 'var(--color-gradient-end)',
 				'gradient-accent': 'var(--color-gradient-accent)',
+				
+				// Modern color palette additions
+				'modern-orange': {
+					50: '#FFF5F2',
+					100: '#FFE8E0',
+					200: '#FFD1C1',
+					300: '#FFB4A1',
+					400: '#FF8A65',
+					500: '#FF6B35',
+					600: '#E55A2B',
+					700: '#CC4A21',
+					800: '#B23B17',
+					900: '#992C0D',
+				},
+				'modern-green': {
+					50: '#F0FDFA',
+					100: '#CCFBF1',
+					200: '#99F6E4',
+					300: '#5EEAD4',
+					400: '#2DD4BF',
+					500: '#00C896',
+					600: '#0DB092',
+					700: '#059669',
+					800: '#047857',
+					900: '#064E3B',
+				},
+				'modern-blue': {
+					50: '#EFF6FF',
+					100: '#DBEAFE',
+					200: '#BFDBFE',
+					300: '#93C5FD',
+					400: '#60A5FA',
+					500: '#4A90E2',
+					600: '#2563EB',
+					700: '#1D4ED8',
+					800: '#1E40AF',
+					900: '#1E3A8A',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -153,6 +191,24 @@ export default {
 					'50%': {
 						'background-position': '100% 50%'
 					}
+				},
+				'modern-pulse': {
+					'0%, 100%': {
+						opacity: '1',
+					},
+					'50%': {
+						opacity: '0.8',
+					}
+				},
+				'smooth-bounce': {
+					'0%, 100%': {
+						transform: 'translateY(0)',
+						animationTimingFunction: 'cubic-bezier(0,0,0.2,1)',
+					},
+					'50%': {
+						transform: 'translateY(-25%)',
+						animationTimingFunction: 'cubic-bezier(0.8,0,1,1)',
+					}
 				}
 			},
 			animation: {
@@ -160,11 +216,20 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.3s ease-out',
 				'fade-out': 'fade-out 0.3s ease-out',
-				'gradient-shift': 'gradient-shift 3s ease-in-out infinite'
+				'gradient-shift': 'gradient-shift 3s ease-in-out infinite',
+				'modern-pulse': 'modern-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'smooth-bounce': 'smooth-bounce 1s ease-in-out infinite'
 			},
 			backgroundImage: {
 				'gradient-mboa': 'linear-gradient(135deg, var(--color-gradient-start) 0%, var(--color-gradient-end) 100%)',
 				'gradient-mboa-accent': 'linear-gradient(135deg, var(--color-gradient-start) 0%, var(--color-gradient-accent) 50%, var(--color-gradient-end) 100%)',
+				'gradient-modern': 'linear-gradient(135deg, #FF6B35 0%, #4A90E2 100%)',
+				'gradient-modern-dark': 'linear-gradient(135deg, #FF8A65 0%, #64B5F6 100%)',
+			},
+			boxShadow: {
+				'modern': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+				'modern-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+				'modern-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
 			}
 		}
 	},
