@@ -2,20 +2,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { AdFormData } from "./AdFormTypes";
-import { v4 as uuidv4 } from "uuid";
-import { sanitizeAdData, sanitizeFileName, isValidImageExtension, isValidFileSize } from "@/utils/inputSanitization";
+import { SubmissionState } from "./submission/types";
+import { validateUserSession } from "./submission/authService";
+import { validateFormData, validateImages } from "./submission/validationService";
+import { calculatePremiumExpiration, getPremiumExpirationDate } from "./submission/premiumExpirationUtils";
+import { createAdWithPayment } from "./submission/adCreationService";
+import { uploadAdImages } from "./submission/imageUploadService";
 
 export const useAdSubmission = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submissionState, setSubmissionState] = useState<SubmissionState>({
+    isLoading: false,
+    isSubmitted: false
+  });
   
   const handleSubmit = async (formData: AdFormData, setShowPreview: (show: boolean) => void) => {
-    // Vérifier si une soumission est déjà en cours ou terminée
-    if (isLoading) {
+    // Check if submission is already in progress or completed
+    if (submissionState.isLoading) {
       toast({
         title: "Soumission en cours",
         description: "Votre annonce est en cours de traitement, veuillez patienter.",
@@ -24,7 +29,7 @@ export const useAdSubmission = () => {
       return;
     }
 
-    if (isSubmitted) {
+    if (submissionState.isSubmitted) {
       toast({
         title: "Annonce déjà soumise",
         description: "Cette annonce a déjà été soumise pour approbation. Vous pouvez consulter son statut dans votre tableau de bord.",
@@ -33,16 +38,11 @@ export const useAdSubmission = () => {
       return;
     }
     
-    setIsLoading(true);
+    setSubmissionState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // Vérifier l'authentification
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        throw new Error("Authentication error");
-      }
+      // Validate user session
+      const session = await validateUserSession();
       
       if (!session) {
         toast({
@@ -54,90 +54,32 @@ export const useAdSubmission = () => {
         return;
       }
       
-      // Sanitize form data
-      const sanitizedData = sanitizeAdData(formData);
-      
-      // Validate required fields
-      if (!sanitizedData.title.trim()) {
-        throw new Error("Le titre est requis");
-      }
-      
-      if (!sanitizedData.description.trim()) {
-        throw new Error("La description est requise");
-      }
-      
-      if (!sanitizedData.phone.trim()) {
-        throw new Error("Le numéro de téléphone est requis");
-      }
-      
-      // Validate images if present
-      if (formData.images && formData.images.length > 0) {
-        for (const file of formData.images) {
-          if (!isValidImageExtension(file.name)) {
-            throw new Error(`Format d'image non valide: ${file.name}. Utilisez JPG, PNG, GIF ou WebP.`);
-          }
-          
-          if (!isValidFileSize(file.size, 10)) {
-            throw new Error(`Image trop volumineuse: ${file.name}. Taille maximale: 10 MB.`);
-          }
-        }
-      }
+      // Validate form data and images
+      const validatedData = validateFormData(formData);
+      validateImages(formData.images);
 
-      console.log('Creating ad with payment integration...');
-      
-      // Calculate premium expiration date based on ad type
-      let premiumExpiresAt = null;
-      if (sanitizedData.adType !== 'standard') {
-        const now = new Date();
-        switch (sanitizedData.adType) {
-          case 'premium_24h':
-            premiumExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-            break;
-          case 'premium_7d':
-            premiumExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            break;
-          case 'premium_15d':
-            premiumExpiresAt = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
-            break;
-          case 'premium_30d':
-            premiumExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-            break;
-        }
-      }
-      
-      // Call the payment processing function
-      const { data: adResult, error: adError } = await supabase.functions.invoke('monetbil-payment', {
-        body: {
-          adData: {
-            ...sanitizedData,
-            premiumExpiresAt: premiumExpiresAt?.toISOString()
-          },
-          adType: sanitizedData.adType
-        }
-      });
+      // Calculate premium expiration
+      const premiumExpiresAt = calculatePremiumExpiration(validatedData.adType);
+      const adDataWithExpiration = {
+        ...validatedData,
+        premiumExpiresAt
+      };
 
-      if (adError) {
-        console.error('Ad creation function error:', adError);
-        throw new Error('Erreur lors de la création de l\'annonce');
-      }
-
-      if (!adResult.success) {
-        throw new Error(adResult.error || 'Erreur lors de la création de l\'annonce');
-      }
-
-      console.log('Ad created successfully:', adResult.adId);
+      // Create the ad
+      const result = await createAdWithPayment(adDataWithExpiration);
       
       // Upload images if any
       if (formData.images && formData.images.length > 0) {
-        await uploadImages(formData.images, adResult.adId);
+        await uploadAdImages(formData.images, result.adId!);
       }
       
-      setIsSubmitted(true);
+      setSubmissionState(prev => ({ ...prev, isSubmitted: true }));
       setShowPreview(false);
       
-      const successMessage = sanitizedData.adType === 'standard' 
+      const premiumExpirationDate = getPremiumExpirationDate(validatedData.adType);
+      const successMessage = validatedData.adType === 'standard' 
         ? "Votre annonce a été soumise pour modération et sera bientôt disponible."
-        : `Votre annonce premium a été créée et sera mise en avant jusqu'au ${premiumExpiresAt?.toLocaleDateString('fr-FR')}.`;
+        : `Votre annonce premium a été créée et sera mise en avant jusqu'au ${premiumExpirationDate?.toLocaleDateString('fr-FR')}.`;
       
       toast({
         title: "Annonce créée avec succès",
@@ -156,59 +98,21 @@ export const useAdSubmission = () => {
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setSubmissionState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
-  const uploadImages = async (images: File[], adId: string) => {
-    console.log(`Uploading ${images.length} images for ad ${adId}`);
-    
-    const uploadPromises = images.map(async (file, index) => {
-      const sanitizedFileName = sanitizeFileName(file.name);
-      const fileExt = sanitizedFileName.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `ads/${adId}/${fileName}`;
-      
-      try {
-        // Upload to Supabase storage (if storage is configured)
-        // For now, we'll create a placeholder URL
-        const imageUrl = `/placeholder-${index + 1}.jpg`;
-        
-        // Insert image record
-        const { error: imageError } = await supabase
-          .from('ad_images')
-          .insert({
-            ad_id: adId,
-            image_url: imageUrl,
-            position: index
-          });
-        
-        if (imageError) {
-          console.error('Error saving image record:', imageError);
-          throw imageError;
-        }
-        
-        console.log(`Image ${index + 1} uploaded successfully`);
-        
-      } catch (error) {
-        console.error(`Error uploading image ${index + 1}:`, error);
-        throw error;
-      }
-    });
-    
-    await Promise.all(uploadPromises);
-    console.log('All images uploaded successfully');
-  };
-
   const resetSubmissionState = () => {
-    setIsSubmitted(false);
-    setIsLoading(false);
+    setSubmissionState({
+      isLoading: false,
+      isSubmitted: false
+    });
   };
 
   return { 
     handleSubmit, 
-    isLoading, 
-    isSubmitted, 
+    isLoading: submissionState.isLoading, 
+    isSubmitted: submissionState.isSubmitted, 
     resetSubmissionState 
   };
 };
