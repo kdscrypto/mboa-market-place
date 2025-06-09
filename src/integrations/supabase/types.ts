@@ -51,6 +51,7 @@ export type Database = {
           id: string
           payment_transaction_id: string | null
           phone: string
+          premium_expires_at: string | null
           price: number
           region: string
           reject_reason: string | null
@@ -69,6 +70,7 @@ export type Database = {
           id?: string
           payment_transaction_id?: string | null
           phone: string
+          premium_expires_at?: string | null
           price: number
           region: string
           reject_reason?: string | null
@@ -87,6 +89,7 @@ export type Database = {
           id?: string
           payment_transaction_id?: string | null
           phone?: string
+          premium_expires_at?: string | null
           price?: number
           region?: string
           reject_reason?: string | null
