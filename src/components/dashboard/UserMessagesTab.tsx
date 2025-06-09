@@ -117,7 +117,7 @@ const UserMessagesTab = () => {
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <Button
-                  onClick={() => navigate(`/messages/${conversation.id}`)}
+                  onClick={() => navigate(`/messages?conversation=${conversation.id}`)}
                   size="sm"
                   className="bg-mboa-orange hover:bg-mboa-orange/90"
                 >
