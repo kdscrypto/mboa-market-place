@@ -14,12 +14,24 @@ export interface PasswordComplexityResult {
   hasSpecialChars: boolean;
   hasMinLength: boolean;
   isNotCommon: boolean;
+  entropy: number;
 }
 
 const commonPasswords = [
   'password', '123456', '123456789', 'qwerty', 'abc123', 'password123',
   'admin', 'letmein', 'welcome', 'monkey', '1234567890', 'password1'
 ];
+
+const calculateEntropy = (password: string): number => {
+  let characterSpace = 0;
+  
+  if (/[a-z]/.test(password)) characterSpace += 26;
+  if (/[A-Z]/.test(password)) characterSpace += 26;
+  if (/[0-9]/.test(password)) characterSpace += 10;
+  if (/[^a-zA-Z0-9]/.test(password)) characterSpace += 32;
+  
+  return Math.log2(Math.pow(characterSpace, password.length));
+};
 
 export const validatePasswordComplexity = (password: string): PasswordComplexityResult => {
   return {
@@ -28,7 +40,8 @@ export const validatePasswordComplexity = (password: string): PasswordComplexity
     hasNumbers: /\d/.test(password),
     hasSpecialChars: /[!@#$%^&*(),.?":{}|<>]/.test(password),
     hasMinLength: password.length >= 8,
-    isNotCommon: !commonPasswords.includes(password.toLowerCase())
+    isNotCommon: !commonPasswords.includes(password.toLowerCase()),
+    entropy: calculateEntropy(password)
   };
 };
 

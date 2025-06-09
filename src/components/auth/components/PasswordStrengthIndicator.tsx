@@ -2,7 +2,7 @@
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle, XCircle, Shield, Key } from "lucide-react";
-import { validatePasswordComplexity } from "@/services/securityService";
+import { validatePasswordComplexity } from "@/services/security/passwordValidationService";
 
 interface PasswordStrengthIndicatorProps {
   password: string;
@@ -34,8 +34,8 @@ const PasswordStrengthIndicator = ({
 
   const requirements = [
     { label: "Au moins 8 caractères", met: complexity.hasMinLength },
-    { label: "Une majuscule", met: complexity.hasUppercase },
-    { label: "Une minuscule", met: complexity.hasLowercase },
+    { label: "Une majuscule", met: complexity.hasUpperCase },
+    { label: "Une minuscule", met: complexity.hasLowerCase },
     { label: "Un chiffre", met: complexity.hasNumbers },
     { label: "Un caractère spécial", met: complexity.hasSpecialChars }
   ];
