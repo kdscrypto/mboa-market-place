@@ -36,6 +36,7 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
   const { checkSecurity, isBlocked, blockEndTime } = useSecurityCheck();
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [formStartTime] = useState(Date.now());
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -73,7 +74,7 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
     {
       id: "security",
       label: "Sécurité", 
-      completed: !!(passwordValue && confirmPasswordValue && passwordValidation.score >= 3),
+      completed: !!(passwordValue && confirmPasswordValue && passwordValidation.score >= 70),
       hasError: !!form.formState.errors.password || !!form.formState.errors.confirmPassword
     },
     {
@@ -87,12 +88,12 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
   const getCurrentStep = () => {
     if (!usernameValue || !emailValue) return "personal";
     if (!form.watch("phone")) return "contact";
-    if (!passwordValue || !confirmPasswordValue || passwordValidation.score < 3) return "security";
+    if (!passwordValue || !confirmPasswordValue || passwordValidation.score < 70) return "security";
     if (!acceptTerms) return "terms";
     return "complete";
   };
 
-  const isFormValid = form.formState.isValid && passwordValidation.score >= 3;
+  const isFormValid = form.formState.isValid && passwordValidation.score >= 70;
   const completionPercentage = Math.round(
     (formSteps.filter(step => step.completed).length / formSteps.length) * 100
   );
@@ -103,8 +104,9 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
       phone: values.phone,
       user_agent: navigator.userAgent,
       password_strength: passwordValidation.score,
-      form_completion_time: Date.now(),
-      client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      form_completion_time: Date.now() - formStartTime,
+      client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      form_submission_time: Date.now()
     });
 
     if (!securityCheck.allowed) {
@@ -118,7 +120,8 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
         failed: true,
         error: error instanceof Error ? error.message : 'Unknown error',
         username: values.username,
-        password_strength: passwordValidation.score
+        password_strength: passwordValidation.score,
+        form_completion_time: Date.now() - formStartTime
       });
       throw error;
     }
@@ -162,7 +165,7 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
           <SecurityAlerts 
             isBlocked={isBlocked} 
             blockEndTime={blockEndTime}
-            showRecommendations={passwordValidation.score < 4}
+            showRecommendations={passwordValidation.score < 70}
             recommendations={recommendations}
           />
 

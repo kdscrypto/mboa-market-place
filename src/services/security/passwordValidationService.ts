@@ -1,95 +1,109 @@
 
 export interface PasswordValidationResult {
-  isValid: boolean;
-  errors: string[];
   score: number;
+  errors: string[];
+  suggestions: string[];
+  isValid: boolean;
+  strength: 'very-weak' | 'weak' | 'fair' | 'good' | 'strong';
 }
 
 export interface PasswordComplexityResult {
-  hasUppercase: boolean;
-  hasLowercase: boolean;
+  hasLowerCase: boolean;
+  hasUpperCase: boolean;
   hasNumbers: boolean;
   hasSpecialChars: boolean;
   hasMinLength: boolean;
-  entropy: number;
+  isNotCommon: boolean;
 }
 
-export const validatePasswordStrength = (password: string): PasswordValidationResult => {
-  const errors: string[] = [];
-  let score = 0;
-
-  // Minimum length
-  if (password.length < 8) {
-    errors.push('Le mot de passe doit contenir au moins 8 caractères');
-  } else {
-    score += 1;
-  }
-
-  // At least one uppercase
-  if (!/[A-Z]/.test(password)) {
-    errors.push('Le mot de passe doit contenir au moins une majuscule');
-  } else {
-    score += 1;
-  }
-
-  // At least one lowercase
-  if (!/[a-z]/.test(password)) {
-    errors.push('Le mot de passe doit contenir au moins une minuscule');
-  } else {
-    score += 1;
-  }
-
-  // At least one digit
-  if (!/\d/.test(password)) {
-    errors.push('Le mot de passe doit contenir au moins un chiffre');
-  } else {
-    score += 1;
-  }
-
-  // At least one special character
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    errors.push('Le mot de passe doit contenir au moins un caractère spécial');
-  } else {
-    score += 1;
-  }
-
-  // Length bonus
-  if (password.length >= 12) {
-    score += 1;
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-    score: Math.min(score, 5)
-  };
-};
+const commonPasswords = [
+  'password', '123456', '123456789', 'qwerty', 'abc123', 'password123',
+  'admin', 'letmein', 'welcome', 'monkey', '1234567890', 'password1'
+];
 
 export const validatePasswordComplexity = (password: string): PasswordComplexityResult => {
   return {
-    hasUppercase: /[A-Z]/.test(password),
-    hasLowercase: /[a-z]/.test(password),
+    hasLowerCase: /[a-z]/.test(password),
+    hasUpperCase: /[A-Z]/.test(password),
     hasNumbers: /\d/.test(password),
     hasSpecialChars: /[!@#$%^&*(),.?":{}|<>]/.test(password),
     hasMinLength: password.length >= 8,
-    entropy: calculatePasswordEntropy(password)
+    isNotCommon: !commonPasswords.includes(password.toLowerCase())
   };
 };
 
-const calculatePasswordEntropy = (password: string): number => {
-  const charsets = [
-    { regex: /[a-z]/, size: 26 },
-    { regex: /[A-Z]/, size: 26 },
-    { regex: /[0-9]/, size: 10 },
-    { regex: /[^a-zA-Z0-9]/, size: 32 }
-  ];
+export const validatePasswordStrength = (password: string): PasswordValidationResult => {
+  const complexity = validatePasswordComplexity(password);
+  const errors: string[] = [];
+  const suggestions: string[] = [];
+  let score = 0;
 
-  let charsetSize = 0;
-  charsets.forEach(charset => {
-    if (charset.regex.test(password)) {
-      charsetSize += charset.size;
-    }
-  });
+  // Check length
+  if (!complexity.hasMinLength) {
+    errors.push('Le mot de passe doit contenir au moins 8 caractères');
+    suggestions.push('Ajoutez plus de caractères à votre mot de passe');
+  } else {
+    score += 20;
+  }
 
-  return password.length * Math.log2(charsetSize);
+  // Check lowercase
+  if (!complexity.hasLowerCase) {
+    errors.push('Le mot de passe doit contenir au moins une lettre minuscule');
+    suggestions.push('Ajoutez des lettres minuscules (a-z)');
+  } else {
+    score += 15;
+  }
+
+  // Check uppercase
+  if (!complexity.hasUpperCase) {
+    errors.push('Le mot de passe doit contenir au moins une lettre majuscule');
+    suggestions.push('Ajoutez des lettres majuscules (A-Z)');
+  } else {
+    score += 15;
+  }
+
+  // Check numbers
+  if (!complexity.hasNumbers) {
+    errors.push('Le mot de passe doit contenir au moins un chiffre');
+    suggestions.push('Ajoutez des chiffres (0-9)');
+  } else {
+    score += 15;
+  }
+
+  // Check special characters
+  if (!complexity.hasSpecialChars) {
+    errors.push('Le mot de passe doit contenir au moins un caractère spécial');
+    suggestions.push('Ajoutez des caractères spéciaux (!@#$%^&*)');
+  } else {
+    score += 20;
+  }
+
+  // Check if not common
+  if (!complexity.isNotCommon) {
+    errors.push('Ce mot de passe est trop commun');
+    suggestions.push('Choisissez un mot de passe plus unique');
+    score = Math.max(0, score - 25);
+  } else {
+    score += 15;
+  }
+
+  // Additional length bonus
+  if (password.length >= 12) {
+    score += 10;
+  }
+
+  // Determine strength
+  let strength: PasswordValidationResult['strength'] = 'very-weak';
+  if (score >= 90) strength = 'strong';
+  else if (score >= 70) strength = 'good';
+  else if (score >= 50) strength = 'fair';
+  else if (score >= 30) strength = 'weak';
+
+  return {
+    score: Math.min(100, score),
+    errors,
+    suggestions,
+    isValid: errors.length === 0,
+    strength
+  };
 };

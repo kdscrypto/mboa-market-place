@@ -42,7 +42,7 @@ export const useSecurityCheck = () => {
       }
 
       // Check IP rate limiting
-      const ipRateLimit = await checkAuthRateLimit(clientIP, 'ip', actionType);
+      const ipRateLimit = await checkAuthRateLimit(await clientIP, 'ip', actionType);
       
       if (!ipRateLimit.allowed) {
         const blockedUntil = ipRateLimit.blocked_until ? new Date(ipRateLimit.blocked_until) : null;
@@ -94,11 +94,11 @@ export const useSecurityCheck = () => {
       // Analyze suspicious activity
       if (additionalData) {
         const suspiciousActivity = await detectSuspiciousActivity(
-          userIdentifier || clientIP,
+          userIdentifier || await clientIP,
           userIdentifier ? 'user' : 'ip',
           {
             action_type: actionType,
-            client_ip: clientIP,
+            client_ip: await clientIP,
             timestamp: new Date().toISOString(),
             ...additionalData
           }
@@ -110,7 +110,7 @@ export const useSecurityCheck = () => {
             risk_score: suspiciousActivity.risk_score,
             event_type: suspiciousActivity.event_type,
             user_identifier: userIdentifier,
-            client_ip: clientIP
+            client_ip: await clientIP
           });
         }
       }
@@ -123,7 +123,7 @@ export const useSecurityCheck = () => {
       await logSecurityEvent('security_check_error', 'medium', {
         action_type: actionType,
         error: error instanceof Error ? error.message : 'Unknown error',
-        client_ip: clientIP
+        client_ip: await clientIP
       });
       
       // In case of error, allow the action but log the error

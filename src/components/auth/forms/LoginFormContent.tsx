@@ -30,6 +30,7 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
   const [attemptCount, setAttemptCount] = useState(0);
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [formStartTime] = useState(Date.now());
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -47,7 +48,8 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
       attempt_count: attemptCount + 1,
       user_agent: navigator.userAgent,
       client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      form_submission_time: Date.now()
+      form_submission_time: Date.now(),
+      form_completion_time: Date.now() - formStartTime
     });
 
     if (!securityCheck.allowed) {
@@ -65,7 +67,8 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
         failed: true,
         error: error instanceof Error ? error.message : 'Unknown error',
         user_agent: navigator.userAgent,
-        client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        form_completion_time: Date.now() - formStartTime
       });
       
       throw error;
