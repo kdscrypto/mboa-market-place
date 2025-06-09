@@ -10,6 +10,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { forgotPasswordSchema, ForgotPasswordFormValues } from "../validation/authSchemas";
 import EmailField from "../components/EmailField";
+import SecurityAlerts from "../components/SecurityAlerts";
+import { useSecurityCheck } from "@/hooks/useSecurityCheck";
 
 interface ForgotPasswordFormContentProps {
   onSubmit: (values: ForgotPasswordFormValues) => Promise<void>;
@@ -20,6 +22,8 @@ const ForgotPasswordFormContent: React.FC<ForgotPasswordFormContentProps> = ({
   onSubmit, 
   isLoading 
 }) => {
+  const { checkSecurity, isBlocked, blockEndTime } = useSecurityCheck();
+  
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
@@ -27,21 +31,32 @@ const ForgotPasswordFormContent: React.FC<ForgotPasswordFormContentProps> = ({
     }
   });
 
+  const handleSecureSubmit = async (values: ForgotPasswordFormValues) => {
+    // Vérifier la sécurité avant de demander la réinitialisation
+    const securityCheck = await checkSecurity('password_reset', values.email, {
+      user_agent: navigator.userAgent
+    });
+
+    if (!securityCheck.allowed) {
+      return; // L'erreur est déjà affichée par useSecurityCheck
+    }
+
+    await onSubmit(values);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(handleSecureSubmit)}>
         <CardContent className="space-y-4">
+          <SecurityAlerts isBlocked={isBlocked} blockEndTime={blockEndTime} />
           <EmailField form={form} />
-          <div className="text-sm text-gray-600">
-            Nous enverrons un lien de réinitialisation uniquement si cette adresse email est associée à un compte existant.
-          </div>
         </CardContent>
         
         <CardFooter>
           <Button 
             type="submit" 
             className="w-full bg-mboa-orange hover:bg-mboa-orange/90"
-            disabled={isLoading}
+            disabled={isLoading || isBlocked}
           >
             {isLoading ? "Envoi en cours..." : "Envoyer le lien de réinitialisation"}
           </Button>

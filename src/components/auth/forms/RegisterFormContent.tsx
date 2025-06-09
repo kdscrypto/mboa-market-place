@@ -10,10 +10,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, RegisterFormValues } from "../validation/authSchemas";
 import EmailField from "../components/EmailField";
+import PasswordField from "../components/PasswordField";
+import ConfirmPasswordField from "../components/ConfirmPasswordField";
 import UsernameField from "../components/UsernameField";
 import PhoneField from "../components/PhoneField";
-import PasswordField from "../components/PasswordField";
 import TermsCheckbox from "../components/TermsCheckbox";
+import SecurityAlerts from "../components/SecurityAlerts";
+import { useSecurityCheck } from "@/hooks/useSecurityCheck";
 
 interface RegisterFormContentProps {
   onSubmit: (values: RegisterFormValues) => Promise<void>;
@@ -21,41 +24,59 @@ interface RegisterFormContentProps {
   isLoading: boolean;
 }
 
-const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
-  onSubmit,
+const RegisterFormContent: React.FC<RegisterFormContentProps> = ({ 
+  onSubmit, 
   onShowTerms,
-  isLoading
+  isLoading 
 }) => {
+  const { checkSecurity, isBlocked, blockEndTime } = useSecurityCheck();
+  
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",
-      username: "",
       password: "",
+      confirmPassword: "",
+      username: "",
       phone: "",
-      // No default value for acceptTerms so user must explicitly check it
+      acceptTerms: false
     }
   });
 
+  const handleSecureSubmit = async (values: RegisterFormValues) => {
+    // Vérifier la sécurité avant de créer le compte
+    const securityCheck = await checkSecurity('account_creation', values.email, {
+      username: values.username,
+      phone: values.phone,
+      user_agent: navigator.userAgent
+    });
+
+    if (!securityCheck.allowed) {
+      return; // L'erreur est déjà affichée par useSecurityCheck
+    }
+
+    await onSubmit(values);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(handleSecureSubmit)}>
         <CardContent className="space-y-4">
-          <EmailField form={form} />
+          <SecurityAlerts isBlocked={isBlocked} blockEndTime={blockEndTime} />
+          
           <UsernameField form={form} />
+          <EmailField form={form} />
           <PhoneField form={form} />
-          <PasswordField form={form} />
-          <TermsCheckbox 
-            form={form} 
-            onShowTerms={onShowTerms} 
-          />
+          <PasswordField form={form} showStrengthIndicator={true} />
+          <ConfirmPasswordField form={form} />
+          <TermsCheckbox form={form} onShowTerms={onShowTerms} />
         </CardContent>
         
         <CardFooter>
           <Button 
             type="submit" 
             className="w-full bg-mboa-orange hover:bg-mboa-orange/90"
-            disabled={isLoading}
+            disabled={isLoading || isBlocked}
           >
             {isLoading ? "Création en cours..." : "Créer un compte"}
           </Button>

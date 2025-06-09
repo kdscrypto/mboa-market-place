@@ -152,6 +152,81 @@ export type Database = {
           },
         ]
       }
+      auth_rate_limits: {
+        Row: {
+          action_type: string
+          blocked_until: string | null
+          created_at: string | null
+          id: string
+          identifier: string
+          identifier_type: string
+          request_count: number
+          updated_at: string | null
+          window_start: string
+        }
+        Insert: {
+          action_type: string
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          identifier: string
+          identifier_type: string
+          request_count?: number
+          updated_at?: string | null
+          window_start?: string
+        }
+        Update: {
+          action_type?: string
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          request_count?: number
+          updated_at?: string | null
+          window_start?: string
+        }
+        Relationships: []
+      }
+      auth_security_events: {
+        Row: {
+          auto_blocked: boolean | null
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          identifier: string
+          identifier_type: string
+          reviewed: boolean | null
+          risk_score: number | null
+          severity: string
+        }
+        Insert: {
+          auto_blocked?: boolean | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          identifier: string
+          identifier_type: string
+          reviewed?: boolean | null
+          risk_score?: number | null
+          severity: string
+        }
+        Update: {
+          auto_blocked?: boolean | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          reviewed?: boolean | null
+          risk_score?: number | null
+          severity?: string
+        }
+        Relationships: []
+      }
       conversation_labels: {
         Row: {
           conversation_id: string | null
@@ -690,6 +765,16 @@ export type Database = {
         Args: { plan_id: string; created_at: string }
         Returns: string
       }
+      check_auth_rate_limit: {
+        Args: {
+          p_identifier: string
+          p_identifier_type: string
+          p_action_type: string
+          p_max_requests?: number
+          p_window_minutes?: number
+        }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           p_identifier: string
@@ -718,6 +803,14 @@ export type Database = {
         Returns: string
       }
       detect_suspicious_activity: {
+        Args: {
+          p_identifier: string
+          p_identifier_type: string
+          p_event_data: Json
+        }
+        Returns: Json
+      }
+      detect_suspicious_auth_activity: {
         Args: {
           p_identifier: string
           p_identifier_type: string
