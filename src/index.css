@@ -1,5 +1,4 @@
 
-
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
@@ -71,17 +70,36 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: "Inter", sans-serif;
   }
 }
 
 @layer utilities {
   .mboa-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .mboa-container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .mboa-container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
   }
   
   .mboa-gradient {
@@ -101,15 +119,15 @@
   }
   
   .accessibility-high-contrast * {
-    @apply !border-gray-900;
+    border-color: #1f2937 !important;
   }
   
   .accessibility-high-contrast .bg-white {
-    @apply !bg-gray-100;
+    background-color: #f3f4f6 !important;
   }
   
   .accessibility-high-contrast .text-gray-600 {
-    @apply !text-gray-900;
+    color: #1f2937 !important;
   }
   
   .accessibility-large-text {
@@ -134,17 +152,31 @@
 
   /* Enhanced focus styles for better accessibility */
   .focus-enhanced:focus {
-    @apply ring-4 ring-mboa-orange/50 ring-offset-2 outline-none;
+    outline: none;
+    box-shadow: 0 0 0 4px hsl(var(--mboa-orange) / 0.5), 0 0 0 2px hsl(var(--background));
   }
   
   /* High contrast focus indicators */
   .accessibility-high-contrast *:focus {
-    @apply ring-4 ring-yellow-400 ring-offset-2 outline-none;
+    outline: none;
+    box-shadow: 0 0 0 4px #fbbf24, 0 0 0 2px hsl(var(--background));
   }
   
   /* Skip links for screen readers */
   .skip-link {
-    @apply absolute left-0 top-0 bg-mboa-orange text-white px-4 py-2 z-50 transform -translate-y-full focus:translate-y-0 transition-transform;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: hsl(var(--mboa-orange));
+    color: white;
+    padding: 1rem;
+    z-index: 50;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .skip-link:focus {
+    transform: translateY(0);
   }
 
   /* Reduced motion preferences */
@@ -156,4 +188,3 @@
     }
   }
 }
-
