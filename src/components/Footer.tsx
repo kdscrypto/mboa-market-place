@@ -22,17 +22,17 @@ const Footer = () => {
             <h3 className="text-base font-semibold mb-2 theme-text-primary">Liens Utiles</h3>
             <ul className="space-y-1">
               <li>
-                <Link to="/a-propos" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
+                <Link to="/about" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   À propos
                 </Link>
               </li>
               <li>
-                <Link to="/aide" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
+                <Link to="/help" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   Aide
                 </Link>
               </li>
               <li>
-                <Link to="/conditions" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
+                <Link to="/terms" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   Conditions Générales
                 </Link>
               </li>
@@ -54,7 +54,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/premium" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
+                <Link to="/premium-ads" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   Offres premium
                 </Link>
               </li>
