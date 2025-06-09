@@ -18,7 +18,9 @@ export interface LygosPaymentResponse {
   success: boolean;
   paymentId?: string;
   paymentUrl?: string;
+  transactionId?: string;
   status?: string;
+  paymentData?: any;
   error?: string;
 }
 
@@ -78,17 +80,10 @@ export const verifyLygosPayment = async (paymentId: string): Promise<LygosPaymen
 
 export const getLygosConfiguration = async () => {
   try {
-    const { data, error } = await supabase
-      .from('lygos_configurations')
-      .select('*')
-      .eq('is_active', true)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      throw error;
-    }
-
-    return data;
+    // Note: Cette table n'existe pas encore dans le schema
+    // Pour l'instant, nous retournons null
+    console.log('Lygos configuration not available - using default settings');
+    return null;
   } catch (error) {
     console.error('Error fetching Lygos configuration:', error);
     return null;

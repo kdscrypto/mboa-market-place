@@ -24,7 +24,7 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
           user_id: session.user.id,
           title: adData.title,
           description: adData.description,
-          price: adData.price,
+          price: parseInt(adData.price) || 0,
           category: adData.category,
           region: adData.region,
           city: adData.city,
@@ -69,7 +69,7 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
         user_id: session.user.id,
         title: adData.title,
         description: adData.description,
-        price: adData.price,
+        price: parseInt(adData.price) || 0,
         category: adData.category,
         region: adData.region,
         city: adData.city,
@@ -99,7 +99,7 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
       customerPhone: adData.phone,
       returnUrl: `${baseUrl}/payment-return?ad_id=${ad.id}`,
       cancelUrl: `${baseUrl}/publier-annonce`,
-      webhookUrl: `${supabase.supabaseUrl}/functions/v1/lygos-webhook`,
+      webhookUrl: `https://hvzqgeeidzkhctoygbts.supabase.co/functions/v1/lygos-webhook`,
       externalReference
     };
 
@@ -112,10 +112,12 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
     }
 
     // Update ad with payment transaction reference
-    await supabase
-      .from('ads')
-      .update({ payment_transaction_id: lygosResult.transactionId })
-      .eq('id', ad.id);
+    if (lygosResult.transactionId) {
+      await supabase
+        .from('ads')
+        .update({ payment_transaction_id: lygosResult.transactionId })
+        .eq('id', ad.id);
+    }
 
     return {
       success: true,

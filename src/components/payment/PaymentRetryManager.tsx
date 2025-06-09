@@ -59,7 +59,7 @@ const PaymentRetryManager: React.FC<PaymentRetryManagerProps> = ({
         customerPhone: originalAdData?.customerPhone,
         returnUrl: `${baseUrl}/payment-return?retry=true&original=${transactionId}`,
         cancelUrl: `${baseUrl}/payment-tracking/${transactionId}`,
-        webhookUrl: `${window.location.origin}/api/lygos-webhook`,
+        webhookUrl: `https://hvzqgeeidzkhctoygbts.supabase.co/functions/v1/lygos-webhook`,
         externalReference
       };
 
@@ -90,8 +90,8 @@ const PaymentRetryManager: React.FC<PaymentRetryManagerProps> = ({
       // Redirect to Lygos payment
       window.location.href = lygosResult.paymentUrl;
       
-      if (onRetrySuccess) {
-        onRetrySuccess(lygosResult.transactionId || '');
+      if (onRetrySuccess && lygosResult.transactionId) {
+        onRetrySuccess(lygosResult.transactionId);
       }
       
     } catch (error) {

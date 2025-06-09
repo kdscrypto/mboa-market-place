@@ -54,8 +54,8 @@ const PaymentReturn = () => {
           try {
             const verification = await verifyLygosPayment(paymentId);
             
-            if (verification.success) {
-              const paymentStatus = verification.paymentData?.status?.toLowerCase();
+            if (verification.success && verification.paymentData) {
+              const paymentStatus = verification.paymentData.status?.toLowerCase();
               
               if (paymentStatus === 'completed' || paymentStatus === 'success' || paymentStatus === 'paid') {
                 setStatus('success');

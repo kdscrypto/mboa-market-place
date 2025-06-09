@@ -30,39 +30,43 @@ export const usePaymentTracking = (transactionId?: string) => {
       setTransaction(data);
 
       // If transaction is pending and has a Lygos payment ID, verify status
-      if (data.status === 'pending' && data.payment_data?.lygosPaymentId) {
-        try {
-          const verification = await verifyLygosPayment(data.payment_data.lygosPaymentId);
-          
-          if (verification.success && verification.paymentData) {
-            const lygosStatus = verification.paymentData.status?.toLowerCase();
-            let newStatus = data.status;
+      if (data.status === 'pending' && data.payment_data && typeof data.payment_data === 'object') {
+        const paymentData = data.payment_data as any;
+        
+        if (paymentData.lygosPaymentId) {
+          try {
+            const verification = await verifyLygosPayment(paymentData.lygosPaymentId);
             
-            if (lygosStatus === 'completed' || lygosStatus === 'success' || lygosStatus === 'paid') {
-              newStatus = 'completed';
-            } else if (lygosStatus === 'failed' || lygosStatus === 'cancelled') {
-              newStatus = 'failed';
-            } else if (lygosStatus === 'expired') {
-              newStatus = 'expired';
-            }
-            
-            if (newStatus !== data.status) {
-              // Update local state immediately
-              setTransaction(prev => ({ ...prev, status: newStatus }));
+            if (verification.success && verification.paymentData) {
+              const lygosStatus = verification.paymentData.status?.toLowerCase();
+              let newStatus = data.status;
               
-              // Update in database via webhook simulation or direct update
-              await supabase
-                .from('payment_transactions')
-                .update({ 
-                  status: newStatus,
-                  completed_at: newStatus === 'completed' ? new Date().toISOString() : null
-                })
-                .eq('id', transactionId);
+              if (lygosStatus === 'completed' || lygosStatus === 'success' || lygosStatus === 'paid') {
+                newStatus = 'completed';
+              } else if (lygosStatus === 'failed' || lygosStatus === 'cancelled') {
+                newStatus = 'failed';
+              } else if (lygosStatus === 'expired') {
+                newStatus = 'expired';
+              }
+              
+              if (newStatus !== data.status) {
+                // Update local state immediately
+                setTransaction(prev => ({ ...prev, status: newStatus }));
+                
+                // Update in database via webhook simulation or direct update
+                await supabase
+                  .from('payment_transactions')
+                  .update({ 
+                    status: newStatus,
+                    completed_at: newStatus === 'completed' ? new Date().toISOString() : null
+                  })
+                  .eq('id', transactionId);
+              }
             }
+          } catch (verifyError) {
+            console.error('Error verifying Lygos payment:', verifyError);
+            // Don't throw error here, just log it
           }
-        } catch (verifyError) {
-          console.error('Error verifying Lygos payment:', verifyError);
-          // Don't throw error here, just log it
         }
       }
     } catch (err) {

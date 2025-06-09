@@ -76,16 +76,43 @@ export const useAdSubmission = () => {
       setSubmissionState(prev => ({ ...prev, isSubmitted: true }));
       setShowPreview(false);
       
-      const premiumExpirationDate = getPremiumExpirationDate(validatedData.adType);
-      const successMessage = validatedData.adType === 'standard' 
-        ? "Votre annonce a été soumise pour modération et sera bientôt disponible."
-        : `Votre annonce premium a été créée et sera mise en avant jusqu'au ${premiumExpirationDate?.toLocaleDateString('fr-FR')}.`;
-      
-      toast({
-        title: "Annonce créée avec succès",
-        description: successMessage,
-        duration: 5000,
-      });
+      // Handle different result types
+      if (result.requiresPayment && result.paymentUrl) {
+        toast({
+          title: "Redirection vers le paiement",
+          description: "Vous allez être redirigé vers Lygos pour effectuer le paiement.",
+          duration: 3000,
+        });
+        
+        // Store transaction info for tracking
+        if (result.transactionId) {
+          sessionStorage.setItem('pendingPayment', JSON.stringify({
+            transactionId: result.transactionId,
+            adId: result.adId
+          }));
+        }
+        
+        // Redirect to Lygos payment
+        setTimeout(() => {
+          window.location.href = result.paymentUrl!;
+        }, 2000);
+      } else {
+        const premiumExpirationDate = getPremiumExpirationDate(validatedData.adType);
+        const successMessage = validatedData.adType === 'standard' 
+          ? "Votre annonce a été soumise pour modération et sera bientôt disponible."
+          : `Votre annonce premium a été créée et sera mise en avant jusqu'au ${premiumExpirationDate?.toLocaleDateString('fr-FR')}.`;
+        
+        toast({
+          title: "Annonce créée avec succès",
+          description: successMessage,
+          duration: 5000,
+        });
+        
+        // Navigate to dashboard after short delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      }
       
     } catch (error) {
       console.error('Ad submission error:', error);

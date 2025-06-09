@@ -7,6 +7,9 @@ export interface SubmissionState {
 export interface SubmissionResult {
   success: boolean;
   adId?: string;
+  requiresPayment?: boolean;
+  paymentUrl?: string;
+  transactionId?: string;
   error?: string;
 }
 
