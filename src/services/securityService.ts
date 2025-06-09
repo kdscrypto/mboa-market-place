@@ -37,9 +37,17 @@ export const checkAuthRateLimit = async (
       return { allowed: true };
     }
 
-    // Assurer que les données correspondent au type attendu
-    if (data && typeof data === 'object' && 'allowed' in data) {
-      return data as RateLimitResult;
+    // Safely convert the data to RateLimitResult
+    if (data && typeof data === 'object') {
+      const result = data as any;
+      return {
+        allowed: Boolean(result.allowed),
+        current_count: result.current_count ? Number(result.current_count) : undefined,
+        max_requests: result.max_requests ? Number(result.max_requests) : undefined,
+        blocked_until: result.blocked_until ? String(result.blocked_until) : undefined,
+        reason: result.reason ? String(result.reason) : undefined,
+        window_start: result.window_start ? String(result.window_start) : undefined
+      };
     }
 
     return { allowed: true };
@@ -66,9 +74,15 @@ export const detectSuspiciousActivity = async (
       return null;
     }
 
-    // Assurer que les données correspondent au type attendu
-    if (data && typeof data === 'object' && 'risk_score' in data) {
-      return data as SecurityAnalysis;
+    // Safely convert the data to SecurityAnalysis
+    if (data && typeof data === 'object') {
+      const result = data as any;
+      return {
+        risk_score: Number(result.risk_score) || 0,
+        severity: String(result.severity) || 'low',
+        auto_block: Boolean(result.auto_block),
+        event_type: String(result.event_type) || 'unknown'
+      };
     }
 
     return null;
