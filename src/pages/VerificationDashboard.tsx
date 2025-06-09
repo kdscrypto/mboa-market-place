@@ -6,6 +6,7 @@ import MigrationCompletionBanner from '@/components/verification/MigrationComple
 import MonetbilRemovalVerification from '@/components/verification/MonetbilRemovalVerification';
 import SystemHealthCheck from '@/components/verification/SystemHealthCheck';
 import MonetbilRemovalReport from '@/components/verification/MonetbilRemovalReport';
+import Phase6Documentation from '@/components/verification/Phase6Documentation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -20,20 +21,25 @@ const VerificationDashboard = () => {
           
           <Card className="mb-6 mt-6">
             <CardHeader>
-              <CardTitle className="text-2xl">Tableau de bord de vérification - Phase 5</CardTitle>
+              <CardTitle className="text-2xl">🎯 Tableau de bord de vérification - Phase 6 Terminée</CardTitle>
               <p className="text-gray-600">
-                Cette page permet de vérifier que la suppression complète de Monetbil s'est déroulée correctement
-                et que toutes les fonctionnalités continuent de fonctionner normalement.
+                Cette page documente la finalisation complète de la suppression de Monetbil et certifie que la plateforme 
+                fonctionne maintenant avec un système d'annonces 100% gratuit.
               </p>
             </CardHeader>
           </Card>
           
-          <Tabs defaultValue="verification" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="phase6" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="phase6">Phase 6 - Final</TabsTrigger>
               <TabsTrigger value="verification">Tests de vérification</TabsTrigger>
               <TabsTrigger value="health">État du système</TabsTrigger>
               <TabsTrigger value="report">Rapport final</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="phase6">
+              <Phase6Documentation />
+            </TabsContent>
             
             <TabsContent value="verification">
               <MonetbilRemovalVerification />
