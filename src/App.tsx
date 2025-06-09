@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -44,6 +44,8 @@ function App() {
               <Route path="/categories" element={<Categories />} />
               <Route path="/category/:categoryName" element={<CategoryPage />} />
               <Route path="/publier-annonce" element={<CreateAd />} />
+              <Route path="/publier" element={<Navigate to="/login" replace />} />
+              <Route path="/connexion" element={<Login />} />
               <Route path="/annonce/:id" element={<AdDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />

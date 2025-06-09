@@ -9,7 +9,7 @@ import { useLocation } from "react-router-dom";
 
 const Login = () => {
   const location = useLocation();
-  const fromPage = (location.state as { from?: string })?.from || "/";
+  const fromPage = (location.state as { from?: string })?.from || "/publier-annonce";
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -17,13 +17,11 @@ const Login = () => {
       
       <main className="flex-grow flex items-center justify-center py-12 bg-mboa-gray">
         <div className="mboa-container max-w-md">
-          {fromPage !== "/" && (
-            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-              <p className="text-sm text-yellow-800">
-                Vous devez vous connecter ou créer un compte pour accéder à cette page.
-              </p>
-            </div>
-          )}
+          <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-md">
+            <p className="text-sm text-orange-800">
+              Connectez-vous ou créez un compte pour publier votre annonce gratuitement.
+            </p>
+          </div>
           
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid grid-cols-2 mb-4">
