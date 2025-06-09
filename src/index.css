@@ -1,4 +1,5 @@
 
+
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
@@ -100,15 +101,15 @@
   }
   
   .accessibility-high-contrast * {
-    border-color: #111827 !important;
+    @apply !border-gray-900;
   }
   
   .accessibility-high-contrast .bg-white {
-    background-color: #f3f4f6 !important;
+    @apply !bg-gray-100;
   }
   
   .accessibility-high-contrast .text-gray-600 {
-    color: #111827 !important;
+    @apply !text-gray-900;
   }
   
   .accessibility-large-text {
@@ -120,18 +121,15 @@
   }
   
   .accessibility-large-text .text-xs {
-    font-size: 0.875rem !important;
-    line-height: 1.25rem !important;
+    font-size: 0.875rem !important; /* 14px - equivalent to text-sm */
   }
   
   .accessibility-large-text .text-sm {
-    font-size: 1rem !important;
-    line-height: 1.5rem !important;
+    font-size: 1rem !important; /* 16px - equivalent to text-base */
   }
   
   .accessibility-large-text .text-base {
-    font-size: 1.125rem !important;
-    line-height: 1.75rem !important;
+    font-size: 1.125rem !important; /* 18px - equivalent to text-lg */
   }
 
   /* Enhanced focus styles for better accessibility */
@@ -141,8 +139,7 @@
   
   /* High contrast focus indicators */
   .accessibility-high-contrast *:focus {
-    box-shadow: 0 0 0 4px rgb(251 191 36), 0 0 0 6px transparent !important;
-    outline: none !important;
+    @apply ring-4 ring-yellow-400 ring-offset-2 outline-none;
   }
   
   /* Skip links for screen readers */
@@ -159,3 +156,4 @@
     }
   }
 }
+
