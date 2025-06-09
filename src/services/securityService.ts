@@ -33,11 +33,9 @@ export const checkAuthRateLimit = async (
 
     if (error) {
       console.error('Rate limit check error:', error);
-      // En cas d'erreur, permettre la requête mais logger l'erreur
       return { allowed: true };
     }
 
-    // Safely convert the data to RateLimitResult
     if (data && typeof data === 'object') {
       const result = data as any;
       return {
@@ -74,7 +72,6 @@ export const detectSuspiciousActivity = async (
       return null;
     }
 
-    // Safely convert the data to SecurityAnalysis
     if (data && typeof data === 'object') {
       const result = data as any;
       return {
@@ -93,8 +90,8 @@ export const detectSuspiciousActivity = async (
 };
 
 export const getClientIP = (): string => {
-  // En production, vous devriez obtenir l'IP réelle du client
-  // Pour le développement, nous utilisons une IP factice
+  // In production, you should get the real client IP
+  // For development, we use a mock IP
   return '127.0.0.1';
 };
 
@@ -106,42 +103,42 @@ export const validatePasswordStrength = (password: string): {
   const errors: string[] = [];
   let score = 0;
 
-  // Longueur minimale
+  // Minimum length
   if (password.length < 8) {
     errors.push('Le mot de passe doit contenir au moins 8 caractères');
   } else {
     score += 1;
   }
 
-  // Au moins une majuscule
+  // At least one uppercase
   if (!/[A-Z]/.test(password)) {
     errors.push('Le mot de passe doit contenir au moins une majuscule');
   } else {
     score += 1;
   }
 
-  // Au moins une minuscule
+  // At least one lowercase
   if (!/[a-z]/.test(password)) {
     errors.push('Le mot de passe doit contenir au moins une minuscule');
   } else {
     score += 1;
   }
 
-  // Au moins un chiffre
+  // At least one digit
   if (!/\d/.test(password)) {
     errors.push('Le mot de passe doit contenir au moins un chiffre');
   } else {
     score += 1;
   }
 
-  // Au moins un caractère spécial
+  // At least one special character
   if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
     errors.push('Le mot de passe doit contenir au moins un caractère spécial');
   } else {
     score += 1;
   }
 
-  // Longueur bonus
+  // Length bonus
   if (password.length >= 12) {
     score += 1;
   }
@@ -153,7 +150,7 @@ export const validatePasswordStrength = (password: string): {
   };
 };
 
-// Nouvelles fonctions pour la phase 2
+// Enhanced functions for Phase 2
 export const validatePasswordComplexity = (password: string): {
   hasUppercase: boolean;
   hasLowercase: boolean;
@@ -208,4 +205,45 @@ export const generateSecurityRecommendations = (
   recommendations.push("Utilisez un gestionnaire de mots de passe pour créer des mots de passe uniques");
 
   return recommendations;
+};
+
+// Enhanced security monitoring functions
+export const logSecurityEvent = async (
+  eventType: string,
+  severity: 'low' | 'medium' | 'high' | 'critical',
+  details: Record<string, any>
+): Promise<void> => {
+  try {
+    console.log(`Security Event [${severity.toUpperCase()}]: ${eventType}`, details);
+    
+    // In a real implementation, you would send this to your security monitoring system
+    // For now, we just log it
+  } catch (error) {
+    console.error('Failed to log security event:', error);
+  }
+};
+
+export const checkFormSubmissionTiming = (startTime: number, endTime: number): {
+  isSuspicious: boolean;
+  reason?: string;
+} => {
+  const submissionTime = endTime - startTime;
+  
+  // Too fast (likely bot)
+  if (submissionTime < 2000) {
+    return {
+      isSuspicious: true,
+      reason: 'Form submitted too quickly (possible bot)'
+    };
+  }
+  
+  // Too slow (possible form hijacking)
+  if (submissionTime > 1800000) { // 30 minutes
+    return {
+      isSuspicious: true,
+      reason: 'Form submission took too long (possible session hijacking)'
+    };
+  }
+  
+  return { isSuspicious: false };
 };

@@ -1,40 +1,61 @@
 
 import { z } from "zod";
 import { validatePasswordStrength } from "@/services/securityService";
+import { validateEmailAdvanced } from "@/services/emailValidationService";
+import { validateUsername, validatePhone } from "@/services/inputValidationService";
 
+// Enhanced email validation
+const emailSchema = z.string()
+  .min(1, "L'email est requis")
+  .email("Format d'email invalide")
+  .refine((email) => {
+    const validation = validateEmailAdvanced(email);
+    return validation.isValid;
+  }, {
+    message: "Adresse email non valide ou non autorisée"
+  });
+
+// Enhanced password validation
 const passwordSchema = z.string()
   .min(1, "Le mot de passe est requis")
   .refine((password) => {
     const validation = validatePasswordStrength(password);
+    return validation.isValid && validation.score >= 3;
+  }, {
+    message: "Le mot de passe ne respecte pas les critères de sécurité requis (score minimum: 3/5)"
+  });
+
+// Enhanced username validation
+const usernameSchema = z.string()
+  .min(1, "Le nom d'utilisateur est requis")
+  .refine((username) => {
+    const validation = validateUsername(username);
     return validation.isValid;
   }, {
-    message: "Le mot de passe ne respecte pas les critères de sécurité requis"
+    message: "Nom d'utilisateur non valide"
+  });
+
+// Enhanced phone validation
+const phoneSchema = z.string()
+  .min(1, "Le numéro de téléphone est requis")
+  .refine((phone) => {
+    const validation = validatePhone(phone);
+    return validation.isValid;
+  }, {
+    message: "Format de numéro camerounais invalide"
   });
 
 export const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "L'email est requis")
-    .email("Format d'email invalide"),
+  email: emailSchema,
   password: z.string().min(1, "Le mot de passe est requis")
 });
 
 export const registerSchema = z.object({
-  email: z
-    .string()
-    .min(1, "L'email est requis")
-    .email("Format d'email invalide"),
+  email: emailSchema,
   password: passwordSchema,
   confirmPassword: z.string().min(1, "La confirmation est requise"),
-  username: z
-    .string()
-    .min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères")
-    .max(50, "Le nom d'utilisateur ne peut pas dépasser 50 caractères")
-    .regex(/^[a-zA-Z0-9_-]+$/, "Le nom d'utilisateur ne peut contenir que des lettres, chiffres, _ et -"),
-  phone: z
-    .string()
-    .min(1, "Le numéro de téléphone est requis")
-    .regex(/^(\+237|237)?[67][0-9]{8}$/, "Format de numéro camerounais invalide"),
+  username: usernameSchema,
+  phone: phoneSchema,
   acceptTerms: z
     .boolean()
     .refine((val) => val === true, "Vous devez accepter les conditions d'utilisation")
@@ -44,10 +65,7 @@ export const registerSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .min(1, "L'email est requis")
-    .email("Format d'email invalide")
+  email: emailSchema
 });
 
 export const resetPasswordSchema = z.object({

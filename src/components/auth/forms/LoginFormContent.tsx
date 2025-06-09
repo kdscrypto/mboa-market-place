@@ -9,7 +9,7 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormValues } from "../validation/authSchemas";
-import EmailField from "../components/EmailField";
+import EnhancedEmailField from "../components/EnhancedEmailField";
 import PasswordField from "../components/PasswordField";
 import SecurityAlerts from "../components/SecurityAlerts";
 import { useSecurityCheck } from "@/hooks/useSecurityCheck";
@@ -36,33 +36,36 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
   });
 
   const handleSecureSubmit = async (values: LoginFormValues) => {
-    // Vérifier la sécurité avant de tenter la connexion
+    // Enhanced security check before login attempt
     const securityCheck = await checkSecurity('login_attempt', values.email, {
       attempt_count: attemptCount + 1,
-      user_agent: navigator.userAgent
+      user_agent: navigator.userAgent,
+      client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      form_submission_time: Date.now()
     });
 
     if (!securityCheck.allowed) {
-      return; // L'erreur est déjà affichée par useSecurityCheck
+      return; // Error is already displayed by useSecurityCheck
     }
 
     try {
       await onSubmit(values);
-      // Réinitialiser le compteur en cas de succès
+      // Reset attempt counter on success
       setAttemptCount(0);
     } catch (error) {
-      // Incrémenter le compteur en cas d'échec
+      // Increment attempt counter on failure
       setAttemptCount(prev => prev + 1);
       
-      // Enregistrer l'échec de connexion pour la détection d'activités suspectes
+      // Log failed login attempt for security monitoring
       await checkSecurity('login_attempt', values.email, {
         attempt_count: attemptCount + 1,
         failed: true,
         error: error instanceof Error ? error.message : 'Unknown error',
-        user_agent: navigator.userAgent
+        user_agent: navigator.userAgent,
+        client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       });
       
-      throw error; // Relancer l'erreur pour que le composant parent puisse la gérer
+      throw error; // Re-throw error for parent component to handle
     }
   };
 
@@ -80,7 +83,7 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
             recommendations={recommendations}
           />
           
-          <EmailField form={form} />
+          <EnhancedEmailField form={form} showValidation={false} />
           <PasswordField form={form} showForgotPassword={true} />
         </CardContent>
         
@@ -90,7 +93,14 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
             className="w-full bg-mboa-orange hover:bg-mboa-orange/90"
             disabled={isLoading || isBlocked}
           >
-            {isLoading ? "Connexion en cours..." : "Se connecter"}
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Connexion en cours...
+              </div>
+            ) : (
+              "Se connecter"
+            )}
           </Button>
         </CardFooter>
       </form>

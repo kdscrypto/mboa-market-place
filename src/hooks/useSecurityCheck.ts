@@ -1,11 +1,18 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { checkAuthRateLimit, detectSuspiciousActivity, getClientIP } from '@/services/securityService';
+import { 
+  checkAuthRateLimit, 
+  detectSuspiciousActivity, 
+  getClientIP,
+  logSecurityEvent,
+  checkFormSubmissionTiming
+} from '@/services/securityService';
 
 export const useSecurityCheck = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockEndTime, setBlockEndTime] = useState<Date | null>(null);
+  const [formStartTime] = useState(Date.now());
   const { toast } = useToast();
 
   const checkSecurity = async (
@@ -14,9 +21,27 @@ export const useSecurityCheck = () => {
     additionalData?: Record<string, any>
   ) => {
     const clientIP = getClientIP();
+    const currentTime = Date.now();
     
     try {
-      // Vérifier la limitation par IP
+      // Check form submission timing
+      if (additionalData?.form_submission_time) {
+        const timingCheck = checkFormSubmissionTiming(
+          formStartTime, 
+          additionalData.form_submission_time
+        );
+        
+        if (timingCheck.isSuspicious) {
+          await logSecurityEvent('suspicious_form_timing', 'medium', {
+            action_type: actionType,
+            reason: timingCheck.reason,
+            submission_time: additionalData.form_submission_time - formStartTime,
+            client_ip: clientIP
+          });
+        }
+      }
+
+      // Check IP rate limiting
       const ipRateLimit = await checkAuthRateLimit(clientIP, 'ip', actionType);
       
       if (!ipRateLimit.allowed) {
@@ -31,10 +56,16 @@ export const useSecurityCheck = () => {
           duration: 8000
         });
         
+        await logSecurityEvent('ip_rate_limit_exceeded', 'high', {
+          action_type: actionType,
+          client_ip: clientIP,
+          blocked_until: blockedUntil
+        });
+        
         return { allowed: false, reason: 'ip_rate_limit' };
       }
 
-      // Vérifier la limitation par utilisateur si disponible
+      // Check user rate limiting if available
       if (userIdentifier) {
         const userRateLimit = await checkAuthRateLimit(userIdentifier, 'user', actionType);
         
@@ -50,13 +81,19 @@ export const useSecurityCheck = () => {
             duration: 8000
           });
           
+          await logSecurityEvent('user_rate_limit_exceeded', 'high', {
+            action_type: actionType,
+            user_identifier: userIdentifier,
+            blocked_until: blockedUntil
+          });
+          
           return { allowed: false, reason: 'user_rate_limit' };
         }
       }
 
-      // Analyser l'activité suspecte
+      // Analyze suspicious activity
       if (additionalData) {
-        await detectSuspiciousActivity(
+        const suspiciousActivity = await detectSuspiciousActivity(
           userIdentifier || clientIP,
           userIdentifier ? 'user' : 'ip',
           {
@@ -66,6 +103,16 @@ export const useSecurityCheck = () => {
             ...additionalData
           }
         );
+
+        if (suspiciousActivity && suspiciousActivity.risk_score > 60) {
+          await logSecurityEvent('high_risk_activity_detected', 'critical', {
+            action_type: actionType,
+            risk_score: suspiciousActivity.risk_score,
+            event_type: suspiciousActivity.event_type,
+            user_identifier: userIdentifier,
+            client_ip: clientIP
+          });
+        }
       }
 
       setIsBlocked(false);
@@ -73,7 +120,13 @@ export const useSecurityCheck = () => {
       return { allowed: true };
     } catch (error) {
       console.error('Security check error:', error);
-      // En cas d'erreur, permettre l'action mais logger l'erreur
+      await logSecurityEvent('security_check_error', 'medium', {
+        action_type: actionType,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        client_ip: clientIP
+      });
+      
+      // In case of error, allow the action but log the error
       return { allowed: true };
     }
   };
