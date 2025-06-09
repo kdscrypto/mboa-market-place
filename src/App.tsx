@@ -21,6 +21,7 @@ import PaymentReturn from "@/pages/PaymentReturn";
 import PaymentTracking from "@/pages/PaymentTracking";
 import SecurityDashboard from "@/pages/SecurityDashboard";
 import SecurityDocumentation from "@/pages/SecurityDocumentation";
+import VerificationDashboard from "@/pages/VerificationDashboard";
 import AuthCallback from "@/pages/AuthCallback";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
@@ -57,6 +58,7 @@ function App() {
               <Route path="/payment-tracking/:transactionId" element={<PaymentTracking />} />
               <Route path="/security-dashboard" element={<SecurityDashboard />} />
               <Route path="/security-documentation" element={<SecurityDocumentation />} />
+              <Route path="/verification-dashboard" element={<VerificationDashboard />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />

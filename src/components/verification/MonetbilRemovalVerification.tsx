@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +13,17 @@ interface VerificationTest {
   status: 'pending' | 'success' | 'warning' | 'error';
   message?: string;
   details?: any;
+}
+
+interface MigrationStats {
+  total_ads: number;
+  standard_ads: number;
+  migration_completed: boolean;
+  all_ads_free: boolean;
+  obsolete_transactions: number;
+  total_transactions: number;
+  migration_logs_count: number;
+  last_migration_check: string;
 }
 
 const MonetbilRemovalVerification: React.FC = () => {
@@ -126,24 +136,27 @@ const MonetbilRemovalVerification: React.FC = () => {
   const testDatabaseMigration = async (tests: VerificationTest[]) => {
     const testIndex = tests.findIndex(t => t.id === 'db-migration-status');
     try {
-      // Vérifier les statistiques de migration
-      const { data, error } = await supabase.rpc('get_monetbil_migration_stats');
+      // Call the database function directly
+      const { data, error } = await supabase
+        .rpc('get_monetbil_migration_stats');
       
       if (error) throw error;
       
-      if (data?.migration_completed && data?.all_ads_free) {
+      const stats = data as MigrationStats;
+      
+      if (stats?.migration_completed && stats?.all_ads_free) {
         tests[testIndex] = {
           ...tests[testIndex],
           status: 'success',
           message: 'Migration complétée avec succès',
-          details: data
+          details: stats
         };
       } else {
         tests[testIndex] = {
           ...tests[testIndex],
           status: 'error',
           message: 'Migration incomplète ou échouée',
-          details: data
+          details: stats
         };
       }
     } catch (error) {

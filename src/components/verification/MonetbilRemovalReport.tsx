@@ -5,6 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Download, FileText, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
+interface MigrationStats {
+  total_ads: number;
+  standard_ads: number;
+  migration_completed: boolean;
+  all_ads_free: boolean;
+  obsolete_transactions: number;
+  total_transactions: number;
+  migration_logs_count: number;
+  last_migration_check: string;
+}
+
 interface RemovalReport {
   timestamp: string;
   phase: string;
@@ -27,7 +38,12 @@ const MonetbilRemovalReport: React.FC = () => {
     
     try {
       // Récupérer les statistiques de migration
-      const { data: migrationStats } = await supabase.rpc('get_monetbil_migration_stats');
+      const { data: migrationStatsData, error: migrationError } = await supabase
+        .rpc('get_monetbil_migration_stats');
+      
+      if (migrationError) throw migrationError;
+      
+      const migrationStats = migrationStatsData as MigrationStats;
       
       // Récupérer les logs d'audit
       const { data: auditLogs } = await supabase

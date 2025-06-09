@@ -609,6 +609,10 @@ export type Database = {
         }
         Returns: Json
       }
+      get_monetbil_migration_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
