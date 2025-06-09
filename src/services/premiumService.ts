@@ -9,23 +9,26 @@ export interface GroupedPremiumAds {
   ads: Ad[];
 }
 
-// Fonction pour récupérer toutes les annonces premium
+// Fonction pour récupérer toutes les annonces premium (maintenant toutes gratuites)
 export const fetchAllPremiumAds = async (): Promise<Ad[]> => {
   try {
-    console.log("Fetching all premium ads");
+    console.log("Fetching all featured ads (formerly premium)");
     
-    // Récupérer les annonces premium (tout type sauf standard)
+    // Récupérer toutes les annonces approuvées qui ne sont pas de type standard
+    // Ceci garantit que toutes les anciennes annonces premium restent visibles
     const { data: ads, error } = await supabase
       .from('ads')
       .select('*')
       .eq('status', 'approved')
-      .not('ad_type', 'eq', 'standard')
+      .neq('ad_type', 'standard') // Inclut premium_24h, premium_7d, premium_15d, premium_30d
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error("Error retrieving premium ads:", error);
+      console.error("Error retrieving featured ads:", error);
       throw error;
     }
+    
+    console.log(`Retrieved ${ads?.length || 0} featured ads`);
     
     // Pour chaque annonce, récupérer l'image principale
     const adsWithImages = await Promise.all(
@@ -58,7 +61,7 @@ export const fetchAllPremiumAds = async (): Promise<Ad[]> => {
     
     return adsWithImages;
   } catch (error) {
-    console.error("Error fetching all premium ads:", error);
+    console.error("Error fetching all featured ads:", error);
     return [];
   }
 };

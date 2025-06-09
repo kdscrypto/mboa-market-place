@@ -1,76 +1,31 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
-import { toast } from "@/components/ui/use-toast";
 
-// Helper function to validate image URLs
-export const isValidImageUrl = (url: string | null | undefined): boolean => {
-  if (!url || typeof url !== 'string' || url.trim() === '') return false;
-  
+export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
   try {
-    // Check if URL is valid (starts with http://, https://, or is a relative path)
-    const isValidPattern = url.startsWith('http://') || 
-                           url.startsWith('https://') || 
-                           url.startsWith('/');
+    console.log("Fetching featured ads (formerly premium)...");
     
-    // Try to construct a URL object to further validate (will throw for malformed URLs)
-    if (isValidPattern && (url.startsWith('http://') || url.startsWith('https://'))) {
-      new URL(url);
-    }
-    
-    return isValidPattern;
-  } catch (e) {
-    console.error("Invalid URL format:", url, e);
-    return false;
-  }
-};
-
-// Preload image to test if it's actually accessible
-export const testImageLoading = async (url: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous"; // Add CORS attribute
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = url;
-    
-    // Set a timeout in case the image hangs
-    setTimeout(() => resolve(false), 5000);
-  });
-};
-
-// Function to retrieve premium ads
-export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
-  try {
-    console.log("Fetching premium ads");
-    
-    // Fetch premium ads (any type except standard)
+    // Récupérer toutes les annonces approuvées qui ne sont pas de type "standard"
+    // Ceci inclut toutes les anciennes annonces premium, même celles avec des transactions obsolètes
     const { data: ads, error } = await supabase
       .from('ads')
       .select('*')
       .eq('status', 'approved')
-      .not('ad_type', 'eq', 'standard')
+      .neq('ad_type', 'standard') // Toutes les annonces non-standard sont maintenant considérées comme mises en avant
       .order('created_at', { ascending: false })
       .limit(limit);
     
     if (error) {
-      console.error("Error retrieving premium ads:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les annonces premium",
-        variant: "destructive",
-      });
-      return []; // Return empty array on error
+      console.error("Error retrieving featured ads:", error);
+      throw error;
     }
+
+    console.log(`Retrieved ${ads?.length || 0} featured ads`);
     
-    if (!ads || ads.length === 0) {
-      console.log("No premium ads found");
-      return [];
-    }
-    
-    // For each ad, retrieve the main image
+    // Pour chaque annonce, récupérer l'image principale
     const adsWithImages = await Promise.all(
-      ads.map(async (ad) => {
+      (ads || []).map(async (ad) => {
         try {
           const { data: images, error: imageError } = await supabase
             .from('ad_images')
@@ -81,61 +36,81 @@ export const fetchPremiumAds = async (limit: number = 5): Promise<Ad[]> => {
           
           if (imageError) {
             console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
-            return {
-              ...ad,
-              imageUrl: '/placeholder.svg',
-              is_premium: true
-            };
-          }
-          
-          // Check if image URL is valid
-          let imageUrl = '/placeholder.svg';
-          
-          if (images && images.length > 0 && images[0].image_url) {
-            const originalUrl = images[0].image_url.trim();
-            
-            if (isValidImageUrl(originalUrl)) {
-              // For Supabase storage URLs, ensure proper formatting
-              imageUrl = originalUrl;
-              
-              // Optionally test if image loads
-              const imageLoads = await testImageLoading(imageUrl);
-              if (!imageLoads) {
-                console.warn(`Image failed to load for ad ${ad.id}:`, imageUrl);
-                imageUrl = '/placeholder.svg';
-              }
-            } else {
-              console.warn(`Invalid image URL format for ad ${ad.id}:`, originalUrl);
-            }
-          } else {
-            console.warn(`No image found for ad ${ad.id}`);
           }
           
           return {
             ...ad,
-            imageUrl,
-            is_premium: true
+            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
           return {
             ...ad,
-            imageUrl: '/placeholder.svg',
-            is_premium: true
+            imageUrl: '/placeholder.svg'
           };
         }
       })
     );
     
-    console.log(`Successfully loaded ${adsWithImages.length} premium ads`);
     return adsWithImages;
   } catch (error) {
-    console.error("Error fetching premium ads:", error);
-    toast({
-      title: "Erreur",
-      description: "Impossible de charger les annonces premium",
-      variant: "destructive",
-    });
+    console.error("Error fetching featured ads:", error);
+    return [];
+  }
+};
+
+// Fonction pour récupérer les annonces tendances (mix d'annonces récentes et populaires)
+export const fetchTrendingAds = async (limit: number = 10): Promise<Ad[]> => {
+  try {
+    console.log("Fetching trending ads...");
+    
+    // Récupérer un mélange d'annonces récentes et d'annonces mises en avant
+    const { data: ads, error } = await supabase
+      .from('ads')
+      .select('*')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error("Error retrieving trending ads:", error);
+      throw error;
+    }
+
+    console.log(`Retrieved ${ads?.length || 0} trending ads`);
+    
+    // Ajouter les images
+    const adsWithImages = await Promise.all(
+      (ads || []).map(async (ad) => {
+        try {
+          const { data: images, error: imageError } = await supabase
+            .from('ad_images')
+            .select('image_url')
+            .eq('ad_id', ad.id)
+            .order('position', { ascending: true })
+            .limit(1);
+          
+          if (imageError) {
+            console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
+          }
+          
+          return {
+            ...ad,
+            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
+          };
+        } catch (err) {
+          console.error(`Error processing images for ad ${ad.id}:`, err);
+          return {
+            ...ad,
+            imageUrl: '/placeholder.svg'
+          };
+        }
+      })
+    );
+    
+    return adsWithImages;
+  } catch (error) {
+    console.error("Error fetching trending ads:", error);
     return [];
   }
 };

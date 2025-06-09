@@ -12,13 +12,13 @@ interface PremiumSearchFilters {
 }
 
 export const searchPremiumAds = async (filters: PremiumSearchFilters = {}) => {
-  console.log("Searching premium ads with filters:", filters);
+  console.log("Searching featured ads (formerly premium) with filters:", filters);
   
   let query = supabase
     .from('ads')
     .select('*')
     .eq('status', 'approved')
-    .eq('ad_type', 'premium');
+    .neq('ad_type', 'standard'); // Toutes les annonces non-standard sont considérées comme mises en avant
 
   // Apply filters
   if (filters.query && filters.query.trim() !== '') {
@@ -51,11 +51,11 @@ export const searchPremiumAds = async (filters: PremiumSearchFilters = {}) => {
   const { data, error } = await query;
 
   if (error) {
-    console.error("Premium search error:", error);
+    console.error("Featured ads search error:", error);
     throw error;
   }
 
-  console.log("Premium search results:", { 
+  console.log("Featured ads search results:", { 
     foundAds: data?.length || 0, 
     filters 
   });
