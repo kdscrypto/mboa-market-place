@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   CardContent,
@@ -10,12 +10,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, RegisterFormValues } from "../validation/authSchemas";
 import EnhancedEmailField from "../components/EnhancedEmailField";
-import PasswordField from "../components/PasswordField";
+import EnhancedPasswordField from "../components/EnhancedPasswordField";
 import ConfirmPasswordField from "../components/ConfirmPasswordField";
 import EnhancedUsernameField from "../components/EnhancedUsernameField";
-import PhoneField from "../components/PhoneField";
+import EnhancedPhoneField from "../components/EnhancedPhoneField";
 import TermsCheckbox from "../components/TermsCheckbox";
 import SecurityAlerts from "../components/SecurityAlerts";
+import FormProgressIndicator from "../components/FormProgressIndicator";
+import RealTimeValidation from "../components/RealTimeValidation";
+import AccessibilityFeatures from "../components/AccessibilityFeatures";
 import { useSecurityCheck } from "@/hooks/useSecurityCheck";
 import { generateSecurityRecommendations, validatePasswordStrength } from "@/services/securityService";
 
@@ -31,6 +34,8 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
   isLoading 
 }) => {
   const { checkSecurity, isBlocked, blockEndTime } = useSecurityCheck();
+  const [showAccessibility, setShowAccessibility] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -48,36 +53,67 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
   const passwordValidation = passwordValue ? validatePasswordStrength(passwordValue) : { score: 0, errors: [] };
   const usernameValue = form.watch("username");
   const emailValue = form.watch("email");
+  const confirmPasswordValue = form.watch("confirmPassword");
+  const acceptTerms = form.watch("acceptTerms");
 
-  // Calculate form completeness for better UX
+  // Calculate form steps for progress indicator
+  const formSteps = [
+    {
+      id: "personal",
+      label: "Personnel",
+      completed: !!(usernameValue && emailValue),
+      hasError: !!form.formState.errors.username || !!form.formState.errors.email
+    },
+    {
+      id: "contact", 
+      label: "Contact",
+      completed: !!form.watch("phone"),
+      hasError: !!form.formState.errors.phone
+    },
+    {
+      id: "security",
+      label: "Sécurité", 
+      completed: !!(passwordValue && confirmPasswordValue && passwordValidation.score >= 3),
+      hasError: !!form.formState.errors.password || !!form.formState.errors.confirmPassword
+    },
+    {
+      id: "terms",
+      label: "Conditions",
+      completed: acceptTerms,
+      hasError: !!form.formState.errors.acceptTerms
+    }
+  ];
+
+  const getCurrentStep = () => {
+    if (!usernameValue || !emailValue) return "personal";
+    if (!form.watch("phone")) return "contact";
+    if (!passwordValue || !confirmPasswordValue || passwordValidation.score < 3) return "security";
+    if (!acceptTerms) return "terms";
+    return "complete";
+  };
+
   const isFormValid = form.formState.isValid && passwordValidation.score >= 3;
   const completionPercentage = Math.round(
-    ((emailValue ? 20 : 0) + 
-     (usernameValue ? 20 : 0) + 
-     (passwordValue ? 20 : 0) + 
-     (form.watch("confirmPassword") ? 20 : 0) + 
-     (form.watch("acceptTerms") ? 20 : 0))
+    (formSteps.filter(step => step.completed).length / formSteps.length) * 100
   );
 
   const handleSecureSubmit = async (values: RegisterFormValues) => {
-    // Enhanced security check before account creation
     const securityCheck = await checkSecurity('account_creation', values.email, {
       username: values.username,
       phone: values.phone,
       user_agent: navigator.userAgent,
       password_strength: passwordValidation.score,
-      form_completion_time: Date.now(), // Could track how fast form was filled
+      form_completion_time: Date.now(),
       client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
 
     if (!securityCheck.allowed) {
-      return; // Error is already displayed by useSecurityCheck
+      return;
     }
 
     try {
       await onSubmit(values);
     } catch (error) {
-      // Log failed registration attempt for security monitoring
       await checkSecurity('account_creation', values.email, {
         failed: true,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -93,20 +129,35 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSecureSubmit)}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {/* Progress indicator */}
-          <div className="mb-4">
-            <div className="flex justify-between text-sm text-gray-600 mb-1">
-              <span>Progression</span>
-              <span>{completionPercentage}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-mboa-orange h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${completionPercentage}%` }}
-              ></div>
-            </div>
+          <FormProgressIndicator 
+            steps={formSteps}
+            currentStep={getCurrentStep()}
+          />
+
+          {/* Accessibility features toggle */}
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-700">
+              Progression: {completionPercentage}%
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAccessibility(!showAccessibility)}
+              className="text-xs"
+            >
+              Accessibilité
+            </Button>
           </div>
+
+          {showAccessibility && (
+            <AccessibilityFeatures 
+              onTogglePasswordVisibility={() => setPasswordVisible(!passwordVisible)}
+              passwordVisible={passwordVisible}
+            />
+          )}
 
           <SecurityAlerts 
             isBlocked={isBlocked} 
@@ -114,13 +165,27 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
             showRecommendations={passwordValidation.score < 4}
             recommendations={recommendations}
           />
+
+          {/* Real-time validation for all fields */}
+          <RealTimeValidation 
+            form={form}
+            fields={['email', 'username', 'password']}
+            showSuccessMessages={false}
+          />
           
-          <EnhancedUsernameField form={form} />
-          <EnhancedEmailField form={form} />
-          <PhoneField form={form} />
-          <PasswordField form={form} showStrengthIndicator={true} />
-          <ConfirmPasswordField form={form} />
-          <TermsCheckbox form={form} onShowTerms={onShowTerms} />
+          <div className="space-y-4">
+            <EnhancedUsernameField form={form} />
+            <EnhancedEmailField form={form} />
+            <EnhancedPhoneField form={form} />
+            <EnhancedPasswordField 
+              form={form} 
+              showStrengthIndicator={true}
+              showPasswordGenerator={true}
+              autoComplete="new-password"
+            />
+            <ConfirmPasswordField form={form} />
+            <TermsCheckbox form={form} onShowTerms={onShowTerms} />
+          </div>
         </CardContent>
         
         <CardFooter>

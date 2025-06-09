@@ -1,4 +1,5 @@
 
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,109 +8,63 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 30 100% 57%;
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 143 55% 49%;
-    --accent-foreground: 0 0% 100%;
-
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 30 100% 57%;
-
+    --ring: 222.2 84% 4.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Custom Mboa Market theme variables - Light Mode */
-    --color-background: #ffffff;
-    --color-surface: #ffffff;
-    --color-surface-elevated: #f8f9fa;
-    --color-text-primary: #111827;
-    --color-text-secondary: #6b7280;
-    --color-text-muted: #9ca3af;
-    --color-primary-accent: #FF7722;
-    --color-primary-accent-hover: #e5661f;
-    --color-text-on-accent: #ffffff;
-    --color-border: #e5e7eb;
-    --color-border-light: #f3f4f6;
-    --color-error: #ef4444;
-    --color-success: #10b981;
-    --color-warning: #f59e0b;
-    --color-green: #25D366;
-    --color-blue: #3498db;
-    --color-input-bg: #ffffff;
-    --color-input-border: #d1d5db;
-    --color-dropdown-bg: #ffffff;
-    --color-shadow: rgba(0, 0, 0, 0.1);
-    --color-shadow-lg: rgba(0, 0, 0, 0.15);
+    /* Custom Mboa colors */
+    --mboa-orange: 25 95% 53%;
+    --mboa-blue: 213 94% 68%;
+    --mboa-green: 134 61% 41%;
+    --mboa-gray: 210 20% 96%;
+    --mboa-dark: 222.2 84% 4.9%;
   }
 
-  html[data-theme="dark"] {
+  .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 30 100% 60%;
-    --primary-foreground: 0 0% 100%;
-
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 143 55% 49%;
-    --accent-foreground: 0 0% 100%;
-
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 30 100% 60%;
-
-    /* Custom Mboa Market theme variables - Dark Mode */
-    --color-background: #121212;
-    --color-surface: #1e1e1e;
-    --color-surface-elevated: #2c2c2c;
-    --color-text-primary: #e0e0e0;
-    --color-text-secondary: #a0a0a0;
-    --color-text-muted: #737373;
-    --color-primary-accent: #FFA726;
-    --color-primary-accent-hover: #ff9800;
-    --color-text-on-accent: #000000;
-    --color-border: #333333;
-    --color-border-light: #404040;
-    --color-error: #f87171;
-    --color-success: #34d399;
-    --color-warning: #fbbf24;
-    --color-green: #25D366;
-    --color-blue: #60a5fa;
-    --color-input-bg: #1e1e1e;
-    --color-input-border: #404040;
-    --color-dropdown-bg: #1e1e1e;
-    --color-shadow: rgba(0, 0, 0, 0.3);
-    --color-shadow-lg: rgba(0, 0, 0, 0.5);
+    --ring: 212.7 26.8% 83.9;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -117,206 +72,86 @@
   * {
     @apply border-border;
   }
-
-  html {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
-
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
-    background-color: var(--color-background);
-    color: var(--color-text-primary);
-    transition: background-color 0.15s ease, color 0.15s ease;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
-
-  #root {
-    width: 100%;
-    min-height: 100vh;
-    margin: 0;
-    padding: 0;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold;
-    color: var(--color-text-primary);
-    transition: color 0.15s ease;
-  }
-
-  /* Optimized surface elements transitions */
-  .bg-white {
-    background-color: var(--color-surface) !important;
-    transition: background-color 0.15s ease;
-  }
-
-  .border {
-    border-color: var(--color-border) !important;
-    transition: border-color 0.15s ease;
-  }
-
-  .text-gray-600 {
-    color: var(--color-text-secondary) !important;
-    transition: color 0.15s ease;
-  }
-
-  .text-gray-700 {
-    color: var(--color-text-primary) !important;
-    transition: color 0.15s ease;
-  }
-
-  .text-gray-500 {
-    color: var(--color-text-muted) !important;
-    transition: color 0.15s ease;
-  }
-
-  /* Optimized input and form elements */
-  input, textarea, select {
-    background-color: var(--color-input-bg) !important;
-    border-color: var(--color-input-border) !important;
-    color: var(--color-text-primary) !important;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  }
-
-  input::placeholder, textarea::placeholder {
-    color: var(--color-text-muted) !important;
-    transition: color 0.15s ease;
-  }
-
-  /* Optimized dropdown and popover backgrounds */
-  [role="menu"], [role="listbox"], .popover-content, .dropdown-content {
-    background-color: var(--color-dropdown-bg) !important;
-    border-color: var(--color-border) !important;
-    box-shadow: 0 10px 15px -3px var(--color-shadow), 0 4px 6px -2px var(--color-shadow);
-    transition: background-color 0.15s ease, border-color 0.15s ease;
-  }
-
-  /* Simplified shadow utilities */
-  .shadow-sm {
-    box-shadow: 0 1px 2px 0 var(--color-shadow);
-  }
-
-  .shadow {
-    box-shadow: 0 1px 3px 0 var(--color-shadow), 0 1px 2px 0 var(--color-shadow);
-  }
-
-  .shadow-md {
-    box-shadow: 0 4px 6px -1px var(--color-shadow), 0 2px 4px -1px var(--color-shadow);
-  }
-
-  .shadow-lg {
-    box-shadow: 0 10px 15px -3px var(--color-shadow-lg), 0 4px 6px -2px var(--color-shadow);
+    font-family: "Inter", sans-serif;
   }
 }
 
-@layer components {
+@layer utilities {
   .mboa-container {
-    @apply w-full mx-auto px-4 md:px-6;
-    max-width: none;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
   
-  .mboa-card {
-    @apply rounded-lg border shadow-sm hover:shadow-md transition-all duration-200;
-    background-color: var(--color-surface);
-    border-color: var(--color-border);
-    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
-  }
-
-  .mboa-btn-primary {
-    background-color: var(--color-primary-accent);
-    color: var(--color-text-on-accent);
-    @apply px-4 py-2 rounded-md transition-colors;
-  }
-
-  .mboa-btn-primary:hover {
-    background-color: var(--color-primary-accent-hover);
-  }
-
-  .mboa-btn-secondary {
-    background-color: var(--color-green);
-    color: var(--color-text-on-accent);
-    @apply px-4 py-2 rounded-md transition-colors;
-  }
-
-  .mboa-btn-secondary:hover {
-    opacity: 0.9;
-  }
-
-  .mboa-input {
-    background-color: var(--color-input-bg);
-    border-color: var(--color-input-border);
-    color: var(--color-text-primary);
-    @apply border p-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all duration-200;
+  .mboa-gradient {
+    background: linear-gradient(135deg, hsl(var(--mboa-orange)) 0%, hsl(var(--mboa-blue)) 100%);
   }
   
-  .mboa-link {
-    color: var(--color-primary-accent);
-    @apply transition-colors;
+  .mboa-text-gradient {
+    background: linear-gradient(135deg, hsl(var(--mboa-orange)) 0%, hsl(var(--mboa-blue)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  .mboa-link:hover {
-    color: var(--color-primary-accent-hover);
+  /* Accessibility features */
+  .accessibility-high-contrast {
+    filter: contrast(150%) brightness(110%);
   }
   
-  /* New animation and interaction classes */
-  .hover-scale {
-    @apply transition-transform duration-200 hover:scale-105;
+  .accessibility-high-contrast * {
+    @apply !border-gray-900;
   }
   
-  .animate-fade-in {
-    @apply animate-[fade-in_0.6s_ease-out];
+  .accessibility-high-contrast .bg-white {
+    @apply !bg-gray-100;
   }
   
-  .animate-slide-in {
-    @apply animate-[slide-in-right_0.4s_ease-out];
+  .accessibility-high-contrast .text-gray-600 {
+    @apply !text-gray-900;
+  }
+  
+  .accessibility-large-text {
+    font-size: 110% !important;
+  }
+  
+  .accessibility-large-text * {
+    font-size: inherit !important;
+  }
+  
+  .accessibility-large-text .text-xs {
+    @apply !text-sm;
+  }
+  
+  .accessibility-large-text .text-sm {
+    @apply !text-base;
+  }
+  
+  .accessibility-large-text .text-base {
+    @apply !text-lg;
   }
 
-  /* Optimized theme-aware background utilities */
-  .theme-bg-primary {
-    background-color: var(--color-background);
-    transition: background-color 0.15s ease;
+  /* Enhanced focus styles for better accessibility */
+  .focus-enhanced:focus {
+    @apply ring-4 ring-mboa-orange/50 ring-offset-2 outline-none;
+  }
+  
+  /* High contrast focus indicators */
+  .accessibility-high-contrast *:focus {
+    @apply ring-4 ring-yellow-400 ring-offset-2 outline-none;
+  }
+  
+  /* Skip links for screen readers */
+  .skip-link {
+    @apply absolute left-0 top-0 bg-mboa-orange text-white px-4 py-2 z-50 transform -translate-y-full focus:translate-y-0 transition-transform;
   }
 
-  .theme-bg-surface {
-    background-color: var(--color-surface);
-    transition: background-color 0.15s ease;
-  }
-
-  .theme-bg-elevated {
-    background-color: var(--color-surface-elevated);
-    transition: background-color 0.15s ease;
-  }
-
-  .theme-text-primary {
-    color: var(--color-text-primary);
-    transition: color 0.15s ease;
-  }
-
-  .theme-text-secondary {
-    color: var(--color-text-secondary);
-    transition: color 0.15s ease;
-  }
-
-  .theme-border {
-    border-color: var(--color-border);
-    transition: border-color 0.15s ease;
-  }
-}
-
-/* Add additional keyframes for new animations */
-@keyframes slide-in-right {
-  0% {
-    transform: translateX(20px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
+  /* Reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

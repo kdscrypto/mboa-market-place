@@ -10,8 +10,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormValues } from "../validation/authSchemas";
 import EnhancedEmailField from "../components/EnhancedEmailField";
-import PasswordField from "../components/PasswordField";
+import EnhancedPasswordField from "../components/EnhancedPasswordField";
 import SecurityAlerts from "../components/SecurityAlerts";
+import AccessibilityFeatures from "../components/AccessibilityFeatures";
+import RealTimeValidation from "../components/RealTimeValidation";
 import { useSecurityCheck } from "@/hooks/useSecurityCheck";
 import { generateSecurityRecommendations } from "@/services/securityService";
 
@@ -26,6 +28,8 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
 }) => {
   const { checkSecurity, isBlocked, blockEndTime } = useSecurityCheck();
   const [attemptCount, setAttemptCount] = useState(0);
+  const [showAccessibility, setShowAccessibility] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -35,8 +39,10 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
     }
   });
 
+  const emailValue = form.watch("email");
+  const passwordValue = form.watch("password");
+
   const handleSecureSubmit = async (values: LoginFormValues) => {
-    // Enhanced security check before login attempt
     const securityCheck = await checkSecurity('login_attempt', values.email, {
       attempt_count: attemptCount + 1,
       user_agent: navigator.userAgent,
@@ -45,18 +51,15 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
     });
 
     if (!securityCheck.allowed) {
-      return; // Error is already displayed by useSecurityCheck
+      return;
     }
 
     try {
       await onSubmit(values);
-      // Reset attempt counter on success
       setAttemptCount(0);
     } catch (error) {
-      // Increment attempt counter on failure
       setAttemptCount(prev => prev + 1);
       
-      // Log failed login attempt for security monitoring
       await checkSecurity('login_attempt', values.email, {
         attempt_count: attemptCount + 1,
         failed: true,
@@ -65,16 +68,48 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
         client_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       });
       
-      throw error; // Re-throw error for parent component to handle
+      throw error;
     }
   };
 
   const recommendations = generateSecurityRecommendations(0, attemptCount);
+  const formCompleteness = (emailValue ? 50 : 0) + (passwordValue ? 50 : 0);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSecureSubmit)}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Form completion indicator */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-700">
+                Completion: {formCompleteness}%
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAccessibility(!showAccessibility)}
+                className="text-xs"
+              >
+                Accessibilité
+              </Button>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div 
+                className="bg-mboa-orange h-1.5 rounded-full transition-all duration-300" 
+                style={{ width: `${formCompleteness}%` }}
+              />
+            </div>
+          </div>
+
+          {showAccessibility && (
+            <AccessibilityFeatures 
+              onTogglePasswordVisibility={() => setPasswordVisible(!passwordVisible)}
+              passwordVisible={passwordVisible}
+            />
+          )}
+
           <SecurityAlerts 
             isBlocked={isBlocked} 
             blockEndTime={blockEndTime}
@@ -82,9 +117,22 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
             showRecommendations={attemptCount > 1}
             recommendations={recommendations}
           />
+
+          {/* Real-time validation for email only on login */}
+          <RealTimeValidation 
+            form={form}
+            fields={['email']}
+            showSuccessMessages={false}
+          />
           
-          <EnhancedEmailField form={form} showValidation={false} />
-          <PasswordField form={form} showForgotPassword={true} />
+          <div className="space-y-4">
+            <EnhancedEmailField form={form} showValidation={false} />
+            <EnhancedPasswordField 
+              form={form} 
+              showForgotPassword={true}
+              autoComplete="current-password"
+            />
+          </div>
         </CardContent>
         
         <CardFooter>
