@@ -12,7 +12,9 @@ import { loginSchema, LoginFormValues } from "../validation/authSchemas";
 import EmailField from "../components/EmailField";
 import PasswordField from "../components/PasswordField";
 import SecurityAlerts from "../components/SecurityAlerts";
+import SecurityMetrics from "../components/SecurityMetrics";
 import { useSecurityCheck } from "@/hooks/useSecurityCheck";
+import { generateSecurityRecommendations } from "@/services/securityService";
 
 interface LoginFormContentProps {
   onSubmit: (values: LoginFormValues) => Promise<void>;
@@ -25,6 +27,7 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
 }) => {
   const { checkSecurity, isBlocked, blockEndTime } = useSecurityCheck();
   const [attemptCount, setAttemptCount] = useState(0);
+  const [showMetrics, setShowMetrics] = useState(false);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -65,20 +68,35 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
     }
   };
 
+  const recommendations = generateSecurityRecommendations(0, attemptCount);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSecureSubmit)}>
         <CardContent className="space-y-4">
-          <SecurityAlerts isBlocked={isBlocked} blockEndTime={blockEndTime} />
+          <SecurityMetrics showMetrics={showMetrics} />
+          
+          <SecurityAlerts 
+            isBlocked={isBlocked} 
+            blockEndTime={blockEndTime}
+            attemptCount={attemptCount}
+            showRecommendations={attemptCount > 1}
+            recommendations={recommendations}
+          />
           
           <EmailField form={form} />
           <PasswordField form={form} showForgotPassword={true} />
           
-          {attemptCount > 0 && (
-            <div className="text-sm text-orange-600 bg-orange-50 p-2 rounded">
-              Tentative {attemptCount}/5. Après 5 échecs, votre compte sera temporairement bloqué.
-            </div>
-          )}
+          {/* Bouton pour afficher/masquer les métriques de sécurité */}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowMetrics(!showMetrics)}
+              className="text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              {showMetrics ? 'Masquer' : 'Afficher'} les métriques de sécurité
+            </button>
+          </div>
         </CardContent>
         
         <CardFooter>

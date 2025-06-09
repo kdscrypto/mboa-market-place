@@ -37,7 +37,12 @@ export const checkAuthRateLimit = async (
       return { allowed: true };
     }
 
-    return data as RateLimitResult;
+    // Assurer que les données correspondent au type attendu
+    if (data && typeof data === 'object' && 'allowed' in data) {
+      return data as RateLimitResult;
+    }
+
+    return { allowed: true };
   } catch (error) {
     console.error('Rate limit check exception:', error);
     return { allowed: true };
@@ -61,7 +66,12 @@ export const detectSuspiciousActivity = async (
       return null;
     }
 
-    return data as SecurityAnalysis;
+    // Assurer que les données correspondent au type attendu
+    if (data && typeof data === 'object' && 'risk_score' in data) {
+      return data as SecurityAnalysis;
+    }
+
+    return null;
   } catch (error) {
     console.error('Security analysis exception:', error);
     return null;
@@ -127,4 +137,61 @@ export const validatePasswordStrength = (password: string): {
     errors,
     score: Math.min(score, 5)
   };
+};
+
+// Nouvelles fonctions pour la phase 2
+export const validatePasswordComplexity = (password: string): {
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasNumbers: boolean;
+  hasSpecialChars: boolean;
+  hasMinLength: boolean;
+  entropy: number;
+} => {
+  return {
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumbers: /\d/.test(password),
+    hasSpecialChars: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    hasMinLength: password.length >= 8,
+    entropy: calculatePasswordEntropy(password)
+  };
+};
+
+const calculatePasswordEntropy = (password: string): number => {
+  const charsets = [
+    { regex: /[a-z]/, size: 26 },
+    { regex: /[A-Z]/, size: 26 },
+    { regex: /[0-9]/, size: 10 },
+    { regex: /[^a-zA-Z0-9]/, size: 32 }
+  ];
+
+  let charsetSize = 0;
+  charsets.forEach(charset => {
+    if (charset.regex.test(password)) {
+      charsetSize += charset.size;
+    }
+  });
+
+  return password.length * Math.log2(charsetSize);
+};
+
+export const generateSecurityRecommendations = (
+  passwordScore: number,
+  attemptCount: number
+): string[] => {
+  const recommendations: string[] = [];
+
+  if (passwordScore < 3) {
+    recommendations.push("Utilisez un mot de passe plus complexe avec des majuscules, minuscules, chiffres et caractères spéciaux");
+  }
+
+  if (attemptCount > 2) {
+    recommendations.push("Trop de tentatives détectées. Assurez-vous de saisir le bon mot de passe");
+  }
+
+  recommendations.push("Activez l'authentification à deux facteurs pour une sécurité renforcée");
+  recommendations.push("Utilisez un gestionnaire de mots de passe pour créer des mots de passe uniques");
+
+  return recommendations;
 };
