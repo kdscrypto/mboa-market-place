@@ -9,7 +9,7 @@ interface PaymentStatusIndicatorProps {
   showText?: boolean;
 }
 
-// Simplified payment status indicator - since all ads are free, we always show "Gratuit"
+// Payment status indicator now always shows "Gratuit" since all ads are free
 const PaymentStatusIndicator: React.FC<PaymentStatusIndicatorProps> = ({ 
   className = '', 
   showText = true 

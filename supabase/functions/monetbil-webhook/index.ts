@@ -12,11 +12,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('Monetbil webhook called but no longer needed - all ads are free');
+
   // Return a message that the webhook is no longer needed
   return new Response(
     JSON.stringify({
-      message: "Webhook no longer needed - all ads are now free",
-      timestamp: new Date().toISOString()
+      message: "Monetbil integration has been completely removed - all ads are now free",
+      status: "deprecated",
+      timestamp: new Date().toISOString(),
+      migration_completed: true
     }),
     {
       status: 200,
