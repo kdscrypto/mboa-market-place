@@ -24,21 +24,11 @@ import {
 import {
   validatePaymentAmount,
   processStandardAd,
-  callMonetbilAPI,
   type PaymentRequest
 } from './modules/paymentProcessing.ts'
 
 import {
-  createPaymentTransaction,
-  updateTransactionWithMonetbilResponse,
-  generatePaymentUrls,
-  type TransactionData
-} from './modules/transactionManagement.ts'
-
-import {
-  logTransactionCreated,
-  logMonetbilApiError,
-  logPaymentInitiated
+  logTransactionCreated
 } from './modules/auditLogging.ts'
 
 import {
@@ -46,12 +36,11 @@ import {
   createErrorResponse,
   createRateLimitResponse,
   createSuspiciousActivityResponse,
-  createStandardAdResponse,
-  createPremiumAdResponse
+  createStandardAdResponse
 } from './modules/responseUtils.ts'
 
 serve(async (req) => {
-  console.log('=== PAYMENT FUNCTION START ===')
+  console.log('=== FREE AD CREATION FUNCTION START ===')
   console.log('Request method:', req.method)
   console.log('Request URL:', req.url)
 
@@ -81,28 +70,28 @@ serve(async (req) => {
     console.log('Checking rate limits for user and IP...')
     
     // Check user-based rate limiting using database function
-    const userRateLimit = await checkRateLimit(supabase, user.id, 'user', 5, 60)
+    const userRateLimit = await checkRateLimit(supabase, user.id, 'user', 10, 60) // Increased limit for free ads
     if (!userRateLimit.allowed) {
       console.log('User rate limit exceeded:', userRateLimit)
       return createRateLimitResponse(
-        'Trop de tentatives de paiement. Veuillez réessayer plus tard.',
+        'Trop de tentatives de création d\'annonces. Veuillez réessayer plus tard.',
         userRateLimit.retryAfter
       )
     }
 
     // Check IP-based rate limiting using database function
-    const ipRateLimit = await checkRateLimit(supabase, clientIP, 'ip', 10, 60)
+    const ipRateLimit = await checkRateLimit(supabase, clientIP, 'ip', 20, 60) // Increased limit for free ads
     if (!ipRateLimit.allowed) {
       console.log('IP rate limit exceeded:', ipRateLimit)
       return createRateLimitResponse(
-        'Trop de tentatives de paiement depuis cette adresse IP. Veuillez réessayer plus tard.',
+        'Trop de tentatives de création d\'annonces depuis cette adresse IP. Veuillez réessayer plus tard.',
         ipRateLimit.retryAfter
       )
     }
 
     console.log('Parsing request body...')
     const { adData, adType }: PaymentRequest = await req.json()
-    console.log('Payment request received:', { 
+    console.log('Ad creation request received:', { 
       userId: user.id, 
       adType, 
       adTitle: adData.title,
@@ -110,7 +99,7 @@ serve(async (req) => {
       clientIP 
     })
 
-    // Validate payment amount
+    // Validate payment amount (should always be 0 now)
     console.log('Validating payment amount...')
     const amount = validatePaymentAmount(adType)
     console.log('Amount validated:', amount)
@@ -132,20 +121,12 @@ serve(async (req) => {
       return createSuspiciousActivityResponse()
     }
 
-    // For standard ads (free), process directly
-    if (amount === 0) {
-      console.log('Processing standard (free) ad...')
-      const adId = await processStandardAd(supabase, adData, adType, user.id)
-      console.log('Standard ad created successfully:', adId)
-      return createStandardAdResponse(adId)
-    }
-
-    // For premium ads, create payment transaction with enhanced security features
-    console.log('Processing premium ad payment...')
-    const { returnUrl, cancelUrl, notifyUrl } = generatePaymentUrls(req)
-    console.log('Payment URLs generated:', { returnUrl, cancelUrl, notifyUrl })
-
-    // Generate client fingerprint for additional security
+    // All ads are now free - process directly
+    console.log('Processing free ad (all ads are now free)...')
+    const adId = await processStandardAd(supabase, adData, adType, user.id)
+    console.log('Free ad created successfully:', adId)
+    
+    // Generate client fingerprint for security logging
     const clientFingerprint = await generateClientFingerprint(userAgent, clientIP)
     console.log('Client fingerprint generated:', clientFingerprint)
 
@@ -153,34 +134,11 @@ serve(async (req) => {
     const securityScore = calculateSecurityScore(suspiciousActivity, userRateLimit, ipRateLimit)
     console.log('Security score calculated:', securityScore)
 
-    // Create payment transaction record with enhanced security
-    const transactionData: TransactionData = {
-      user_id: user.id,
-      amount,
-      currency: 'XAF',
-      status: 'pending',
-      return_url: returnUrl,
-      cancel_url: cancelUrl,
-      notify_url: notifyUrl,
-      payment_data: { 
-        adData, 
-        adType,
-        client_ip: clientIP,
-        user_agent: userAgent,
-        security_fingerprint: clientFingerprint
-      },
-      client_fingerprint: clientFingerprint,
-      security_score: securityScore,
-    }
-
-    console.log('Creating payment transaction...')
-    const transaction = await createPaymentTransaction(supabase, transactionData)
-    console.log('Payment transaction created:', { id: transaction.id, expires_at: transaction.expires_at })
-
-    // Enhanced audit logging with security context
+    // Enhanced audit logging with security context (using a fake transaction ID for logging)
+    const fakeTransactionId = `free-ad-${adId}`
     await logTransactionCreated(
       supabase,
-      transaction.id,
+      fakeTransactionId,
       user.id,
       amount,
       adType,
@@ -192,102 +150,19 @@ serve(async (req) => {
       suspiciousActivity,
       clientFingerprint
     )
-
-    // Get Monetbil API credentials
-    console.log('Retrieving Monetbil credentials...')
-    const serviceKey = Deno.env.get('MONETBIL_SERVICE_KEY')
-    const serviceSecret = Deno.env.get('MONETBIL_SERVICE_SECRET')
-
-    console.log('Monetbil credentials check:', {
-      hasServiceKey: !!serviceKey,
-      serviceKeyLength: serviceKey?.length || 0,
-      hasServiceSecret: !!serviceSecret,
-      serviceSecretLength: serviceSecret?.length || 0
-    })
-
-    if (!serviceKey || !serviceSecret) {
-      console.error('Monetbil API credentials not configured')
-      return createErrorResponse('Service de paiement non configuré. Veuillez contacter l\'administrateur.')
-    }
-
-    try {
-      console.log('Calling Monetbil API...')
-      // Call Monetbil API with improved error handling
-      const monetbilResult = await callMonetbilAPI(
-        serviceKey,
-        serviceSecret,
-        amount,
-        adData,
-        transaction.id,
-        user.id,
-        user.email,
-        returnUrl,
-        cancelUrl,
-        notifyUrl
-      )
-
-      console.log('Monetbil API call successful, token received:', monetbilResult.substring(0, 20) + '...')
-
-      // Update transaction with Monetbil response
-      await updateTransactionWithMonetbilResponse(supabase, transaction.id, monetbilResult)
-
-      // Enhanced success logging
-      await logPaymentInitiated(
-        supabase,
-        transaction.id,
-        monetbilResult,
-        securityScore,
-        clientFingerprint,
-        suspiciousActivity,
-        clientIP,
-        userAgent
-      )
-
-      const paymentUrl = `https://api.monetbil.com/widget/v2.1/${monetbilResult}`
-      console.log('Payment URL generated:', paymentUrl)
-      
-      console.log('=== PAYMENT FUNCTION SUCCESS ===')
-      return createPremiumAdResponse(
-        paymentUrl,
-        transaction.id,
-        transaction.expires_at,
-        securityScore
-      )
-
-    } catch (monetbilError) {
-      console.error('=== MONETBIL API ERROR ===')
-      console.error('Monetbil API error details:', {
-        error: monetbilError,
-        message: monetbilError.message,
-        stack: monetbilError.stack
-      })
-      
-      // Enhanced API error logging
-      await logMonetbilApiError(
-        supabase,
-        transaction.id,
-        500,
-        monetbilError.message,
-        clientIP,
-        userAgent,
-        securityScore
-      )
-      
-      return createErrorResponse(
-        `Erreur de paiement: ${monetbilError.message}`,
-        500
-      )
-    }
+    
+    console.log('=== FREE AD CREATION SUCCESS ===')
+    return createStandardAdResponse(adId)
 
   } catch (error) {
-    console.error('=== PAYMENT PROCESSING ERROR ===')
-    console.error('Payment processing error details:', {
+    console.error('=== AD CREATION ERROR ===')
+    console.error('Ad creation error details:', {
       error: error,
       message: error.message,
       stack: error.stack
     })
     return createErrorResponse(
-      error.message || 'Erreur lors du traitement du paiement',
+      error.message || 'Erreur lors de la création de l\'annonce',
       500
     )
   }

@@ -438,8 +438,6 @@ export type Database = {
           id: string
           locked_at: string | null
           locked_by: string | null
-          monetbil_payment_token: string | null
-          monetbil_transaction_id: string | null
           notify_url: string | null
           payment_data: Json | null
           payment_method: string
@@ -465,8 +463,6 @@ export type Database = {
           id?: string
           locked_at?: string | null
           locked_by?: string | null
-          monetbil_payment_token?: string | null
-          monetbil_transaction_id?: string | null
           notify_url?: string | null
           payment_data?: Json | null
           payment_method?: string
@@ -492,8 +488,6 @@ export type Database = {
           id?: string
           locked_at?: string | null
           locked_by?: string | null
-          monetbil_payment_token?: string | null
-          monetbil_transaction_id?: string | null
           notify_url?: string | null
           payment_data?: Json | null
           payment_method?: string

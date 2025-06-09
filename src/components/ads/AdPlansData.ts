@@ -1,11 +1,11 @@
 
-// Ad plan options and their details
+// Ad plan options - all are now free
 export const adPlans = [
   { id: "standard", name: "Annonce Standard", price: 0, duration: "30 jours", description: "Gratuit" },
-  { id: "premium_24h", name: "Premium 24H", price: 1000, duration: "24 heures", description: "Mise en avant pendant 24 heures" },
-  { id: "premium_7d", name: "Premium 7 Jours", price: 5000, duration: "7 jours", description: "Mise en avant pendant 7 jours" },
-  { id: "premium_15d", name: "Premium 15 Jours", price: 10000, duration: "15 jours", description: "Mise en avant pendant 15 jours" },
-  { id: "premium_30d", name: "Premium 30 Jours", price: 15000, duration: "30 jours", description: "Mise en avant pendant 30 jours" },
+  { id: "premium_24h", name: "Premium 24H", price: 0, duration: "24 heures", description: "Gratuit - Mise en avant pendant 24 heures" },
+  { id: "premium_7d", name: "Premium 7 Jours", price: 0, duration: "7 jours", description: "Gratuit - Mise en avant pendant 7 jours" },
+  { id: "premium_15d", name: "Premium 15 Jours", price: 0, duration: "15 jours", description: "Gratuit - Mise en avant pendant 15 jours" },
+  { id: "premium_30d", name: "Premium 30 Jours", price: 0, duration: "30 jours", description: "Gratuit - Mise en avant pendant 30 jours" },
 ];
 
 // Format price to display comma separated thousands

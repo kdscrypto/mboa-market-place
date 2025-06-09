@@ -5,8 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import PaymentStatusBadge from "@/components/ads/PaymentStatusBadge";
-import { Eye, Edit, Trash2, RefreshCw } from "lucide-react";
+import { Eye, Edit, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -19,10 +18,6 @@ interface UserAd {
   status: string;
   ad_type: string;
   created_at: string;
-  payment_transaction_id?: string;
-  payment_transactions?: {
-    status: string;
-  };
 }
 
 const UserAdsTable = () => {
@@ -38,12 +33,7 @@ const UserAdsTable = () => {
 
       const { data, error } = await supabase
         .from('ads')
-        .select(`
-          *,
-          payment_transactions (
-            status
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -78,10 +68,7 @@ const UserAdsTable = () => {
   };
 
   const getAdTypeColor = (adType: string) => {
-    switch (adType) {
-      case 'standard': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-purple-100 text-purple-800';
-    }
+    return 'bg-blue-100 text-blue-800'; // All ads are now free
   };
 
   const formatPrice = (price: number) => {
@@ -149,7 +136,7 @@ const UserAdsTable = () => {
                         {ad.status === 'rejected' && 'Rejetée'}
                       </Badge>
                       <Badge className={getAdTypeColor(ad.ad_type)}>
-                        {ad.ad_type === 'standard' ? 'Gratuite' : 'Premium'}
+                        Gratuit
                       </Badge>
                     </div>
                     
@@ -163,17 +150,6 @@ const UserAdsTable = () => {
                         })}
                       </span>
                     </div>
-
-                    {/* Payment Status for Premium Ads */}
-                    {ad.payment_transaction_id && (
-                      <div className="mt-2">
-                        <PaymentStatusBadge
-                          transactionId={ad.payment_transaction_id}
-                          status={ad.payment_transactions?.status as any}
-                          showTrackingButton={true}
-                        />
-                      </div>
-                    )}
                   </div>
                   
                   <div className="flex gap-2">
