@@ -23,7 +23,7 @@ export const validateFormData = (formData: AdFormData): AdSubmissionData => {
   // Convert the sanitized data to match AdSubmissionData interface
   return {
     ...sanitizedData,
-    price: sanitizedData.price.toString() // Convert number back to string for AdSubmissionData
+    price: sanitizedData.price.toString() // Keep as string since AdSubmissionData expects string
   };
 };
 
