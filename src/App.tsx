@@ -44,7 +44,10 @@ function App() {
               <Route path="/categories" element={<Categories />} />
               <Route path="/category/:categoryName" element={<CategoryPage />} />
               <Route path="/publier-annonce" element={<CreateAd />} />
-              <Route path="/publier" element={<Navigate to="/login" replace />} />
+              <Route 
+                path="/publier" 
+                element={<Navigate to="/login" state={{ from: "/publier-annonce" }} replace />} 
+              />
               <Route path="/connexion" element={<Login />} />
               <Route path="/annonce/:id" element={<AdDetail />} />
               <Route path="/login" element={<Login />} />

@@ -9,7 +9,7 @@ import { useLocation } from "react-router-dom";
 
 const Login = () => {
   const location = useLocation();
-  const fromPage = (location.state as { from?: string })?.from || "/publier-annonce";
+  const fromPage = (location.state as { from?: string })?.from || "/dashboard";
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -19,7 +19,10 @@ const Login = () => {
         <div className="mboa-container max-w-md">
           <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-md">
             <p className="text-sm text-orange-800">
-              Connectez-vous ou créez un compte pour publier votre annonce gratuitement.
+              {fromPage === "/publier-annonce" 
+                ? "Connectez-vous ou créez un compte pour publier votre annonce gratuitement."
+                : "Connectez-vous à votre compte Mboa Market."
+              }
             </p>
           </div>
           
