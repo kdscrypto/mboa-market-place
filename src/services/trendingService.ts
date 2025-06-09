@@ -2,6 +2,23 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 
+// Helper function to validate image URLs
+export const isValidImageUrl = (url: string): boolean => {
+  if (!url || typeof url !== 'string') return false;
+  
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl) return false;
+  
+  // Check if it's a valid URL format
+  try {
+    new URL(trimmedUrl);
+    return true;
+  } catch {
+    // If it's not a valid URL, check if it's a relative path
+    return trimmedUrl.startsWith('/') || trimmedUrl.startsWith('./') || trimmedUrl.startsWith('../');
+  }
+};
+
 export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
   try {
     console.log("Fetching featured ads (formerly premium)...");
