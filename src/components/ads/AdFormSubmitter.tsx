@@ -83,12 +83,35 @@ export const useAdSubmission = () => {
         }
       }
 
-      console.log('Creating free ad directly...');
+      console.log('Creating ad with payment integration...');
       
-      // Call the simplified ad creation function
+      // Calculate premium expiration date based on ad type
+      let premiumExpiresAt = null;
+      if (sanitizedData.adType !== 'standard') {
+        const now = new Date();
+        switch (sanitizedData.adType) {
+          case 'premium_24h':
+            premiumExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            break;
+          case 'premium_7d':
+            premiumExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'premium_15d':
+            premiumExpiresAt = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
+            break;
+          case 'premium_30d':
+            premiumExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            break;
+        }
+      }
+      
+      // Call the payment processing function
       const { data: adResult, error: adError } = await supabase.functions.invoke('monetbil-payment', {
         body: {
-          adData: sanitizedData,
+          adData: {
+            ...sanitizedData,
+            premiumExpiresAt: premiumExpiresAt?.toISOString()
+          },
           adType: sanitizedData.adType
         }
       });
@@ -102,7 +125,7 @@ export const useAdSubmission = () => {
         throw new Error(adResult.error || 'Erreur lors de la création de l\'annonce');
       }
 
-      console.log('Free ad created successfully:', adResult.adId);
+      console.log('Ad created successfully:', adResult.adId);
       
       // Upload images if any
       if (formData.images && formData.images.length > 0) {
@@ -112,9 +135,13 @@ export const useAdSubmission = () => {
       setIsSubmitted(true);
       setShowPreview(false);
       
+      const successMessage = sanitizedData.adType === 'standard' 
+        ? "Votre annonce a été soumise pour modération et sera bientôt disponible."
+        : `Votre annonce premium a été créée et sera mise en avant jusqu'au ${premiumExpiresAt?.toLocaleDateString('fr-FR')}.`;
+      
       toast({
         title: "Annonce créée avec succès",
-        description: "Votre annonce a été soumise pour modération et sera bientôt disponible.",
+        description: successMessage,
         duration: 5000,
       });
       

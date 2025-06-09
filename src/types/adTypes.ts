@@ -16,4 +16,5 @@ export interface Ad {
   is_premium?: boolean;
   ad_type?: string;
   reject_reason?: string;
+  premium_expires_at?: string | null;
 }

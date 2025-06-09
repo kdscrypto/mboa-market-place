@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { fetchPremiumAds } from "@/services/trendingService";
+import { convertExpiredPremiumAds } from "@/services/premiumExpirationService";
 import { Ad } from "@/types/adTypes";
 import PremiumAdGrid from "@/components/premium/PremiumAdGrid";
 import EmptyState from "@/components/ads/EmptyState";
@@ -18,6 +19,11 @@ const TrendingAdsSection = () => {
       
       try {
         console.log("Loading featured ads for trending section...");
+        
+        // First, check for expired premium ads and convert them
+        await convertExpiredPremiumAds();
+        
+        // Then load the current premium ads
         const ads = await fetchPremiumAds(8); // Limiter à 8 pour la section trending
         console.log("Featured ads loaded:", ads.length);
         setPremiumAds(ads);
