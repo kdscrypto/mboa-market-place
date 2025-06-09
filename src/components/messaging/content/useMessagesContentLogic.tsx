@@ -1,5 +1,6 @@
 
 import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Conversation } from "@/services/messaging/types";
 import { useMessaging } from "@/hooks/useMessaging";
 import { useNotificationSettings } from "@/hooks/messaging/useNotificationSettings";
@@ -7,6 +8,7 @@ import { useNotificationSettings } from "@/hooks/messaging/useNotificationSettin
 export const useMessagesContentLogic = () => {
   const messaging = useMessaging();
   const notifications = useNotificationSettings();
+  const [searchParams] = useSearchParams();
   
   const [filteredConversations, setFilteredConversations] = useState<Conversation[]>(messaging.conversations);
 
@@ -14,6 +16,19 @@ export const useMessagesContentLogic = () => {
   useEffect(() => {
     setFilteredConversations(messaging.conversations);
   }, [messaging.conversations]);
+
+  // Auto-select conversation from URL parameter
+  useEffect(() => {
+    const conversationId = searchParams.get('conversation');
+    if (conversationId && messaging.conversations.length > 0) {
+      // Check if the conversation exists in the user's conversations
+      const conversationExists = messaging.conversations.some(conv => conv.id === conversationId);
+      if (conversationExists && messaging.currentConversation !== conversationId) {
+        console.log(`[MESSAGES] Auto-selecting conversation from URL: ${conversationId}`);
+        messaging.loadMessages(conversationId);
+      }
+    }
+  }, [searchParams, messaging.conversations, messaging.currentConversation, messaging.loadMessages]);
 
   const handleConversationSelect = useCallback((conversationId: string) => {
     messaging.loadMessages(conversationId);

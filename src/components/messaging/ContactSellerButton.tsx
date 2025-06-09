@@ -58,10 +58,12 @@ const ContactSellerButton: React.FC<ContactSellerButtonProps> = ({ ad }) => {
         return;
       }
       
-      // Fermer la boîte de dialogue et rediriger vers la conversation
+      // Fermer la boîte de dialogue et rediriger vers la page des messages
       setIsOpen(false);
       setMessage("");
-      navigate(`/messages/${conversation.id}`);
+      
+      // Rediriger vers la page des messages générale avec l'ID de conversation en paramètre d'URL
+      navigate(`/messages?conversation=${conversation.id}`);
       toast.success("Message envoyé avec succès");
     } catch (error) {
       console.error("Erreur lors de la création de la conversation:", error);
