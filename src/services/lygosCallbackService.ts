@@ -64,16 +64,23 @@ export const processLygosCallback = async (
 
             // Update transaction if exists
             if (ad.payment_transaction_id) {
+              const existingTransactions = ad.payment_transactions as any;
+              const existingPaymentData = Array.isArray(existingTransactions) && existingTransactions.length > 0 
+                ? existingTransactions[0].payment_data 
+                : {};
+              
+              const updatedPaymentData = {
+                ...(typeof existingPaymentData === 'object' ? existingPaymentData : {}),
+                lygosCallback: verification.paymentData,
+                callbackProcessedAt: new Date().toISOString()
+              };
+
               await supabase
                 .from('payment_transactions')
                 .update({
                   status: 'completed',
                   completed_at: new Date().toISOString(),
-                  payment_data: {
-                    ...(ad.payment_transactions as any)?.payment_data,
-                    lygosCallback: verification.paymentData,
-                    callbackProcessedAt: new Date().toISOString()
-                  }
+                  payment_data: updatedPaymentData
                 })
                 .eq('id', ad.payment_transaction_id);
             }
@@ -188,16 +195,20 @@ export const startPaymentStatusPolling = (
       }
 
       // If still pending and has Lygos payment ID, verify with Lygos
-      if (transaction?.payment_data?.lygosPaymentId) {
-        const verification = await verifyLygosPayment(transaction.payment_data.lygosPaymentId);
+      if (transaction?.payment_data) {
+        const paymentDataObj = transaction.payment_data as any;
         
-        if (verification.success && verification.paymentData) {
-          const lygosStatus = verification.paymentData.status?.toLowerCase();
+        if (paymentDataObj && typeof paymentDataObj === 'object' && paymentDataObj.lygosPaymentId) {
+          const verification = await verifyLygosPayment(paymentDataObj.lygosPaymentId);
           
-          if (['completed', 'success', 'paid', 'failed', 'cancelled', 'expired'].includes(lygosStatus)) {
-            // Status changed, update will be handled by webhook or manual verification
-            onStatusUpdate(lygosStatus);
-            return true; // Stop polling
+          if (verification.success && verification.paymentData) {
+            const lygosStatus = verification.paymentData.status?.toLowerCase();
+            
+            if (['completed', 'success', 'paid', 'failed', 'cancelled', 'expired'].includes(lygosStatus)) {
+              // Status changed, update will be handled by webhook or manual verification
+              onStatusUpdate(lygosStatus);
+              return true; // Stop polling
+            }
           }
         }
       }

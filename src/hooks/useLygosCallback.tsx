@@ -79,15 +79,21 @@ export const useLygosCallback = () => {
 
                 // Update transaction if exists
                 if (ad.payment_transaction_id) {
+                  const existingPaymentData = Array.isArray(ad.payment_transactions) && ad.payment_transactions.length > 0 
+                    ? ad.payment_transactions[0].payment_data 
+                    : {};
+                  
+                  const updatedPaymentData = {
+                    ...(typeof existingPaymentData === 'object' ? existingPaymentData : {}),
+                    lygosCallback: verification.paymentData
+                  };
+
                   await supabase
                     .from('payment_transactions')
                     .update({
                       status: 'completed',
                       completed_at: new Date().toISOString(),
-                      payment_data: {
-                        ...ad.payment_transactions?.payment_data,
-                        lygosCallback: verification.paymentData
-                      }
+                      payment_data: updatedPaymentData
                     })
                     .eq('id', ad.payment_transaction_id);
                 }

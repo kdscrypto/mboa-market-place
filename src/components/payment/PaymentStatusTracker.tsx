@@ -44,42 +44,48 @@ const PaymentStatusTracker: React.FC<PaymentStatusTrackerProps> = ({
       let currentStatus = transaction.status;
       
       // If pending and has Lygos payment ID, verify with Lygos
-      if (currentStatus === 'pending' && transaction.payment_data?.lygosPaymentId) {
-        try {
-          const verification = await verifyLygosPayment(transaction.payment_data.lygosPaymentId);
-          
-          if (verification.success && verification.paymentData) {
-            const lygosStatus = verification.paymentData.status?.toLowerCase();
+      if (currentStatus === 'pending' && transaction.payment_data) {
+        const paymentDataObj = transaction.payment_data as any;
+        
+        if (paymentDataObj && typeof paymentDataObj === 'object' && paymentDataObj.lygosPaymentId) {
+          try {
+            const verification = await verifyLygosPayment(paymentDataObj.lygosPaymentId);
             
-            // Map Lygos status to our internal status
-            if (lygosStatus === 'completed' || lygosStatus === 'success' || lygosStatus === 'paid') {
-              currentStatus = 'completed';
-            } else if (lygosStatus === 'failed' || lygosStatus === 'cancelled') {
-              currentStatus = 'failed';
-            } else if (lygosStatus === 'expired') {
-              currentStatus = 'expired';
+            if (verification.success && verification.paymentData) {
+              const lygosStatus = verification.paymentData.status?.toLowerCase();
+              
+              // Map Lygos status to our internal status
+              if (lygosStatus === 'completed' || lygosStatus === 'success' || lygosStatus === 'paid') {
+                currentStatus = 'completed';
+              } else if (lygosStatus === 'failed' || lygosStatus === 'cancelled') {
+                currentStatus = 'failed';
+              } else if (lygosStatus === 'expired') {
+                currentStatus = 'expired';
+              }
+              
+              setPaymentData(verification.paymentData);
+              
+              // Update local database if status changed
+              if (currentStatus !== transaction.status) {
+                const updatedPaymentData = {
+                  ...(typeof transaction.payment_data === 'object' ? transaction.payment_data : {}),
+                  lastVerification: verification.paymentData
+                };
+                
+                await supabase
+                  .from('payment_transactions')
+                  .update({ 
+                    status: currentStatus,
+                    completed_at: currentStatus === 'completed' ? new Date().toISOString() : null,
+                    payment_data: updatedPaymentData
+                  })
+                  .eq('id', transactionId);
+              }
             }
-            
-            setPaymentData(verification.paymentData);
-            
-            // Update local database if status changed
-            if (currentStatus !== transaction.status) {
-              await supabase
-                .from('payment_transactions')
-                .update({ 
-                  status: currentStatus,
-                  completed_at: currentStatus === 'completed' ? new Date().toISOString() : null,
-                  payment_data: {
-                    ...transaction.payment_data,
-                    lastVerification: verification.paymentData
-                  }
-                })
-                .eq('id', transactionId);
-            }
+          } catch (verifyError) {
+            console.error('Verification error:', verifyError);
+            // Don't throw, just log - transaction might still be processing
           }
-        } catch (verifyError) {
-          console.error('Verification error:', verifyError);
-          // Don't throw, just log - transaction might still be processing
         }
       }
 
