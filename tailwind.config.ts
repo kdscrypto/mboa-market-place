@@ -2,7 +2,7 @@
 import type { Config } from "tailwindcss";
 
 export default {
-	darkMode: ["class", '[data-theme="dark"]'],
+	darkMode: ["class"],
 	content: [
 		"./pages/**/*.{ts,tsx}",
 		"./components/**/*.{ts,tsx}",
@@ -63,7 +63,7 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for Mboa Market with CSS variable references
+				// Custom colors for Mboa Market
 				'mboa-orange': 'var(--color-primary-accent)',
 				'mboa-green': 'var(--color-green)', 
 				'mboa-blue': 'var(--color-blue)',

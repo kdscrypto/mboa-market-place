@@ -55,9 +55,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     if (typeof window !== 'undefined') {
       const htmlElement = document.documentElement;
       if (newTheme === 'dark') {
-        htmlElement.setAttribute('data-theme', 'dark');
+        htmlElement.classList.add('dark');
       } else {
-        htmlElement.removeAttribute('data-theme');
+        htmlElement.classList.remove('dark');
       }
     }
   };
@@ -70,18 +70,20 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     applyTheme(initialTheme);
 
     // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-      // Only apply system preference if user hasn't set a preference
-      if (!getUserPreference()) {
-        const systemTheme = e.matches ? 'dark' : 'light';
-        setThemeState(systemTheme);
-        applyTheme(systemTheme);
-      }
-    };
+    if (typeof window !== 'undefined') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+        // Only apply system preference if user hasn't set a preference
+        if (!getUserPreference()) {
+          const systemTheme = e.matches ? 'dark' : 'light';
+          setThemeState(systemTheme);
+          applyTheme(systemTheme);
+        }
+      };
 
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+      mediaQuery.addEventListener('change', handleSystemThemeChange);
+      return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+    }
   }, []);
 
   const setTheme = (newTheme: Theme) => {

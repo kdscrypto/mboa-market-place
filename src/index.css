@@ -32,12 +32,16 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Custom Mboa colors */
-    --mboa-orange: 25 95% 53%;
-    --mboa-blue: 213 94% 68%;
-    --mboa-green: 134 61% 41%;
-    --mboa-gray: 210 20% 96%;
-    --mboa-dark: 222.2 84% 4.9%;
+    /* Custom Mboa colors - Light mode */
+    --color-primary-accent: #ff6b2b;
+    --color-green: #52c41a;
+    --color-blue: #1890ff;
+    --color-surface-elevated: #f5f5f5;
+    --color-text-primary: #2c2c2c;
+    --color-background: #ffffff;
+    --color-surface: #f8f9fa;
+    --color-text-secondary: #6b7280;
+    --color-border: #e5e7eb;
   }
 
   .dark {
@@ -65,6 +69,17 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* Custom Mboa colors - Dark mode */
+    --color-primary-accent: #ff7a4d;
+    --color-green: #73d13d;
+    --color-blue: #40a9ff;
+    --color-surface-elevated: #374151;
+    --color-text-primary: #f9fafb;
+    --color-background: #111827;
+    --color-surface: #1f2937;
+    --color-text-secondary: #9ca3af;
+    --color-border: #374151;
   }
 }
 
@@ -103,11 +118,11 @@
   }
   
   .mboa-gradient {
-    background: linear-gradient(135deg, hsl(var(--mboa-orange)) 0%, hsl(var(--mboa-blue)) 100%);
+    background: linear-gradient(135deg, var(--color-primary-accent) 0%, var(--color-blue) 100%);
   }
   
   .mboa-text-gradient {
-    background: linear-gradient(135deg, hsl(var(--mboa-orange)) 0%, hsl(var(--mboa-blue)) 100%);
+    background: linear-gradient(135deg, var(--color-primary-accent) 0%, var(--color-blue) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -153,7 +168,7 @@
   /* Enhanced focus styles for better accessibility */
   .focus-enhanced:focus {
     outline: none;
-    box-shadow: 0 0 0 4px hsl(var(--mboa-orange) / 0.5), 0 0 0 2px hsl(var(--background));
+    box-shadow: 0 0 0 4px var(--color-primary-accent), 0 0 0 2px hsl(var(--background));
   }
   
   /* High contrast focus indicators */
@@ -167,7 +182,7 @@
     position: absolute;
     left: 0;
     top: 0;
-    background-color: hsl(var(--mboa-orange));
+    background-color: var(--color-primary-accent);
     color: white;
     padding: 1rem;
     z-index: 50;
