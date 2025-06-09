@@ -47,7 +47,13 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <header 
+      className="shadow-sm border-b sticky top-0 z-50 transition-colors duration-200"
+      style={{ 
+        backgroundColor: 'var(--color-header-bg)', 
+        borderBottomColor: 'var(--color-header-border)' 
+      }}
+    >
       <nav className="mboa-container py-2">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-xl font-bold">
@@ -58,11 +64,16 @@ const Header = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center flex-1 max-w-2xl mx-8">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" style={{ color: 'var(--color-text-secondary)' }} />
               <input
                 type="text"
                 placeholder="Rechercher une annonce..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mboa-orange focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-mboa-orange focus:border-transparent transition-colors duration-200"
+                style={{ 
+                  backgroundColor: 'var(--color-background)',
+                  borderColor: 'var(--color-border)',
+                  color: 'var(--color-text-primary)'
+                }}
               />
             </div>
           </div>
@@ -79,18 +90,31 @@ const Header = () => {
             
             {user ? (
               <>
-                <Link to="/messages" className="text-gray-700 hover:text-mboa-orange transition-colors">
+                <Link 
+                  to="/messages" 
+                  className="transition-colors"
+                  style={{ color: 'var(--color-header-text)' }}
+                  onMouseEnter={(e) => e.target.style.color = 'var(--color-primary-accent)'}
+                  onMouseLeave={(e) => e.target.style.color = 'var(--color-header-text)'}
+                >
                   <MessageCircle className="h-5 w-5" />
                 </Link>
                 
-                <Link to="/dashboard" className="text-gray-700 hover:text-mboa-orange transition-colors">
+                <Link 
+                  to="/dashboard" 
+                  className="transition-colors"
+                  style={{ color: 'var(--color-header-text)' }}
+                  onMouseEnter={(e) => e.target.style.color = 'var(--color-primary-accent)'}
+                  onMouseLeave={(e) => e.target.style.color = 'var(--color-header-text)'}
+                >
                   <User className="h-5 w-5" />
                 </Link>
                 
                 <Button
                   variant="ghost"
                   onClick={handleSignOut}
-                  className="text-gray-700 hover:text-mboa-orange"
+                  style={{ color: 'var(--color-header-text)' }}
+                  className="hover:text-mboa-orange"
                 >
                   Déconnexion
                 </Button>
@@ -107,7 +131,7 @@ const Header = () => {
             <Button
               variant="ghost"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-700"
+              style={{ color: 'var(--color-header-text)' }}
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
@@ -116,14 +140,19 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t pt-4">
+          <div className="md:hidden mt-4 pb-4 border-t pt-4" style={{ borderTopColor: 'var(--color-header-border)' }}>
             <div className="flex flex-col space-y-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" style={{ color: 'var(--color-text-secondary)' }} />
                 <input
                   type="text"
                   placeholder="Rechercher une annonce..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mboa-orange focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-mboa-orange focus:border-transparent transition-colors duration-200"
+                  style={{ 
+                    backgroundColor: 'var(--color-background)',
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text-primary)'
+                  }}
                 />
               </div>
               
@@ -138,7 +167,8 @@ const Header = () => {
                 <div className="flex flex-col space-y-4">
                   <Link 
                     to="/messages" 
-                    className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
+                    className="flex items-center transition-colors"
+                    style={{ color: 'var(--color-header-text)' }}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <MessageCircle className="mr-2 h-4 w-4" />
@@ -147,7 +177,8 @@ const Header = () => {
                   
                   <Link 
                     to="/dashboard" 
-                    className="text-gray-700 hover:text-mboa-orange transition-colors flex items-center"
+                    className="flex items-center transition-colors"
+                    style={{ color: 'var(--color-header-text)' }}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <User className="mr-2 h-4 w-4" />
@@ -160,7 +191,8 @@ const Header = () => {
                       handleSignOut();
                       setIsMenuOpen(false);
                     }}
-                    className="text-gray-700 hover:text-mboa-orange w-full justify-start"
+                    className="w-full justify-start"
+                    style={{ color: 'var(--color-header-text)' }}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     Déconnexion

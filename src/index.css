@@ -42,6 +42,9 @@
     --color-surface: #f8f9fa;
     --color-text-secondary: #6b7280;
     --color-border: #e5e7eb;
+    --color-header-bg: #ffffff;
+    --color-header-text: #374151;
+    --color-header-border: #e5e7eb;
   }
 
   .dark {
@@ -80,6 +83,9 @@
     --color-surface: #1f2937;
     --color-text-secondary: #9ca3af;
     --color-border: #374151;
+    --color-header-bg: #1f2937;
+    --color-header-text: #f9fafb;
+    --color-header-border: #374151;
   }
 }
 
@@ -88,8 +94,8 @@
     border-color: hsl(var(--border));
   }
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
     font-family: "Inter", sans-serif;
   }
 }

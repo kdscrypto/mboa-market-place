@@ -75,6 +75,9 @@ export default {
 				'theme-text': 'var(--color-text-primary)',
 				'theme-text-secondary': 'var(--color-text-secondary)',
 				'theme-border': 'var(--color-border)',
+				'theme-header-bg': 'var(--color-header-bg)',
+				'theme-header-text': 'var(--color-header-text)',
+				'theme-header-border': 'var(--color-header-border)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
