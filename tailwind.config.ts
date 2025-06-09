@@ -63,21 +63,48 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for Mboa Market
+				// Modern Mboa Market colors
 				'mboa-orange': 'var(--color-primary-accent)',
 				'mboa-green': 'var(--color-green)', 
 				'mboa-blue': 'var(--color-blue)',
 				'mboa-gray': 'var(--color-surface-elevated)',
 				'mboa-dark': 'var(--color-text-primary)',
-				// Theme-aware colors
+				
+				// Theme-aware semantic colors
 				'theme-bg': 'var(--color-background)',
 				'theme-surface': 'var(--color-surface)',
+				'theme-surface-elevated': 'var(--color-surface-elevated)',
 				'theme-text': 'var(--color-text-primary)',
 				'theme-text-secondary': 'var(--color-text-secondary)',
 				'theme-border': 'var(--color-border)',
 				'theme-header-bg': 'var(--color-header-bg)',
 				'theme-header-text': 'var(--color-header-text)',
 				'theme-header-border': 'var(--color-header-border)',
+				
+				// Extended semantic colors
+				'theme-success': 'var(--color-success)',
+				'theme-warning': 'var(--color-warning)',
+				'theme-error': 'var(--color-error)',
+				'theme-info': 'var(--color-info)',
+				
+				// Neutral scale
+				'theme-neutral': {
+					50: 'var(--color-neutral-50)',
+					100: 'var(--color-neutral-100)',
+					200: 'var(--color-neutral-200)',
+					300: 'var(--color-neutral-300)',
+					400: 'var(--color-neutral-400)',
+					500: 'var(--color-neutral-500)',
+					600: 'var(--color-neutral-600)',
+					700: 'var(--color-neutral-700)',
+					800: 'var(--color-neutral-800)',
+					900: 'var(--color-neutral-900)',
+				},
+				
+				// Gradient colors
+				'gradient-start': 'var(--color-gradient-start)',
+				'gradient-end': 'var(--color-gradient-end)',
+				'gradient-accent': 'var(--color-gradient-accent)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -118,13 +145,26 @@ export default {
 					'100%': {
 						opacity: '0',
 					}
+				},
+				'gradient-shift': {
+					'0%, 100%': {
+						'background-position': '0% 50%'
+					},
+					'50%': {
+						'background-position': '100% 50%'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.3s ease-out',
-				'fade-out': 'fade-out 0.3s ease-out'
+				'fade-out': 'fade-out 0.3s ease-out',
+				'gradient-shift': 'gradient-shift 3s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'gradient-mboa': 'linear-gradient(135deg, var(--color-gradient-start) 0%, var(--color-gradient-end) 100%)',
+				'gradient-mboa-accent': 'linear-gradient(135deg, var(--color-gradient-start) 0%, var(--color-gradient-accent) 50%, var(--color-gradient-end) 100%)',
 			}
 		}
 	},
