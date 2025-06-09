@@ -94,8 +94,8 @@ const Header = () => {
                   to="/messages" 
                   className="transition-colors"
                   style={{ color: 'var(--color-header-text)' }}
-                  onMouseEnter={(e) => e.target.style.color = 'var(--color-primary-accent)'}
-                  onMouseLeave={(e) => e.target.style.color = 'var(--color-header-text)'}
+                  onMouseEnter={(e) => (e.target as HTMLElement).style.color = 'var(--color-primary-accent)'}
+                  onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'var(--color-header-text)'}
                 >
                   <MessageCircle className="h-5 w-5" />
                 </Link>
@@ -104,8 +104,8 @@ const Header = () => {
                   to="/dashboard" 
                   className="transition-colors"
                   style={{ color: 'var(--color-header-text)' }}
-                  onMouseEnter={(e) => e.target.style.color = 'var(--color-primary-accent)'}
-                  onMouseLeave={(e) => e.target.style.color = 'var(--color-header-text)'}
+                  onMouseEnter={(e) => (e.target as HTMLElement).style.color = 'var(--color-primary-accent)'}
+                  onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'var(--color-header-text)'}
                 >
                   <User className="h-5 w-5" />
                 </Link>
