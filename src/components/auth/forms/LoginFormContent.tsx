@@ -12,7 +12,6 @@ import { loginSchema, LoginFormValues } from "../validation/authSchemas";
 import EmailField from "../components/EmailField";
 import PasswordField from "../components/PasswordField";
 import SecurityAlerts from "../components/SecurityAlerts";
-import SecurityMetrics from "../components/SecurityMetrics";
 import { useSecurityCheck } from "@/hooks/useSecurityCheck";
 import { generateSecurityRecommendations } from "@/services/securityService";
 
@@ -27,7 +26,6 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
 }) => {
   const { checkSecurity, isBlocked, blockEndTime } = useSecurityCheck();
   const [attemptCount, setAttemptCount] = useState(0);
-  const [showMetrics, setShowMetrics] = useState(false);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -74,8 +72,6 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSecureSubmit)}>
         <CardContent className="space-y-4">
-          <SecurityMetrics showMetrics={showMetrics} />
-          
           <SecurityAlerts 
             isBlocked={isBlocked} 
             blockEndTime={blockEndTime}
@@ -86,17 +82,6 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
           
           <EmailField form={form} />
           <PasswordField form={form} showForgotPassword={true} />
-          
-          {/* Bouton pour afficher/masquer les métriques de sécurité */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShowMetrics(!showMetrics)}
-              className="text-xs text-gray-500 hover:text-gray-700 underline"
-            >
-              {showMetrics ? 'Masquer' : 'Afficher'} les métriques de sécurité
-            </button>
-          </div>
         </CardContent>
         
         <CardFooter>
