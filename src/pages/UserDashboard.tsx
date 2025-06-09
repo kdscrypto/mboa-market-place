@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ interface Ad {
   price: number;
   status: string;
   created_at: string;
-  imageUrl?: string; // URL de l'image principale (optionnelle)
+  imageUrl?: string;
 }
 
 const UserDashboard = () => {
@@ -37,10 +38,8 @@ const UserDashboard = () => {
     checkAuth();
   }, [navigate]);
 
-  // Récupérer les annonces de l'utilisateur
   const fetchUserAds = async (userId: string) => {
     try {
-      // Récupérer les annonces
       const { data: ads, error } = await supabase
         .from('ads')
         .select('*')
@@ -49,7 +48,6 @@ const UserDashboard = () => {
       
       if (error) throw error;
       
-      // Pour chaque annonce, récupérer l'image principale
       const adsWithImages = await Promise.all(
         ads.map(async (ad) => {
           const { data: images } = await supabase
@@ -68,7 +66,6 @@ const UserDashboard = () => {
       
       setUserAds(adsWithImages);
       
-      // Vérifier les annonces en attente
       const pendingAds = adsWithImages.filter(ad => ad.status === "pending");
       if (pendingAds.length > 0) {
         toast({
@@ -89,7 +86,6 @@ const UserDashboard = () => {
     }
   };
 
-  // S'abonner aux mises à jour en temps réel des annonces
   useEffect(() => {
     if (!user) return;
     
@@ -118,8 +114,8 @@ const UserDashboard = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-grow py-8 bg-mboa-gray">
-          <div className="mboa-container max-w-5xl">
+        <main className="flex-grow py-6 bg-mboa-gray">
+          <div className="mboa-container max-w-6xl">
             <div className="bg-white rounded-lg shadow p-6">
               <p className="text-center">Chargement...</p>
             </div>
@@ -134,22 +130,26 @@ const UserDashboard = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <main className="flex-grow py-8 bg-mboa-gray">
-        <div className="mboa-container max-w-5xl">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold">Mon tableau de bord</h1>
-              <Button 
-                asChild 
-                className="mt-4 md:mt-0 bg-mboa-orange hover:bg-mboa-orange/90"
-              >
-                <Link to="/publier-annonce">
-                  Publier une nouvelle annonce
-                </Link>
-              </Button>
+      <main className="flex-grow py-6 bg-mboa-gray">
+        <div className="mboa-container max-w-6xl">
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h1 className="text-2xl font-bold">Mon tableau de bord</h1>
+                <Button 
+                  asChild 
+                  className="bg-mboa-orange hover:bg-mboa-orange/90"
+                >
+                  <Link to="/publier-annonce">
+                    Publier une nouvelle annonce
+                  </Link>
+                </Button>
+              </div>
             </div>
             
-            <UserDashboardTabs user={user} />
+            <div className="p-4">
+              <UserDashboardTabs user={user} />
+            </div>
           </div>
         </div>
       </main>

@@ -6,38 +6,38 @@ import { Facebook, Instagram, Linkedin, Twitter, Youtube, Heart } from "lucide-r
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   return (
-    <footer className="theme-bg-surface theme-text-primary mt-12 border-t theme-border">
-      <div className="mboa-container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="theme-bg-surface theme-text-primary border-t theme-border mt-6">
+      <div className="mboa-container py-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Présentation */}
           <div>
-            <h3 className="text-xl font-bold mb-4 theme-text-primary">Mboa Market</h3>
-            <p className="theme-text-secondary">
+            <h3 className="text-lg font-bold mb-3 theme-text-primary">Mboa Market</h3>
+            <p className="theme-text-secondary text-sm">
               La plateforme de petites annonces simple et efficace pour acheter et vendre au Cameroun.
             </p>
           </div>
 
           {/* Liens utiles */}
           <div>
-            <h3 className="text-lg font-semibold mb-3 theme-text-primary">Liens Utiles</h3>
-            <ul className="space-y-2">
+            <h3 className="text-base font-semibold mb-2 theme-text-primary">Liens Utiles</h3>
+            <ul className="space-y-1">
               <li>
-                <Link to="/a-propos" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Link to="/a-propos" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   À propos
                 </Link>
               </li>
               <li>
-                <Link to="/aide" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Link to="/aide" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   Aide
                 </Link>
               </li>
               <li>
-                <Link to="/conditions" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Link to="/conditions" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   Conditions Générales
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Link to="/contact" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   Contact
                 </Link>
               </li>
@@ -46,20 +46,20 @@ const Footer = () => {
 
           {/* Pour les annonceurs */}
           <div>
-            <h3 className="text-lg font-semibold mb-3 theme-text-primary">Pour les annonceurs</h3>
-            <ul className="space-y-2">
+            <h3 className="text-base font-semibold mb-2 theme-text-primary">Pour les annonceurs</h3>
+            <ul className="space-y-1">
               <li>
-                <Link to="/publier" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Link to="/publier" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   Publier une annonce
                 </Link>
               </li>
               <li>
-                <Link to="/premium" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Link to="/premium" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   Offres premium
                 </Link>
               </li>
               <li>
-                <Link to="/conseils-vendeurs" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Link to="/conseils-vendeurs" className="theme-text-secondary hover:text-mboa-orange transition-colors text-sm">
                   Conseils aux vendeurs
                 </Link>
               </li>
@@ -68,34 +68,34 @@ const Footer = () => {
 
           {/* Réseaux sociaux */}
           <div>
-            <h3 className="text-lg font-semibold mb-3 theme-text-primary">Suivez-nous</h3>
-            <div className="grid grid-cols-5 gap-3">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="flex items-center theme-text-secondary hover:text-mboa-orange transition-colors">
-                <Facebook size={24} />
+            <h3 className="text-base font-semibold mb-2 theme-text-primary">Suivez-nous</h3>
+            <div className="flex gap-3">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Facebook size={20} />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="flex items-center theme-text-secondary hover:text-mboa-orange transition-colors">
-                <Instagram size={24} />
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Instagram size={20} />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="flex items-center theme-text-secondary hover:text-mboa-orange transition-colors">
-                <Twitter size={24} />
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Twitter size={20} />
               </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="flex items-center theme-text-secondary hover:text-mboa-orange transition-colors">
-                <Linkedin size={24} />
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Linkedin size={20} />
               </a>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="flex items-center theme-text-secondary hover:text-mboa-orange transition-colors">
-                <Youtube size={24} />
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+                <Youtube size={20} />
               </a>
             </div>
           </div>
         </div>
         
-        <div className="border-t theme-border mt-8 pt-6 text-center">
-          <p className="theme-text-secondary">
+        <div className="border-t theme-border mt-4 pt-4 text-center">
+          <p className="theme-text-secondary text-sm">
             &copy; {currentYear} Mboa Market. Tous droits réservés.
           </p>
-          <div className="mt-4">
+          <div className="mt-2">
             <p className="text-xs theme-text-secondary opacity-60">
-              <span>built with <Heart className="inline-block text-red-500" size={12} fill="red" /> by KDS</span>
+              <span>built with <Heart className="inline-block text-red-500" size={10} fill="red" /> by KDS</span>
             </p>
           </div>
         </div>
