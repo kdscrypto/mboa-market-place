@@ -41,6 +41,39 @@ export type Database = {
           },
         ]
       }
+      ad_plans: {
+        Row: {
+          created_at: string
+          description: string
+          duration_days: number
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          duration_days: number
+          id: string
+          is_active?: boolean
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ads: {
         Row: {
           ad_type: string
@@ -49,6 +82,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          payment_id: string | null
           payment_transaction_id: string | null
           phone: string
           premium_expires_at: string | null
@@ -68,6 +102,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          payment_id?: string | null
           payment_transaction_id?: string | null
           phone: string
           premium_expires_at?: string | null
@@ -87,6 +122,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          payment_id?: string | null
           payment_transaction_id?: string | null
           phone?: string
           premium_expires_at?: string | null
@@ -100,6 +136,13 @@ export type Database = {
           whatsapp?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "ads_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ads_payment_transaction_id_fkey"
             columns: ["payment_transaction_id"]
@@ -512,6 +555,72 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          ad_id: string | null
+          amount: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          expires_at: string | null
+          id: string
+          payment_method: string | null
+          payment_reference: string | null
+          payment_url: string | null
+          plan_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ad_id?: string | null
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_url?: string | null
+          plan_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ad_id?: string | null
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_url?: string | null
+          plan_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "ad_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_messages: {
         Row: {
           content: string
@@ -576,6 +685,10 @@ export type Database = {
       acquire_transaction_lock: {
         Args: { transaction_uuid: string; lock_identifier: string }
         Returns: boolean
+      }
+      calculate_premium_expiration: {
+        Args: { plan_id: string; created_at: string }
+        Returns: string
       }
       check_rate_limit: {
         Args: {

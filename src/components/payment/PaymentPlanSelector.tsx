@@ -2,19 +2,26 @@
 import React from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { usePaymentPlans } from "@/hooks/usePaymentPlans";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Loader2 } from "lucide-react";
+import { Star, Clock } from "lucide-react";
 
-interface AdPlanSelectorProps {
-  value: string;
-  onChange: (value: string) => void;
+interface AdPlan {
+  id: string;
+  name: string;
+  price: number;
+  duration_days: number;
+  description: string;
+  is_active: boolean;
 }
 
-const AdPlanSelector = ({ value, onChange }: AdPlanSelectorProps) => {
-  const { plans, loading } = usePaymentPlans();
+interface PaymentPlanSelectorProps {
+  plans: AdPlan[];
+  selectedPlan: string;
+  onPlanChange: (planId: string) => void;
+}
 
+const PaymentPlanSelector = ({ plans, selectedPlan, onPlanChange }: PaymentPlanSelectorProps) => {
   const formatPrice = (price: number) => {
     return price === 0 ? "Gratuit" : `${price.toLocaleString('fr-FR')} XAF`;
   };
@@ -27,30 +34,14 @@ const AdPlanSelector = ({ value, onChange }: AdPlanSelectorProps) => {
     return `${days} jours`;
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        <label className="block font-medium">
-          Type d'annonce <span className="text-red-500">*</span>
-        </label>
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="ml-2">Chargement des plans...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-3">
-      <label className="block font-medium">
-        Type d'annonce <span className="text-red-500">*</span>
-      </label>
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Choisir un plan d'annonce</h3>
       
-      <RadioGroup value={value} onValueChange={onChange} className="space-y-3">
-        {plans.map((plan) => (
+      <RadioGroup value={selectedPlan} onValueChange={onPlanChange}>
+        {plans.filter(plan => plan.is_active).map((plan) => (
           <Card key={plan.id} className={`cursor-pointer transition-colors ${
-            value === plan.id ? 'ring-2 ring-mboa-orange bg-orange-50' : 'hover:bg-gray-50'
+            selectedPlan === plan.id ? 'ring-2 ring-mboa-orange bg-orange-50' : 'hover:bg-gray-50'
           }`}>
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
@@ -89,4 +80,4 @@ const AdPlanSelector = ({ value, onChange }: AdPlanSelectorProps) => {
   );
 };
 
-export default AdPlanSelector;
+export default PaymentPlanSelector;
