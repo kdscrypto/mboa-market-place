@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { createLygosPayment } from '@/services/lygosService';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -46,20 +46,27 @@ const PaymentRetryManager: React.FC<PaymentRetryManagerProps> = ({
         await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
       }
 
-      // Call the payment function again with the original data
-      const { data: paymentResult, error: paymentError } = await supabase.functions.invoke('monetbil-payment', {
-        body: {
-          adData: originalAdData,
-          adType: originalAdType
-        }
-      });
+      // Create new Lygos payment with original data
+      const baseUrl = window.location.origin;
+      const externalReference = `retry_${Date.now()}_${transactionId}`;
+      
+      const paymentData = {
+        amount: originalAdData?.amount || 1000, // Default amount if not available
+        currency: 'XAF',
+        description: `Nouvelle tentative - Annonce: ${originalAdData?.title || 'Annonce premium'}`,
+        customerName: originalAdData?.customerName || 'Client',
+        customerEmail: originalAdData?.customerEmail,
+        customerPhone: originalAdData?.customerPhone,
+        returnUrl: `${baseUrl}/payment-return?retry=true&original=${transactionId}`,
+        cancelUrl: `${baseUrl}/payment-tracking/${transactionId}`,
+        webhookUrl: `${window.location.origin}/api/lygos-webhook`,
+        externalReference
+      };
 
-      if (paymentError) {
-        throw new Error(paymentError.message || 'Erreur lors de la création du nouveau paiement');
-      }
+      const lygosResult = await createLygosPayment(paymentData);
 
-      if (!paymentResult.success) {
-        throw new Error(paymentResult.error || 'Erreur lors du traitement du paiement');
+      if (!lygosResult.success || !lygosResult.paymentUrl) {
+        throw new Error(lygosResult.error || 'Erreur lors de la création du nouveau paiement Lygos');
       }
 
       // Update retry history
@@ -68,36 +75,23 @@ const PaymentRetryManager: React.FC<PaymentRetryManagerProps> = ({
         success: true
       }]);
 
-      // If payment required, redirect to payment
-      if (paymentResult.paymentRequired) {
-        toast({
-          title: "Nouveau paiement créé",
-          description: "Redirection vers la page de paiement...",
-        });
-        
-        // Store retry information
-        sessionStorage.setItem('paymentRetryInfo', JSON.stringify({
-          originalTransactionId: transactionId,
-          newTransactionId: paymentResult.transactionId,
-          retryCount: retryCount + 1
-        }));
-        
-        // Redirect to payment
-        window.location.href = paymentResult.paymentUrl;
-        
-        if (onRetrySuccess) {
-          onRetrySuccess(paymentResult.transactionId);
-        }
-      } else {
-        // Free ad created successfully
-        toast({
-          title: "Annonce créée",
-          description: "Votre annonce a été créée avec succès.",
-        });
-        
-        if (onRetrySuccess) {
-          onRetrySuccess(paymentResult.adId);
-        }
+      toast({
+        title: "Nouveau paiement créé",
+        description: "Redirection vers la page de paiement Lygos...",
+      });
+      
+      // Store retry information
+      sessionStorage.setItem('paymentRetryInfo', JSON.stringify({
+        originalTransactionId: transactionId,
+        newTransactionId: lygosResult.transactionId,
+        retryCount: retryCount + 1
+      }));
+      
+      // Redirect to Lygos payment
+      window.location.href = lygosResult.paymentUrl;
+      
+      if (onRetrySuccess) {
+        onRetrySuccess(lygosResult.transactionId || '');
       }
       
     } catch (error) {
@@ -184,7 +178,7 @@ const PaymentRetryManager: React.FC<PaymentRetryManagerProps> = ({
           ) : (
             <>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Réessayer le paiement ({remainingRetries} tentatives restantes)
+              Réessayer le paiement avec Lygos ({remainingRetries} tentatives restantes)
             </>
           )}
         </Button>
