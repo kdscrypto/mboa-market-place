@@ -1,5 +1,4 @@
 
-
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
@@ -121,15 +120,15 @@
   }
   
   .accessibility-large-text .text-xs {
-    font-size: 0.875rem !important; /* 14px - equivalent to text-sm */
+    @apply !text-sm;
   }
   
   .accessibility-large-text .text-sm {
-    font-size: 1rem !important; /* 16px - equivalent to text-base */
+    @apply !text-base;
   }
   
   .accessibility-large-text .text-base {
-    font-size: 1.125rem !important; /* 18px - equivalent to text-lg */
+    @apply !text-lg;
   }
 
   /* Enhanced focus styles for better accessibility */
@@ -156,4 +155,3 @@
     }
   }
 }
-
