@@ -3,10 +3,10 @@ export interface AuditLog {
   id: string;
   transaction_id: string;
   event_type: string;
-  event_data: any;
+  event_data: Record<string, any>;
   ip_address: string | null;
   user_agent: string | null;
-  security_flags: any;
+  security_flags: Record<string, any> | null;
   created_at: string;
 }
 
@@ -21,12 +21,11 @@ export const AUDIT_EVENT_TYPES = [
   'payment_created',
   'payment_completed',
   'payment_failed',
-  'payment_retry_attempt',
-  'payment_retry_success',
-  'payment_retry_failed',
-  'lygos_callback_processed',
-  'transaction_expired',
-  'lock_attempt',
-  'lock_released',
-  'security_event_detected'
-] as const;
+  'payment_cancelled',
+  'payment_verification_performed',
+  'payment_verification_failed',
+  'payment_creation_failed',
+  'security_event',
+  'user_action',
+  'system_action'
+];

@@ -1,257 +1,256 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { createLygosPayment } from '@/services/lygosService';
-import { supabase } from '@/integrations/supabase/client';
+import { createLygosPayment, verifyLygosPayment } from '@/services/lygosService';
+import type { LygosPaymentRequest, LygosPaymentResponse } from '@/services/lygosService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CreditCard, ArrowRight, AlertCircle } from 'lucide-react';
-import PaymentStatusTracker from './PaymentStatusTracker';
+import { 
+  CreditCard, 
+  CheckCircle, 
+  AlertTriangle, 
+  Clock,
+  ExternalLink,
+  RefreshCw
+} from 'lucide-react';
 
 interface LygosPaymentFlowProps {
-  adData: {
-    title: string;
-    description: string;
-    category: string;
-    price: string;
-    region: string;
-    city: string;
-    phone: string;
-    whatsapp?: string;
-    adType: string;
-  };
-  planData: {
-    price: number;
-    name: string;
-    description: string;
-  };
-  onSuccess?: (adId: string) => void;
-  onCancel?: () => void;
+  amount: number;
+  currency: string;
+  description: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  onSuccess?: (transactionId: string) => void;
+  onError?: (error: string) => void;
 }
 
 const LygosPaymentFlow: React.FC<LygosPaymentFlowProps> = ({
-  adData,
-  planData,
+  amount,
+  currency,
+  description,
+  customerName,
+  customerEmail,
+  customerPhone,
   onSuccess,
-  onCancel
+  onError
 }) => {
-  const [step, setStep] = useState<'confirm' | 'processing' | 'payment' | 'tracking'>('confirm');
-  const [transactionId, setTransactionId] = useState<string | null>(null);
-  const [adId, setAdId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const navigate = useNavigate();
+  const [paymentResponse, setPaymentResponse] = useState<LygosPaymentResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<string>('pending');
   const { toast } = useToast();
 
-  const createAdAndPayment = async () => {
-    setIsProcessing(true);
-    setError(null);
-    setStep('processing');
-
+  const createPayment = async () => {
+    setIsLoading(true);
     try {
-      // Get current user
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session?.user) {
-        throw new Error('Vous devez être connecté');
-      }
-
-      // Create the ad first
-      const { data: ad, error: adError } = await supabase
-        .from('ads')
-        .insert({
-          user_id: session.user.id,
-          title: adData.title,
-          description: adData.description,
-          price: parseInt(adData.price) || 0,
-          category: adData.category,
-          region: adData.region,
-          city: adData.city,
-          phone: adData.phone,
-          whatsapp: adData.whatsapp,
-          ad_type: adData.adType,
-          status: 'pending_payment'
-        })
-        .select()
-        .single();
-
-      if (adError) {
-        throw new Error('Erreur lors de la création de l\'annonce');
-      }
-
-      setAdId(ad.id);
-
-      // Create Lygos payment
-      const baseUrl = window.location.origin;
-      const externalReference = `ad_${session.user.id}_${ad.id}`;
-      
-      const paymentData = {
-        amount: planData.price,
-        currency: 'XAF',
-        description: `${planData.name}: ${adData.title}`,
-        customerName: session.user.user_metadata?.full_name || 'Client',
-        customerEmail: session.user.email,
-        customerPhone: adData.phone,
-        returnUrl: `${baseUrl}/payment-return?ad_id=${ad.id}`,
-        cancelUrl: `${baseUrl}/publier-annonce`,
-        webhookUrl: `https://hvzqgeeidzkhctoygbts.supabase.co/functions/v1/lygos-webhook`,
-        externalReference
+      const paymentRequest: LygosPaymentRequest = {
+        amount,
+        currency,
+        description,
+        customer: {
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone
+        }
       };
 
-      const lygosResult = await createLygosPayment(paymentData);
-
-      if (!lygosResult.success || !lygosResult.paymentUrl) {
-        // Delete the ad if payment creation failed
-        await supabase.from('ads').delete().eq('id', ad.id);
-        throw new Error(lygosResult.error || 'Erreur lors de la création du paiement Lygos');
-      }
-
-      // Update ad with transaction reference
-      if (lygosResult.transactionId) {
-        await supabase
-          .from('ads')
-          .update({ payment_transaction_id: lygosResult.transactionId })
-          .eq('id', ad.id);
-        
-        setTransactionId(lygosResult.transactionId);
-      }
-
-      setStep('payment');
+      const response = await createLygosPayment(paymentRequest);
       
-      // Store payment info for tracking
-      sessionStorage.setItem('lygosPaymentFlow', JSON.stringify({
-        transactionId: lygosResult.transactionId,
-        adId: ad.id,
-        paymentUrl: lygosResult.paymentUrl
-      }));
+      if (response.success && response.paymentData) {
+        setPaymentResponse(response);
+        setPaymentStatus(response.paymentData.status);
+        
+        toast({
+          title: "Paiement créé",
+          description: "Votre demande de paiement a été créée avec succès",
+        });
 
-      // Small delay before redirect
-      setTimeout(() => {
-        window.location.href = lygosResult.paymentUrl!;
-      }, 2000);
-
+        // Auto-redirect to payment URL
+        if (response.paymentData.payment_url) {
+          window.open(response.paymentData.payment_url, '_blank');
+        }
+      } else {
+        throw new Error(response.error || 'Erreur lors de la création du paiement');
+      }
     } catch (error) {
-      console.error('Payment flow error:', error);
-      setError(error instanceof Error ? error.message : 'Erreur inconnue');
-      setStep('confirm');
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      toast({
+        title: "Erreur de paiement",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      onError?.(errorMessage);
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
 
-  const handleStatusChange = (newStatus: string) => {
-    if (newStatus === 'completed' && adId && onSuccess) {
-      onSuccess(adId);
+  const verifyPayment = async () => {
+    if (!paymentResponse?.paymentData?.id) return;
+
+    setIsVerifying(true);
+    try {
+      const verification = await verifyLygosPayment(paymentResponse.paymentData.id);
+      
+      if (verification.success && verification.paymentData) {
+        setPaymentStatus(verification.paymentData.status);
+        
+        if (verification.paymentData.status === 'completed') {
+          toast({
+            title: "Paiement confirmé",
+            description: "Votre paiement a été traité avec succès",
+          });
+          onSuccess?.(verification.transactionId || '');
+        } else if (verification.paymentData.status === 'failed') {
+          toast({
+            title: "Paiement échoué",
+            description: "Le paiement n'a pas pu être traité",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      toast({
+        title: "Erreur de vérification",
+        description: "Impossible de vérifier le statut du paiement",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
-  const renderConfirmStep = () => (
-    <Card className="max-w-md mx-auto">
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />Complété</Badge>;
+      case 'failed':
+        return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Échoué</Badge>;
+      case 'pending':
+      default:
+        return <Badge variant="outline"><Clock className="h-3 w-3 mr-1" />En attente</Badge>;
+    }
+  };
+
+  // Auto-verify every 10 seconds if payment is pending
+  useEffect(() => {
+    if (paymentResponse && paymentStatus === 'pending') {
+      const interval = setInterval(verifyPayment, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [paymentResponse, paymentStatus]);
+
+  return (
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="h-5 w-5" />
-          Confirmer le paiement
+          Paiement Lygos - Phase 5
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <h3 className="font-medium">{planData.name}</h3>
-          <p className="text-sm text-gray-600">{planData.description}</p>
-          <div className="flex justify-between items-center">
-            <span className="font-medium">Montant:</span>
-            <span className="text-lg font-bold text-mboa-orange">
-              {planData.price.toLocaleString()} XAF
-            </span>
+        {/* Payment Details */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h3 className="font-medium mb-2">Détails du paiement</h3>
+          <div className="space-y-1 text-sm">
+            <p><span className="font-medium">Montant:</span> {amount} {currency}</p>
+            <p><span className="font-medium">Description:</span> {description}</p>
+            <p><span className="font-medium">Client:</span> {customerName}</p>
           </div>
         </div>
 
-        <div className="border-t pt-4">
-          <h4 className="font-medium mb-2">Annonce à publier:</h4>
-          <p className="text-sm">{adData.title}</p>
-          <p className="text-xs text-gray-500">{adData.category} • {adData.region}</p>
+        {/* Payment Status */}
+        {paymentResponse && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Statut du paiement:</span>
+              {getStatusBadge(paymentStatus)}
+            </div>
+            
+            {paymentResponse.paymentData && (
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm"><span className="font-medium">ID de paiement:</span> {paymentResponse.paymentData.id}</p>
+                <p className="text-sm"><span className="font-medium">Créé le:</span> {new Date(paymentResponse.paymentData.created_at).toLocaleString()}</p>
+                {paymentResponse.paymentData.expires_at && (
+                  <p className="text-sm"><span className="font-medium">Expire le:</span> {new Date(paymentResponse.paymentData.expires_at).toLocaleString()}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {!paymentResponse ? (
+            <Button 
+              onClick={createPayment} 
+              disabled={isLoading}
+              className="w-full bg-mboa-orange hover:bg-mboa-orange/90"
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Création en cours...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Créer le paiement
+                </>
+              )}
+            </Button>
+          ) : (
+            <>
+              {paymentResponse.paymentData?.payment_url && paymentStatus === 'pending' && (
+                <Button 
+                  asChild
+                  className="flex-1"
+                >
+                  <a href={paymentResponse.paymentData.payment_url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Payer maintenant
+                  </a>
+                </Button>
+              )}
+              
+              <Button 
+                onClick={verifyPayment} 
+                disabled={isVerifying}
+                variant="outline"
+                className="flex-1"
+              >
+                {isVerifying ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Vérification...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Vérifier le statut
+                  </>
+                )}
+              </Button>
+            </>
+          )}
         </div>
 
-        {error && (
+        {/* Instructions */}
+        {paymentResponse && paymentStatus === 'pending' && (
           <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <Clock className="h-4 w-4" />
+            <AlertDescription>
+              Votre paiement est en cours de traitement. Cliquez sur "Payer maintenant" pour compléter 
+              votre paiement, ou attendez la vérification automatique.
+            </AlertDescription>
           </Alert>
         )}
-
-        <div className="flex gap-2 pt-4">
-          <Button 
-            variant="outline" 
-            onClick={onCancel}
-            className="flex-1"
-            disabled={isProcessing}
-          >
-            Annuler
-          </Button>
-          <Button 
-            onClick={createAdAndPayment}
-            className="flex-1 bg-mboa-orange hover:bg-mboa-orange/90"
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Traitement...
-              </>
-            ) : (
-              <>
-                Payer avec Lygos
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
-        </div>
       </CardContent>
     </Card>
-  );
-
-  const renderProcessingStep = () => (
-    <Card className="max-w-md mx-auto">
-      <CardContent className="flex flex-col items-center p-8">
-        <Loader2 className="h-12 w-12 animate-spin text-mboa-orange mb-4" />
-        <h3 className="text-lg font-medium mb-2">Création du paiement...</h3>
-        <p className="text-sm text-gray-600 text-center">
-          Nous préparons votre paiement Lygos. Veuillez patienter.
-        </p>
-      </CardContent>
-    </Card>
-  );
-
-  const renderPaymentStep = () => (
-    <Card className="max-w-md mx-auto">
-      <CardContent className="flex flex-col items-center p-8">
-        <div className="h-12 w-12 bg-mboa-orange rounded-full flex items-center justify-center mb-4">
-          <ArrowRight className="h-6 w-6 text-white" />
-        </div>
-        <h3 className="text-lg font-medium mb-2">Redirection vers Lygos...</h3>
-        <p className="text-sm text-gray-600 text-center mb-4">
-          Vous allez être redirigé vers la plateforme de paiement Lygos.
-        </p>
-        
-        {transactionId && (
-          <div className="w-full">
-            <PaymentStatusTracker
-              transactionId={transactionId}
-              onStatusChange={handleStatusChange}
-              autoRefresh={true}
-            />
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-mboa-gray p-4">
-      {step === 'confirm' && renderConfirmStep()}
-      {step === 'processing' && renderProcessingStep()}
-      {step === 'payment' && renderPaymentStep()}
-    </div>
   );
 };
 

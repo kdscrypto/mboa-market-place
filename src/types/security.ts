@@ -32,6 +32,6 @@ export interface RateLimitInfo {
 export interface SuspiciousActivityResult {
   risk_score: number;
   auto_block: boolean;
-  severity: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
   event_type: string;
 }

@@ -187,6 +187,31 @@ export const validatePasswordStrength = (password: string): {
   };
 };
 
+// Générer des recommandations de sécurité
+export const generateSecurityRecommendations = (
+  passwordScore: number,
+  attemptCount: number
+): string[] => {
+  const recommendations: string[] = [];
+  
+  if (passwordScore < 50) {
+    recommendations.push('Utilisez un mot de passe plus complexe avec des majuscules, minuscules, chiffres et caractères spéciaux');
+  }
+  
+  if (attemptCount > 3) {
+    recommendations.push('Trop de tentatives de connexion. Vérifiez vos identifiants ou réinitialisez votre mot de passe');
+  }
+  
+  if (passwordScore < 30) {
+    recommendations.push('Évitez les mots de passe communs comme "password" ou "123456"');
+  }
+  
+  recommendations.push('Activez l\'authentification à deux facteurs pour plus de sécurité');
+  recommendations.push('Utilisez un gestionnaire de mots de passe pour générer des mots de passe sécurisés');
+  
+  return recommendations;
+};
+
 // Nettoyer les anciens événements de sécurité
 export const cleanupSecurityEvents = async (): Promise<void> => {
   try {

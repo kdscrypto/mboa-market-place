@@ -16,7 +16,15 @@ export interface LygosPaymentRequest {
 
 export interface LygosPaymentResponse {
   success: boolean;
-  paymentData?: any;
+  paymentData?: {
+    id: string;
+    status: string;
+    amount: number;
+    currency: string;
+    payment_url: string;
+    created_at: string;
+    expires_at: string;
+  };
   error?: string;
   transactionId?: string;
 }
@@ -49,6 +57,7 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
       payment_provider: 'lygos',
       lygos_payment_id: paymentId,
       external_reference: `mboa_${Date.now()}`,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       payment_data: {
         ...paymentRequest,
         phase: 5,
