@@ -36,12 +36,22 @@ export const useLygosCallback = () => {
           return;
         }
 
-        // Process callback using the updated service
+        // Process callback using the service
         const result = await processLygosCallback(adId, paymentId || undefined, status || undefined);
 
         if (result.success) {
           // Map the service status to our callback status
-          const mappedStatus = result.status === 'completed' ? 'success' : result.status;
+          let mappedStatus: 'success' | 'failed' | 'expired' | 'error' = 'success';
+          
+          if (result.status === 'completed') {
+            mappedStatus = 'success';
+          } else if (result.status === 'failed') {
+            mappedStatus = 'failed';
+          } else if (result.status === 'expired') {
+            mappedStatus = 'expired';
+          } else {
+            mappedStatus = 'error';
+          }
           
           setCallbackData({
             status: mappedStatus,
