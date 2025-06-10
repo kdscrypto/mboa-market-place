@@ -27,7 +27,7 @@ export const useCreateAdForm = () => {
       city: "",
       phone: "",
       whatsapp: "",
-      adType: "standard",
+      adType: "standard", // Default to standard (free) plan
       images: []
     }
   });
@@ -88,7 +88,18 @@ export const useCreateAdForm = () => {
 
   // Reset form and submission state
   const handleNewAd = () => {
-    reset();
+    reset({
+      title: "",
+      description: "",
+      category: "",
+      price: "",
+      region: "",
+      city: "",
+      phone: "",
+      whatsapp: "",
+      adType: "standard", // Reset to standard plan
+      images: []
+    });
     setImageURLs([]);
     setCitiesList([]);
     resetSubmissionState();

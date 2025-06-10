@@ -2,7 +2,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Star, Clock } from 'lucide-react';
+import { adPlans, formatPrice } from './AdPlansData';
 
 interface AdPlanSelectorProps {
   selectedPlan: string;
@@ -10,73 +13,108 @@ interface AdPlanSelectorProps {
 }
 
 const AdPlanSelector: React.FC<AdPlanSelectorProps> = ({ selectedPlan, onPlanSelect }) => {
-  // Since all ads are now free, we only show the standard plan
-  const standardPlan = {
-    id: 'standard',
-    name: 'Annonce Gratuite',
-    price: 0,
-    duration_days: null,
-    description: 'Publication gratuite de votre annonce',
-    features: [
-      'Publication immédiate après modération',
-      'Visibilité dans toutes les catégories',
-      'Photos et description complète',
-      'Contact direct par téléphone/WhatsApp',
-      'Aucun frais caché'
-    ]
-  };
-
-  React.useEffect(() => {
-    // Auto-select the standard plan since it's the only option
-    onPlanSelect('standard');
-  }, [onPlanSelect]);
-
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Type d'annonce</h3>
+      <h3 className="text-lg font-semibold">Choisir un plan d'annonce</h3>
       
-      <Card className="border-2 border-green-500 bg-green-50">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg text-green-700">
-              {standardPlan.name}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge className="bg-green-600 text-white">GRATUIT</Badge>
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-700">0 XAF</div>
-              <div className="text-sm text-green-600">Publication gratuite</div>
-            </div>
-            
-            <div className="space-y-2">
-              <p className="text-sm text-gray-700 font-medium">Fonctionnalités incluses :</p>
-              <ul className="space-y-1">
-                {standardPlan.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
-                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <RadioGroup value={selectedPlan} onValueChange={onPlanSelect}>
+        {adPlans.map((plan) => (
+          <Card 
+            key={plan.id} 
+            className={`cursor-pointer transition-colors ${
+              selectedPlan === plan.id 
+                ? 'ring-2 ring-mboa-orange bg-orange-50' 
+                : 'hover:bg-gray-50'
+            }`}
+          >
+            <CardHeader>
+              <div className="flex items-center space-x-3">
+                <RadioGroupItem value={plan.id} id={plan.id} />
+                <Label htmlFor={plan.id} className="flex-1 cursor-pointer">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-lg">{plan.name}</CardTitle>
+                        {plan.id !== 'standard' && (
+                          <Badge className="bg-mboa-orange text-white gap-1">
+                            <Star className="h-3 w-3" />
+                            Premium
+                          </Badge>
+                        )}
+                        {plan.id === 'standard' && (
+                          <Badge variant="outline" className="text-green-600 border-green-600">
+                            Gratuit
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">{plan.description}</p>
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Clock className="h-3 w-3" />
+                        {plan.duration}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-mboa-orange">
+                        {plan.price === 0 ? 'Gratuit' : `${formatPrice(plan.price)} XAF`}
+                      </div>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {plan.id === 'standard' ? (
+                <div className="space-y-2">
+                  <ul className="space-y-1">
+                    <li className="flex items-center gap-2 text-sm text-gray-600">
+                      <Star className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      Publication après modération
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-gray-600">
+                      <Star className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      Visibilité dans les résultats de recherche
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-gray-600">
+                      <Star className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      Photos et description complète
+                    </li>
+                  </ul>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <ul className="space-y-1">
+                    <li className="flex items-center gap-2 text-sm text-gray-600">
+                      <Star className="h-4 w-4 text-mboa-orange flex-shrink-0" />
+                      Mise en avant dans les résultats
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-gray-600">
+                      <Star className="h-4 w-4 text-mboa-orange flex-shrink-0" />
+                      Apparition en tête de liste
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-gray-600">
+                      <Star className="h-4 w-4 text-mboa-orange flex-shrink-0" />
+                      Badge Premium visible
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-gray-600">
+                      <Star className="h-4 w-4 text-mboa-orange flex-shrink-0" />
+                      Priorité dans les suggestions
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </RadioGroup>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-start gap-2">
-          <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <Star className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-800">
-            <p className="font-medium mb-1">Bonne nouvelle !</p>
+            <p className="font-medium mb-1">Pourquoi choisir Premium ?</p>
             <p>
-              Toutes les annonces sur MboaMarket sont désormais entièrement gratuites. 
-              Publiez votre annonce sans aucun frais et profitez de toutes nos fonctionnalités.
+              Les annonces premium bénéficient d'une visibilité accrue et apparaissent 
+              en premier dans les résultats de recherche, augmentant vos chances de vente.
             </p>
           </div>
         </div>
