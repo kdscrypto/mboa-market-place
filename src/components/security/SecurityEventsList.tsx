@@ -1,80 +1,48 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  AlertTriangle, 
-  Shield, 
-  Eye, 
-  Clock, 
-  MapPin,
-  Filter
-} from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
+import { AlertTriangle, Shield, Clock, CheckCircle, XCircle } from 'lucide-react';
+
+interface SecurityEvent {
+  id: string;
+  event_type: string;
+  severity: string;
+  identifier: string;
+  identifier_type: string;
+  risk_score: number;
+  auto_blocked: boolean;
+  reviewed: boolean;
+  created_at: string;
+  event_data: any;
+}
 
 interface SecurityEventsListProps {
-  events: any[];
+  events: SecurityEvent[] | undefined;
   loading: boolean;
 }
 
-const SecurityEventsList = ({ events, loading }: SecurityEventsListProps) => {
-  const [filter, setFilter] = useState('all');
-  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
-
+const SecurityEventsList: React.FC<SecurityEventsListProps> = ({ events, loading }) => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-600';
-      case 'high': return 'bg-orange-600';
-      case 'medium': return 'bg-yellow-600';
-      case 'low': return 'bg-blue-600';
-      default: return 'bg-gray-600';
+      case 'critical': return 'destructive';
+      case 'high': return 'destructive';
+      case 'medium': return 'default';
+      case 'low': return 'secondary';
+      default: return 'outline';
     }
   };
 
-  const getEventIcon = (eventType: string) => {
-    switch (eventType) {
-      case 'webhook_security_violation':
-      case 'advanced_anomaly_detected':
-        return <Shield className="h-4 w-4" />;
-      case 'suspicious_activity_blocked':
-        return <AlertTriangle className="h-4 w-4" />;
-      default:
-        return <Eye className="h-4 w-4" />;
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <AlertTriangle className="h-4 w-4 text-red-600" />;
+      case 'high': return <AlertTriangle className="h-4 w-4 text-orange-600" />;
+      case 'medium': return <Shield className="h-4 w-4 text-yellow-600" />;
+      case 'low': return <Shield className="h-4 w-4 text-blue-600" />;
+      default: return <Shield className="h-4 w-4 text-gray-600" />;
     }
   };
-
-  const markAsReviewed = async (eventId: string) => {
-    try {
-      await supabase
-        .from('payment_security_events')
-        .update({ 
-          reviewed: true, 
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: (await supabase.auth.getUser()).data.user?.id
-        })
-        .eq('id', eventId);
-      
-      // Refresh the page or update the local state
-      window.location.reload();
-    } catch (error) {
-      console.error('Failed to mark as reviewed:', error);
-    }
-  };
-
-  const filteredEvents = events?.filter(event => {
-    if (filter === 'all') return true;
-    if (filter === 'unreviewed') return !event.reviewed;
-    if (filter === 'critical') return event.severity === 'critical';
-    return event.severity === filter;
-  }) || [];
 
   if (loading) {
     return (
@@ -83,8 +51,24 @@ const SecurityEventsList = ({ events, loading }: SecurityEventsListProps) => {
           <CardTitle>Événements de Sécurité</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-center py-8">
+          <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mboa-orange"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!events || events.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Événements de Sécurité</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Aucun événement de sécurité récent</p>
           </div>
         </CardContent>
       </Card>
@@ -94,107 +78,71 @@ const SecurityEventsList = ({ events, loading }: SecurityEventsListProps) => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Événements de Sécurité</CardTitle>
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="unreviewed">Non Révisés</SelectItem>
-                <SelectItem value="critical">Critiques</SelectItem>
-                <SelectItem value="high">Élevés</SelectItem>
-                <SelectItem value="medium">Moyens</SelectItem>
-                <SelectItem value="low">Faibles</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <CardTitle className="flex items-center justify-between">
+          <span>Événements de Sécurité ({events.length})</span>
+          <Badge variant="outline">{events.filter(e => !e.reviewed).length} non examinés</Badge>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {filteredEvents.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Aucun événement trouvé pour ce filtre.
-            </div>
-          ) : (
-            filteredEvents.map((event) => (
-              <div key={event.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      {getEventIcon(event.event_type)}
-                      <span className="font-medium">{event.event_type}</span>
+          {events.map((event) => (
+            <div key={event.id} className="border rounded-lg p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3">
+                  {getSeverityIcon(event.severity)}
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Badge variant={getSeverityColor(event.severity)}>
+                        {event.severity.toUpperCase()}
+                      </Badge>
+                      <span className="text-sm font-medium">{event.event_type}</span>
+                      {event.auto_blocked && (
+                        <Badge variant="destructive" className="text-xs">
+                          AUTO-BLOQUÉ
+                        </Badge>
+                      )}
                     </div>
-                    <Badge className={getSeverityColor(event.severity)}>
-                      {event.severity}
-                    </Badge>
-                    {event.auto_blocked && (
-                      <Badge variant="destructive">
-                        Auto-bloqué
-                      </Badge>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p>
+                        <span className="font-medium">Identifiant:</span> {event.identifier} 
+                        <span className="text-xs ml-2">({event.identifier_type})</span>
+                      </p>
+                      <p>
+                        <span className="font-medium">Score de risque:</span> {event.risk_score}/100
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs">
+                        <Clock className="h-3 w-3" />
+                        <span>{new Date(event.created_at).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    {event.event_data && Object.keys(event.event_data).length > 0 && (
+                      <details className="mt-2">
+                        <summary className="text-xs text-blue-600 cursor-pointer">
+                          Voir les détails
+                        </summary>
+                        <pre className="text-xs bg-gray-50 p-2 rounded mt-2 overflow-auto">
+                          {JSON.stringify(event.event_data, null, 2)}
+                        </pre>
+                      </details>
                     )}
-                    {!event.reviewed && (
-                      <Badge variant="outline" className="border-orange-300 text-orange-600">
-                        Non révisé
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Clock className="h-4 w-4" />
-                    {new Date(event.created_at).toLocaleString('fr-FR')}
                   </div>
                 </div>
-
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    <span>{event.identifier}</span>
-                    <Badge variant="outline" className="text-xs">
-                      {event.identifier_type}
-                    </Badge>
-                  </div>
-                  {event.risk_score && (
-                    <div>
-                      Score de risque: <strong>{event.risk_score}</strong>
+                <div className="flex items-center space-x-2">
+                  {event.reviewed ? (
+                    <div className="flex items-center space-x-1 text-green-600">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-xs">Examiné</span>
                     </div>
-                  )}
-                </div>
-
-                {expandedEvent === event.id && (
-                  <div className="bg-gray-50 p-3 rounded border-l-4 border-blue-500">
-                    <pre className="text-xs overflow-x-auto">
-                      {JSON.stringify(event.event_data, null, 2)}
-                    </pre>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setExpandedEvent(
-                      expandedEvent === event.id ? null : event.id
-                    )}
-                  >
-                    {expandedEvent === event.id ? 'Masquer' : 'Détails'}
-                  </Button>
-                  {!event.reviewed && (
-                    <Button
-                      size="sm"
-                      onClick={() => markAsReviewed(event.id)}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      Marquer comme révisé
-                    </Button>
+                  ) : (
+                    <div className="flex items-center space-x-1 text-orange-600">
+                      <XCircle className="h-4 w-4" />
+                      <span className="text-xs">En attente</span>
+                    </div>
                   )}
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

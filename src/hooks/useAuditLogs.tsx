@@ -32,11 +32,13 @@ export const useAuditLogs = () => {
 
       if (error) throw error;
 
-      // Type conversion avec gestion des valeurs nulles
+      // Type conversion avec gestion des valeurs nulles et correction du type ip_address
       const typedData: AuditLog[] = (data || []).map(item => ({
         ...item,
-        ip_address: item.ip_address || '',
-        user_agent: item.user_agent || ''
+        ip_address: item.ip_address ? String(item.ip_address) : '',
+        user_agent: item.user_agent || '',
+        event_data: item.event_data || {},
+        security_flags: item.security_flags || {}
       }));
 
       setAuditLogs(typedData);

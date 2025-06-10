@@ -1,117 +1,116 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Shield, TrendingUp, AlertTriangle } from 'lucide-react';
 
 interface SecurityMetricsChartProps {
   data: any;
 }
 
-const SecurityMetricsChart = ({ data }: SecurityMetricsChartProps) => {
-  // Simuler des données temporelles pour le graphique
-  const generateTimeSeriesData = () => {
-    const hours = [];
-    for (let i = 23; i >= 0; i--) {
-      const date = new Date();
-      date.setHours(date.getHours() - i);
-      hours.push({
-        time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        transactions: Math.floor(Math.random() * 100 + 50),
-        blocked: Math.floor(Math.random() * 10),
-        risk_score: Math.floor(Math.random() * 50 + 20)
-      });
-    }
-    return hours;
-  };
+const SecurityMetricsChart: React.FC<SecurityMetricsChartProps> = ({ data }) => {
+  // Préparer les données pour les graphiques
+  const securityData = data?.security_metrics ? [
+    { name: 'Transactions Totales', value: data.security_metrics.total_transactions || 0 },
+    { name: 'Transactions Bloquées', value: data.security_metrics.blocked_transactions || 0 },
+    { name: 'Événements Sécurité', value: data.security_metrics.security_events || 0 }
+  ] : [];
 
-  const timeSeriesData = generateTimeSeriesData();
+  const pieData = data?.security_metrics ? [
+    { name: 'Réussies', value: (data.security_metrics.total_transactions || 0) - (data.security_metrics.blocked_transactions || 0), color: '#22c55e' },
+    { name: 'Bloquées', value: data.security_metrics.blocked_transactions || 0, color: '#ef4444' }
+  ] : [];
 
-  const topRiskIPs = data?.security_metrics?.top_risk_ips || [];
-
-  return (
-    <div className="space-y-6">
+  if (!data || !data.security_metrics) {
+    return (
       <Card>
         <CardHeader>
-          <CardTitle>Activité des Transactions (24h)</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Métriques de Sécurité
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer
-            config={{
-              transactions: {
-                label: "Transactions",
-                color: "#3B82F6",
-              },
-              blocked: {
-                label: "Bloquées",
-                color: "#EF4444",
-              },
-            }}
-            className="h-[300px]"
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={timeSeriesData}>
-                <XAxis dataKey="time" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Area 
-                  type="monotone" 
-                  dataKey="transactions" 
-                  stackId="1"
-                  stroke="#3B82F6" 
-                  fill="#3B82F6" 
-                  fillOpacity={0.3}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="blocked" 
-                  stackId="2"
-                  stroke="#EF4444" 
-                  fill="#EF4444" 
-                  fillOpacity={0.6}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+          <div className="flex items-center justify-center h-64 text-gray-500">
+            <div className="text-center">
+              <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Aucune donnée de sécurité disponible</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
+    );
+  }
 
-      {topRiskIPs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Top IPs à Risque</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={{
-                risk_score: {
-                  label: "Score de Risque",
-                  color: "#F59E0B",
-                },
-              }}
-              className="h-[200px]"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topRiskIPs.slice(0, 5)}>
-                  <XAxis 
-                    dataKey="ip" 
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="avg_risk_score" 
-                    fill="#F59E0B" 
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Métriques de Sécurité
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Graphique en barres */}
+          <div>
+            <h4 className="text-sm font-medium mb-4">Activité des Transactions</h4>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={securityData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#3B82F6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Graphique en secteurs */}
+          <div>
+            <h4 className="text-sm font-medium mb-4">Répartition des Transactions</h4>
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Statistiques supplémentaires */}
+        {data.security_metrics.top_risk_ips && data.security_metrics.top_risk_ips.length > 0 && (
+          <div className="mt-6">
+            <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-orange-500" />
+              Adresses IP à Risque
+            </h4>
+            <div className="bg-orange-50 p-3 rounded border">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                {data.security_metrics.top_risk_ips.slice(0, 6).map((ip: string, index: number) => (
+                  <div key={index} className="font-mono bg-white px-2 py-1 rounded">
+                    {ip}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

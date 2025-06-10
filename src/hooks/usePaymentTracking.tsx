@@ -2,20 +2,38 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { verifyLygosPayment } from '@/services/lygosService';
+
+interface PaymentTransaction {
+  id: string;
+  status: string;
+  amount: number;
+  currency: string;
+  created_at: string;
+  expires_at: string;
+  completed_at?: string;
+  payment_data: any;
+  user_id: string;
+  ad_id?: string;
+}
+
+interface TimeRemaining {
+  minutes: number;
+  seconds: number;
+  expired: boolean;
+}
 
 export const usePaymentTracking = (transactionId?: string) => {
-  const [transaction, setTransaction] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [transaction, setTransaction] = useState<PaymentTransaction | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchTransaction = useCallback(async () => {
+  const refreshTransaction = useCallback(async () => {
     if (!transactionId) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const { data, error: fetchError } = await supabase
         .from('payment_transactions')
@@ -24,51 +42,10 @@ export const usePaymentTracking = (transactionId?: string) => {
         .single();
 
       if (fetchError) {
-        throw new Error('Transaction non trouvée');
+        throw new Error(fetchError.message);
       }
 
       setTransaction(data);
-
-      // If transaction is pending and has a Lygos payment ID, verify status
-      if (data.status === 'pending' && data.payment_data && typeof data.payment_data === 'object') {
-        const paymentData = data.payment_data as any;
-        
-        if (paymentData.lygosPaymentId) {
-          try {
-            const verification = await verifyLygosPayment(paymentData.lygosPaymentId);
-            
-            if (verification.success && verification.paymentData) {
-              const lygosStatus = verification.paymentData.status?.toLowerCase();
-              let newStatus = data.status;
-              
-              if (lygosStatus === 'completed' || lygosStatus === 'success' || lygosStatus === 'paid') {
-                newStatus = 'completed';
-              } else if (lygosStatus === 'failed' || lygosStatus === 'cancelled') {
-                newStatus = 'failed';
-              } else if (lygosStatus === 'expired') {
-                newStatus = 'expired';
-              }
-              
-              if (newStatus !== data.status) {
-                // Update local state immediately
-                setTransaction(prev => ({ ...prev, status: newStatus }));
-                
-                // Update in database via webhook simulation or direct update
-                await supabase
-                  .from('payment_transactions')
-                  .update({ 
-                    status: newStatus,
-                    completed_at: newStatus === 'completed' ? new Date().toISOString() : null
-                  })
-                  .eq('id', transactionId);
-              }
-            }
-          } catch (verifyError) {
-            console.error('Error verifying Lygos payment:', verifyError);
-            // Don't throw error here, just log it
-          }
-        }
-      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
       setError(errorMessage);
@@ -78,43 +55,111 @@ export const usePaymentTracking = (transactionId?: string) => {
     }
   }, [transactionId]);
 
-  const refreshTransaction = useCallback(() => {
-    fetchTransaction();
-  }, [fetchTransaction]);
+  const getTimeRemaining = useCallback((): TimeRemaining | null => {
+    if (!transaction || transaction.status !== 'pending') return null;
 
-  const getTimeRemaining = useCallback(() => {
-    if (!transaction?.expires_at) return null;
-    
-    const expirationTime = new Date(transaction.expires_at).getTime();
-    const currentTime = Date.now();
-    const timeLeft = expirationTime - currentTime;
-    
-    if (timeLeft <= 0) {
-      return { expired: true, minutes: 0, seconds: 0 };
+    const now = new Date().getTime();
+    const expiresAt = new Date(transaction.expires_at).getTime();
+    const timeDiff = expiresAt - now;
+
+    if (timeDiff <= 0) {
+      return { minutes: 0, seconds: 0, expired: true };
     }
-    
-    const minutes = Math.floor(timeLeft / (1000 * 60));
-    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-    
-    return { expired: false, minutes, seconds };
+
+    const minutes = Math.floor(timeDiff / (1000 * 60));
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+    return {
+      minutes,
+      seconds,
+      expired: false
+    };
   }, [transaction]);
 
-  const isExpired = useCallback(() => {
-    const timeRemaining = getTimeRemaining();
-    return timeRemaining?.expired || false;
-  }, [getTimeRemaining]);
+  const isExpired = useCallback((): boolean => {
+    if (!transaction) return false;
+    const remaining = getTimeRemaining();
+    return remaining?.expired || false;
+  }, [transaction, getTimeRemaining]);
 
-  const isExpiringSoon = useCallback(() => {
-    const timeRemaining = getTimeRemaining();
-    if (!timeRemaining || timeRemaining.expired) return false;
+  const isExpiringSoon = useCallback((): boolean => {
+    if (!transaction) return false;
+    const remaining = getTimeRemaining();
+    if (!remaining || remaining.expired) return false;
     
-    const totalSeconds = timeRemaining.minutes * 60 + timeRemaining.seconds;
-    return totalSeconds < 300; // Less than 5 minutes
-  }, [getTimeRemaining]);
+    const totalSecondsRemaining = remaining.minutes * 60 + remaining.seconds;
+    return totalSecondsRemaining <= 300; // 5 minutes
+  }, [transaction, getTimeRemaining]);
 
+  // Chargement initial
   useEffect(() => {
-    fetchTransaction();
-  }, [fetchTransaction]);
+    if (transactionId) {
+      refreshTransaction();
+    }
+  }, [transactionId, refreshTransaction]);
+
+  // Polling pour les mises à jour de statut
+  useEffect(() => {
+    if (!transaction || transaction.status !== 'pending') return;
+
+    const interval = setInterval(refreshTransaction, 30000); // Vérifier toutes les 30 secondes
+    return () => clearInterval(interval);
+  }, [transaction, refreshTransaction]);
+
+  // Surveillance en temps réel via Supabase
+  useEffect(() => {
+    if (!transactionId) return;
+
+    const channel = supabase
+      .channel('payment-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'payment_transactions',
+          filter: `id=eq.${transactionId}`
+        },
+        (payload) => {
+          console.log('Transaction updated:', payload);
+          setTransaction(payload.new as PaymentTransaction);
+          
+          // Notifier l'utilisateur des changements de statut
+          if (payload.old?.status !== payload.new?.status) {
+            const newStatus = payload.new?.status;
+            let message = '';
+            let variant: 'default' | 'destructive' = 'default';
+            
+            switch (newStatus) {
+              case 'completed':
+                message = 'Votre paiement a été confirmé avec succès !';
+                break;
+              case 'failed':
+                message = 'Votre paiement a échoué. Veuillez réessayer.';
+                variant = 'destructive';
+                break;
+              case 'expired':
+                message = 'Votre paiement a expiré. Veuillez créer une nouvelle transaction.';
+                variant = 'destructive';
+                break;
+            }
+            
+            if (message) {
+              toast({
+                title: 'Statut du paiement mis à jour',
+                description: message,
+                variant
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [transactionId, toast]);
 
   return {
     transaction,

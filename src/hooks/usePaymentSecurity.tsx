@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +17,7 @@ interface SecurityOptions {
   logAuditEvent: boolean;
 }
 
-// Types pour les réponses des fonctions RPC
+// Types pour les réponses des fonctions RPC avec validation améliorée
 interface RateLimitResponse {
   allowed: boolean;
   blocked_until?: string;
@@ -31,6 +32,39 @@ interface SuspiciousActivityResponse {
   severity: string;
   event_type: string;
 }
+
+// Fonction utilitaire pour valider et convertir les réponses RPC
+const validateRateLimitResponse = (data: any): RateLimitResponse => {
+  if (!data || typeof data !== 'object') {
+    return { allowed: true };
+  }
+  
+  return {
+    allowed: Boolean(data.allowed ?? true),
+    blocked_until: data.blocked_until ? String(data.blocked_until) : undefined,
+    reason: data.reason ? String(data.reason) : undefined,
+    current_count: data.current_count ? Number(data.current_count) : undefined,
+    max_requests: data.max_requests ? Number(data.max_requests) : undefined
+  };
+};
+
+const validateSuspiciousActivityResponse = (data: any): SuspiciousActivityResponse => {
+  if (!data || typeof data !== 'object') {
+    return {
+      risk_score: 0,
+      auto_block: false,
+      severity: 'low',
+      event_type: 'unknown'
+    };
+  }
+  
+  return {
+    risk_score: Number(data.risk_score) || 0,
+    auto_block: Boolean(data.auto_block),
+    severity: String(data.severity) || 'low',
+    event_type: String(data.event_type) || 'unknown'
+  };
+};
 
 export const usePaymentSecurity = () => {
   const [isChecking, setIsChecking] = useState(false);
@@ -70,7 +104,7 @@ export const usePaymentSecurity = () => {
         if (rateLimitError) {
           console.error('Rate limit check error:', rateLimitError);
         } else if (rateLimitData) {
-          const rateLimitResponse = rateLimitData as RateLimitResponse;
+          const rateLimitResponse = validateRateLimitResponse(rateLimitData);
           securityFlags.rateLimit = rateLimitResponse;
           
           if (!rateLimitResponse.allowed) {
@@ -94,7 +128,7 @@ export const usePaymentSecurity = () => {
         if (suspiciousError) {
           console.error('Suspicious activity detection error:', suspiciousError);
         } else if (suspiciousData) {
-          const suspiciousResponse = suspiciousData as SuspiciousActivityResponse;
+          const suspiciousResponse = validateSuspiciousActivityResponse(suspiciousData);
           securityFlags.suspiciousActivity = suspiciousResponse;
           riskScore += suspiciousResponse.risk_score || 0;
           
