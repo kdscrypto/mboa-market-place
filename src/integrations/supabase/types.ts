@@ -315,6 +315,48 @@ export type Database = {
           },
         ]
       }
+      lygos_configurations: {
+        Row: {
+          api_key: string
+          api_secret: string | null
+          base_url: string
+          cancel_url: string | null
+          created_at: string
+          environment: string
+          id: string
+          is_active: boolean
+          return_url: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key: string
+          api_secret?: string | null
+          base_url?: string
+          cancel_url?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          is_active?: boolean
+          return_url?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key?: string
+          api_secret?: string | null
+          base_url?: string
+          cancel_url?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          is_active?: boolean
+          return_url?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       message_reports: {
         Row: {
           created_at: string | null
@@ -548,6 +590,7 @@ export type Database = {
         Row: {
           ad_id: string | null
           amount: number
+          callback_data: Json | null
           cancel_url: string | null
           client_fingerprint: string | null
           completed_at: string | null
@@ -556,12 +599,17 @@ export type Database = {
           data_encryption_key_id: string | null
           encrypted_payment_data: string | null
           expires_at: string
+          external_reference: string | null
           id: string
           locked_at: string | null
           locked_by: string | null
+          lygos_payment_id: string | null
+          lygos_status: string | null
+          lygos_transaction_id: string | null
           notify_url: string | null
           payment_data: Json | null
           payment_method: string
+          payment_provider: string | null
           payment_url: string | null
           processing_lock: boolean | null
           return_url: string | null
@@ -573,6 +621,7 @@ export type Database = {
         Insert: {
           ad_id?: string | null
           amount: number
+          callback_data?: Json | null
           cancel_url?: string | null
           client_fingerprint?: string | null
           completed_at?: string | null
@@ -581,12 +630,17 @@ export type Database = {
           data_encryption_key_id?: string | null
           encrypted_payment_data?: string | null
           expires_at: string
+          external_reference?: string | null
           id?: string
           locked_at?: string | null
           locked_by?: string | null
+          lygos_payment_id?: string | null
+          lygos_status?: string | null
+          lygos_transaction_id?: string | null
           notify_url?: string | null
           payment_data?: Json | null
           payment_method?: string
+          payment_provider?: string | null
           payment_url?: string | null
           processing_lock?: boolean | null
           return_url?: string | null
@@ -598,6 +652,7 @@ export type Database = {
         Update: {
           ad_id?: string | null
           amount?: number
+          callback_data?: Json | null
           cancel_url?: string | null
           client_fingerprint?: string | null
           completed_at?: string | null
@@ -606,12 +661,17 @@ export type Database = {
           data_encryption_key_id?: string | null
           encrypted_payment_data?: string | null
           expires_at?: string
+          external_reference?: string | null
           id?: string
           locked_at?: string | null
           locked_by?: string | null
+          lygos_payment_id?: string | null
+          lygos_status?: string | null
+          lygos_transaction_id?: string | null
           notify_url?: string | null
           payment_data?: Json | null
           payment_method?: string
+          payment_provider?: string | null
           payment_url?: string | null
           processing_lock?: boolean | null
           return_url?: string | null
@@ -785,6 +845,10 @@ export type Database = {
         }
         Returns: Json
       }
+      cleanup_expired_lygos_transactions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_expired_transactions: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -792,6 +856,17 @@ export type Database = {
       cleanup_payment_system: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      create_lygos_transaction: {
+        Args: {
+          p_user_id: string
+          p_ad_id: string
+          p_amount: number
+          p_currency?: string
+          p_description?: string
+          p_external_reference?: string
+        }
+        Returns: string
       }
       create_system_message: {
         Args: {
@@ -818,6 +893,10 @@ export type Database = {
         }
         Returns: Json
       }
+      get_active_lygos_config: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_monetbil_migration_stats: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -836,6 +915,15 @@ export type Database = {
       }
       release_transaction_lock: {
         Args: { transaction_uuid: string; lock_identifier: string }
+        Returns: boolean
+      }
+      update_lygos_transaction_status: {
+        Args: {
+          p_lygos_payment_id: string
+          p_status: string
+          p_lygos_data?: Json
+          p_completed_at?: string
+        }
         Returns: boolean
       }
       validate_image_extension: {

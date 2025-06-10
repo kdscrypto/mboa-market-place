@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { verifyLygosPayment } from '@/services/lygosService';
+import { verifyLygosPayment, updateLygosTransactionStatus } from '@/services/lygosService';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,48 +44,38 @@ const PaymentStatusTracker: React.FC<PaymentStatusTrackerProps> = ({
       let currentStatus = transaction.status;
       
       // If pending and has Lygos payment ID, verify with Lygos
-      if (currentStatus === 'pending' && transaction.payment_data) {
-        const paymentDataObj = transaction.payment_data as any;
-        
-        if (paymentDataObj && typeof paymentDataObj === 'object' && paymentDataObj.lygosPaymentId) {
-          try {
-            const verification = await verifyLygosPayment(paymentDataObj.lygosPaymentId);
+      if (currentStatus === 'pending' && transaction.lygos_payment_id && transaction.payment_provider === 'lygos') {
+        try {
+          const verification = await verifyLygosPayment(transaction.lygos_payment_id);
+          
+          if (verification.success && verification.paymentData) {
+            const lygosStatus = verification.paymentData.status?.toLowerCase();
             
-            if (verification.success && verification.paymentData) {
-              const lygosStatus = verification.paymentData.status?.toLowerCase();
-              
-              // Map Lygos status to our internal status
-              if (lygosStatus === 'completed' || lygosStatus === 'success' || lygosStatus === 'paid') {
-                currentStatus = 'completed';
-              } else if (lygosStatus === 'failed' || lygosStatus === 'cancelled') {
-                currentStatus = 'failed';
-              } else if (lygosStatus === 'expired') {
-                currentStatus = 'expired';
-              }
-              
-              setPaymentData(verification.paymentData);
-              
-              // Update local database if status changed
-              if (currentStatus !== transaction.status) {
-                const updatedPaymentData = {
-                  ...(typeof transaction.payment_data === 'object' ? transaction.payment_data : {}),
-                  lastVerification: verification.paymentData
-                };
-                
-                await supabase
-                  .from('payment_transactions')
-                  .update({ 
-                    status: currentStatus,
-                    completed_at: currentStatus === 'completed' ? new Date().toISOString() : null,
-                    payment_data: updatedPaymentData
-                  })
-                  .eq('id', transactionId);
+            // Update transaction status if different
+            if (lygosStatus !== transaction.lygos_status) {
+              const updateSuccess = await updateLygosTransactionStatus(
+                transaction.lygos_payment_id,
+                lygosStatus,
+                verification.paymentData
+              );
+
+              if (updateSuccess) {
+                // Map Lygos status to our internal status
+                if (lygosStatus === 'completed' || lygosStatus === 'success' || lygosStatus === 'paid') {
+                  currentStatus = 'completed';
+                } else if (lygosStatus === 'failed' || lygosStatus === 'cancelled') {
+                  currentStatus = 'failed';
+                } else if (lygosStatus === 'expired') {
+                  currentStatus = 'expired';
+                }
               }
             }
-          } catch (verifyError) {
-            console.error('Verification error:', verifyError);
-            // Don't throw, just log - transaction might still be processing
+            
+            setPaymentData(verification.paymentData);
           }
+        } catch (verifyError) {
+          console.error('Verification error:', verifyError);
+          // Don't throw, just log - transaction might still be processing
         }
       }
 

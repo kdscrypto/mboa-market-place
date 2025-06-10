@@ -14,6 +14,10 @@ interface PaymentTransaction {
   payment_data: any;
   user_id: string;
   ad_id?: string;
+  lygos_payment_id?: string;
+  lygos_status?: string;
+  external_reference?: string;
+  payment_provider?: string;
 }
 
 interface TimeRemaining {
@@ -46,6 +50,41 @@ export const usePaymentTracking = (transactionId?: string) => {
       }
 
       setTransaction(data);
+
+      // Si la transaction est pending et a un lygos_payment_id, vérifier le statut
+      if (data.status === 'pending' && data.lygos_payment_id && data.payment_provider === 'lygos') {
+        try {
+          const { verifyLygosPayment } = await import('@/services/lygosService');
+          const verification = await verifyLygosPayment(data.lygos_payment_id);
+          
+          if (verification.success && verification.paymentData) {
+            const lygosStatus = verification.paymentData.status?.toLowerCase();
+            
+            // Mettre à jour le statut si nécessaire
+            if (lygosStatus !== data.lygos_status) {
+              const { updateLygosTransactionStatus } = await import('@/services/lygosService');
+              await updateLygosTransactionStatus(
+                data.lygos_payment_id,
+                lygosStatus,
+                verification.paymentData
+              );
+              
+              // Rafraîchir les données
+              const { data: updatedData } = await supabase
+                .from('payment_transactions')
+                .select('*')
+                .eq('id', transactionId)
+                .single();
+                
+              if (updatedData) {
+                setTransaction(updatedData);
+              }
+            }
+          }
+        } catch (verifyError) {
+          console.error('Error verifying Lygos payment:', verifyError);
+        }
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
       setError(errorMessage);

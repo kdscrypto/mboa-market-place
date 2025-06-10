@@ -80,7 +80,7 @@ export const usePaymentRetry = (options: RetryOptions = {}) => {
           });
       }
 
-      // Attempt payment
+      // Attempt payment using the new service
       const result = await createLygosPayment(paymentData);
 
       if (result.success) {

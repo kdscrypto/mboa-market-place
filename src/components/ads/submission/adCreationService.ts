@@ -86,7 +86,7 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
       throw new Error('Erreur lors de la création de l\'annonce');
     }
 
-    // Create Lygos payment
+    // Create Lygos payment using the new service
     const baseUrl = window.location.origin;
     const externalReference = `ad_${session.user.id}_${ad.id}`;
     
