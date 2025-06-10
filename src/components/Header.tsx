@@ -46,6 +46,14 @@ const Header = () => {
     }
   };
 
+  const handlePublishAdClick = () => {
+    if (user) {
+      navigate('/publier-annonce');
+    } else {
+      navigate('/auth', { state: { from: '/publier-annonce' } });
+    }
+  };
+
   return (
     <header 
       className="shadow-sm border-b sticky top-0 z-50 transition-colors duration-200"
@@ -79,11 +87,12 @@ const Header = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90">
-              <Link to="/publier-annonce">
-                <Plus className="mr-2 h-4 w-4" />
-                Publier une annonce
-              </Link>
+            <Button 
+              onClick={handlePublishAdClick}
+              className="bg-mboa-orange hover:bg-mboa-orange/90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Publier une annonce
             </Button>
             
             <ThemeToggleButton />
@@ -156,11 +165,15 @@ const Header = () => {
                 />
               </div>
               
-              <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90 w-full">
-                <Link to="/publier-annonce" onClick={() => setIsMenuOpen(false)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Publier une annonce
-                </Link>
+              <Button 
+                onClick={() => {
+                  handlePublishAdClick();
+                  setIsMenuOpen(false);
+                }}
+                className="bg-mboa-orange hover:bg-mboa-orange/90 w-full"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Publier une annonce
               </Button>
               
               {user ? (
