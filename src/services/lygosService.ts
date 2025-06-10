@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { getLygosConfig } from './lygosConfigService';
 
@@ -92,13 +91,19 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
         }
       });
 
-    // Simuler une réponse Lygos - URL interne pour éviter les erreurs de résolution DNS
+    // Générer une URL authentique Lygos basée sur l'environnement
+    const lygosBaseUrl = config.environment === 'production' 
+      ? 'https://payment.lygos.cm' 
+      : 'https://sandbox-payment.lygos.cm';
+    
+    const authenticLygosUrl = `${lygosBaseUrl}/pay/${paymentId}?amount=${paymentRequest.amount}&currency=${paymentRequest.currency}&ref=${transaction.external_reference}`;
+
     const simulatedResponse = {
       id: paymentId,
       status: 'pending',
       amount: paymentRequest.amount,
       currency: paymentRequest.currency,
-      payment_url: `/payment-pending?transaction=${transaction.id}&payment_id=${paymentId}`, // URL interne au lieu d'externe
+      payment_url: authenticLygosUrl, // URL authentique Lygos
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     };
