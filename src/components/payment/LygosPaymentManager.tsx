@@ -1,103 +1,99 @@
 
 import React, { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
 import { 
   CreditCard, 
+  Zap, 
   CheckCircle, 
-  XCircle, 
-  Clock, 
-  RefreshCw, 
+  AlertCircle,
+  Clock,
   ExternalLink,
-  AlertTriangle
+  RefreshCw
 } from 'lucide-react';
 import { createLygosPayment, verifyLygosPayment } from '@/services/lygosService';
 
-interface PaymentData {
+interface TestPaymentData {
   amount: number;
   description: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  adId: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
 }
 
 const LygosPaymentManager: React.FC = () => {
-  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [testData, setTestData] = useState<TestPaymentData>({
+    amount: 1000,
+    description: 'Test de paiement Lygos - Phase 5',
+    customer_name: 'Utilisateur Test',
+    customer_email: 'test@example.com',
+    customer_phone: '+237600000000'
+  });
+  const [isCreating, setIsCreating] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [paymentResult, setPaymentResult] = useState<any>(null);
+  const [verificationPaymentId, setVerificationPaymentId] = useState('');
   const [verificationResult, setVerificationResult] = useState<any>(null);
-  const [paymentIdToVerify, setPaymentIdToVerify] = useState('');
   const { toast } = useToast();
 
-  const testPaymentData: PaymentData = {
-    amount: 1000,
-    description: 'Test Annonce Premium 24h',
-    customerName: 'Test User',
-    customerEmail: 'test@example.com',
-    customerPhone: '+237123456789',
-    adId: 'test-ad-id'
-  };
-
   const createTestPayment = async () => {
-    setIsCreatingPayment(true);
+    setIsCreating(true);
     setPaymentResult(null);
-
+    
     try {
-      const baseUrl = window.location.origin;
-      const externalReference = `test_${Date.now()}`;
-      
-      const paymentData = {
-        amount: testPaymentData.amount,
+      const result = await createLygosPayment({
+        amount: testData.amount,
         currency: 'XAF',
-        description: testPaymentData.description,
-        customerName: testPaymentData.customerName,
-        customerEmail: testPaymentData.customerEmail,
-        customerPhone: testPaymentData.customerPhone,
-        returnUrl: `${baseUrl}/lygos-callback?ad_id=${testPaymentData.adId}&status=success`,
-        cancelUrl: `${baseUrl}/lygos-callback?ad_id=${testPaymentData.adId}&status=cancelled`,
-        webhookUrl: `https://hvzqgeeidzkhctoygbts.supabase.co/functions/v1/lygos-webhook`,
-        externalReference
-      };
+        description: testData.description,
+        customer: {
+          name: testData.customer_name,
+          email: testData.customer_email,
+          phone: testData.customer_phone
+        },
+        metadata: {
+          test_mode: true,
+          phase: 5,
+          timestamp: new Date().toISOString()
+        }
+      });
 
-      console.log('Creating test payment with data:', paymentData);
-      
-      const result = await createLygosPayment(paymentData);
       setPaymentResult(result);
 
-      if (result.success && result.paymentUrl) {
+      if (result.success) {
         toast({
-          title: "Paiement de test créé",
-          description: "Le lien de paiement a été généré avec succès",
+          title: "Paiement créé avec succès",
+          description: `ID de paiement: ${result.paymentData?.id || 'N/A'}`,
         });
       } else {
         toast({
-          title: "Erreur",
-          description: result.error || "Erreur lors de la création du paiement",
+          title: "Erreur de création",
+          description: result.error || "Erreur inconnue",
           variant: "destructive"
         });
       }
+      
     } catch (error) {
       console.error('Error creating test payment:', error);
       toast({
-        title: "Erreur",
+        title: "Erreur de test",
         description: "Impossible de créer le paiement de test",
         variant: "destructive"
       });
     } finally {
-      setIsCreatingPayment(false);
+      setIsCreating(false);
     }
   };
 
-  const verifyPayment = async () => {
-    if (!paymentIdToVerify.trim()) {
+  const verifyTestPayment = async () => {
+    if (!verificationPaymentId.trim()) {
       toast({
-        title: "Erreur",
-        description: "Veuillez saisir un ID de paiement",
+        title: "ID requis",
+        description: "Veuillez saisir un ID de paiement à vérifier",
         variant: "destructive"
       });
       return;
@@ -105,28 +101,30 @@ const LygosPaymentManager: React.FC = () => {
 
     setIsVerifying(true);
     setVerificationResult(null);
-
+    
     try {
-      const result = await verifyLygosPayment(paymentIdToVerify.trim());
+      const result = await verifyLygosPayment(verificationPaymentId);
+
       setVerificationResult(result);
 
       if (result.success) {
         toast({
           title: "Vérification réussie",
-          description: "Le statut du paiement a été récupéré",
+          description: `Statut: ${result.paymentData?.status || 'Inconnu'}`,
         });
       } else {
         toast({
           title: "Erreur de vérification",
-          description: result.error || "Impossible de vérifier le paiement",
+          description: result.error || "Erreur inconnue",
           variant: "destructive"
         });
       }
+      
     } catch (error) {
       console.error('Error verifying payment:', error);
       toast({
-        title: "Erreur",
-        description: "Erreur lors de la vérification du paiement",
+        title: "Erreur de vérification",
+        description: "Impossible de vérifier le paiement",
         variant: "destructive"
       });
     } finally {
@@ -134,18 +132,18 @@ const LygosPaymentManager: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status?.toLowerCase()) {
       case 'completed':
       case 'success':
-        return <Badge className="bg-green-600 text-white">Complété</Badge>;
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />Complété</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-600 text-white">En attente</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800"><Clock className="h-3 w-3 mr-1" />En attente</Badge>;
       case 'failed':
+      case 'error':
+        return <Badge variant="destructive"><AlertCircle className="h-3 w-3 mr-1" />Échoué</Badge>;
       case 'cancelled':
-        return <Badge variant="destructive">Échoué</Badge>;
-      case 'expired':
-        return <Badge variant="secondary">Expiré</Badge>;
+        return <Badge variant="secondary">Annulé</Badge>;
       default:
         return <Badge variant="outline">{status || 'Inconnu'}</Badge>;
     }
@@ -153,174 +151,220 @@ const LygosPaymentManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* En-tête */}
+      <div className="flex items-center space-x-2">
+        <CreditCard className="h-6 w-6 text-blue-600" />
+        <h3 className="text-lg font-semibold">Gestionnaire de Paiements Lygos - Phase 5</h3>
+      </div>
+
+      {/* Création de paiement de test */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Gestionnaire de Paiements Lygos
+            <Zap className="h-5 w-5" />
+            Créer un Paiement de Test
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="create" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="create">Créer un paiement test</TabsTrigger>
-              <TabsTrigger value="verify">Vérifier un paiement</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="create" className="space-y-4">
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Ce test créera un vrai paiement Lygos. Utilisez des données de test appropriées.
-                </AlertDescription>
-              </Alert>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium">Montant:</p>
-                  <p className="text-lg">{testPaymentData.amount} XAF</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Description:</p>
-                  <p className="text-sm text-gray-600">{testPaymentData.description}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Client:</p>
-                  <p className="text-sm text-gray-600">{testPaymentData.customerName}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Email:</p>
-                  <p className="text-sm text-gray-600">{testPaymentData.customerEmail}</p>
-                </div>
-              </div>
-
-              <Button 
-                onClick={createTestPayment} 
-                disabled={isCreatingPayment}
-                className="bg-mboa-orange hover:bg-mboa-orange/90"
-              >
-                {isCreatingPayment ? (
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <CreditCard className="mr-2 h-4 w-4" />
-                )}
-                {isCreatingPayment ? 'Création en cours...' : 'Créer un paiement test'}
-              </Button>
-
-              {paymentResult && (
-                <Card className={`border-2 ${paymentResult.success ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}`}>
-                  <CardContent className="pt-6">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        {paymentResult.success ? (
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-600" />
-                        )}
-                        <span className="font-medium">
-                          {paymentResult.success ? 'Paiement créé avec succès' : 'Erreur de création'}
-                        </span>
-                      </div>
-
-                      {paymentResult.success ? (
-                        <div className="space-y-2">
-                          <p><strong>ID Paiement:</strong> {paymentResult.paymentId}</p>
-                          <p><strong>ID Transaction:</strong> {paymentResult.transactionId}</p>
-                          {paymentResult.status && (
-                            <div className="flex items-center gap-2">
-                              <strong>Statut:</strong> {getStatusBadge(paymentResult.status)}
-                            </div>
-                          )}
-                          {paymentResult.paymentUrl && (
-                            <Button 
-                              variant="outline" 
-                              className="mt-2"
-                              onClick={() => window.open(paymentResult.paymentUrl, '_blank')}
-                            >
-                              <ExternalLink className="mr-2 h-4 w-4" />
-                              Ouvrir le lien de paiement
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-red-600">{paymentResult.error}</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="verify" className="space-y-4">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium">Montant (XAF)</label>
+              <Input
+                type="number"
+                value={testData.amount}
+                onChange={(e) => setTestData({ ...testData, amount: parseInt(e.target.value) || 0 })}
+                min="100"
+                max="1000000"
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Nom du client</label>
+              <Input
+                value={testData.customer_name}
+                onChange={(e) => setTestData({ ...testData, customer_name: e.target.value })}
+                placeholder="Nom complet"
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Email du client</label>
+              <Input
+                type="email"
+                value={testData.customer_email}
+                onChange={(e) => setTestData({ ...testData, customer_email: e.target.value })}
+                placeholder="email@example.com"
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Téléphone du client</label>
+              <Input
+                value={testData.customer_phone}
+                onChange={(e) => setTestData({ ...testData, customer_phone: e.target.value })}
+                placeholder="+237600000000"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium">Description</label>
+            <Textarea
+              value={testData.description}
+              onChange={(e) => setTestData({ ...testData, description: e.target.value })}
+              placeholder="Description du paiement"
+              rows={2}
+            />
+          </div>
+          
+          <Button 
+            onClick={createTestPayment}
+            disabled={isCreating}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            {isCreating ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Création en cours...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Créer le paiement
+              </>
+            )}
+          </Button>
+          
+          {/* Résultat de création */}
+          {paymentResult && (
+            <Alert className={paymentResult.success ? "border-green-300 bg-green-50" : "border-red-300 bg-red-50"}>
               <div className="space-y-2">
-                <label className="text-sm font-medium">ID de paiement Lygos</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={paymentIdToVerify}
-                    onChange={(e) => setPaymentIdToVerify(e.target.value)}
-                    placeholder="Saisissez l'ID du paiement"
-                    className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  />
-                  <Button 
-                    onClick={verifyPayment} 
-                    disabled={isVerifying || !paymentIdToVerify.trim()}
-                  >
-                    {isVerifying ? (
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                    )}
-                    Vérifier
-                  </Button>
+                <div className="flex items-center gap-2">
+                  {paymentResult.success ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  )}
+                  <span className="font-medium">
+                    {paymentResult.success ? 'Paiement créé avec succès' : 'Erreur de création'}
+                  </span>
                 </div>
-              </div>
-
-              {verificationResult && (
-                <Card className={`border-2 ${verificationResult.success ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}`}>
-                  <CardContent className="pt-6">
-                    <div className="space-y-3">
+                
+                {paymentResult.success && paymentResult.paymentData && (
+                  <div className="space-y-1 text-sm">
+                    <p><strong>ID:</strong> {paymentResult.paymentData.id}</p>
+                    <p><strong>Statut:</strong> {getStatusBadge(paymentResult.paymentData.status)}</p>
+                    <p><strong>Montant:</strong> {paymentResult.paymentData.amount} {paymentResult.paymentData.currency}</p>
+                    {paymentResult.paymentData.payment_url && (
                       <div className="flex items-center gap-2">
-                        {verificationResult.success ? (
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-600" />
-                        )}
-                        <span className="font-medium">
-                          {verificationResult.success ? 'Paiement vérifié' : 'Erreur de vérification'}
-                        </span>
+                        <strong>URL de paiement:</strong>
+                        <Button
+                          onClick={() => window.open(paymentResult.paymentData.payment_url, '_blank')}
+                          size="sm"
+                          variant="outline"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          Ouvrir
+                        </Button>
                       </div>
-
-                      {verificationResult.success && verificationResult.paymentData ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <strong>Statut:</strong> 
-                            {getStatusBadge(verificationResult.paymentData.status)}
-                          </div>
-                          
-                          {verificationResult.paymentData.amount && (
-                            <p><strong>Montant:</strong> {verificationResult.paymentData.amount} {verificationResult.paymentData.currency || 'XAF'}</p>
-                          )}
-                          
-                          {verificationResult.paymentData.reference && (
-                            <p><strong>Référence:</strong> {verificationResult.paymentData.reference}</p>
-                          )}
-                          
-                          {verificationResult.paymentData.created_at && (
-                            <p><strong>Créé le:</strong> {new Date(verificationResult.paymentData.created_at).toLocaleString()}</p>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-red-600">{verificationResult.error}</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
+                    )}
+                  </div>
+                )}
+                
+                {!paymentResult.success && (
+                  <p className="text-sm text-red-700">{paymentResult.error}</p>
+                )}
+              </div>
+            </Alert>
+          )}
         </CardContent>
       </Card>
+
+      {/* Vérification de paiement */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5" />
+            Vérifier un Paiement
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">ID de paiement Lygos</label>
+            <Input
+              value={verificationPaymentId}
+              onChange={(e) => setVerificationPaymentId(e.target.value)}
+              placeholder="Saisir l'ID du paiement à vérifier"
+            />
+          </div>
+          
+          <Button 
+            onClick={verifyTestPayment}
+            disabled={isVerifying || !verificationPaymentId.trim()}
+            className="w-full bg-green-600 hover:bg-green-700"
+          >
+            {isVerifying ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Vérification en cours...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Vérifier le paiement
+              </>
+            )}
+          </Button>
+          
+          {/* Résultat de vérification */}
+          {verificationResult && (
+            <Alert className={verificationResult.success ? "border-green-300 bg-green-50" : "border-red-300 bg-red-50"}>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  {verificationResult.success ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  )}
+                  <span className="font-medium">
+                    {verificationResult.success ? 'Vérification réussie' : 'Erreur de vérification'}
+                  </span>
+                </div>
+                
+                {verificationResult.success && verificationResult.paymentData && (
+                  <div className="space-y-1 text-sm">
+                    <p><strong>ID:</strong> {verificationResult.paymentData.id}</p>
+                    <p><strong>Statut:</strong> {getStatusBadge(verificationResult.paymentData.status)}</p>
+                    <p><strong>Montant:</strong> {verificationResult.paymentData.amount} {verificationResult.paymentData.currency}</p>
+                    <p><strong>Créé le:</strong> {new Date(verificationResult.paymentData.created_at).toLocaleString()}</p>
+                    {verificationResult.paymentData.completed_at && (
+                      <p><strong>Complété le:</strong> {new Date(verificationResult.paymentData.completed_at).toLocaleString()}</p>
+                    )}
+                  </div>
+                )}
+                
+                {!verificationResult.success && (
+                  <p className="text-sm text-red-700">{verificationResult.error}</p>
+                )}
+              </div>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Guide d'utilisation */}
+      <Alert className="border-blue-300 bg-blue-50">
+        <CreditCard className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Guide de test Phase 5:</strong>
+          <ol className="list-decimal list-inside mt-2 space-y-1 text-sm">
+            <li>Créez un paiement de test avec les données de votre choix</li>
+            <li>Copiez l'ID du paiement généré</li>
+            <li>Utilisez cet ID pour tester la vérification</li>
+            <li>Consultez les journaux d'audit pour voir tous les événements</li>
+          </ol>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 };
