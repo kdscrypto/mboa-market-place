@@ -23,7 +23,7 @@ export const getLygosConfig = async (): Promise<LygosConfig | null> => {
 
     // Safely cast the data after validation
     if (data && typeof data === 'object' && !Array.isArray(data)) {
-      return data as LygosConfig;
+      return data as unknown as LygosConfig;
     }
     
     return null;
