@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,6 +17,10 @@ interface PaymentTransaction {
   lygos_status?: string;
   external_reference?: string;
   payment_provider?: string;
+  security_score?: number;
+  processing_lock?: boolean;
+  locked_by?: string;
+  client_fingerprint?: string;
 }
 
 interface TimeRemaining {

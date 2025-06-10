@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Helper function to safely parse JSON response from RPC calls
@@ -29,7 +28,7 @@ export const checkAuthRateLimit = async (
   actionType: string,
   maxRequests: number = 5,
   windowMinutes: number = 15
-): Promise<{ allowed: boolean; blocked_until?: string; reason?: string }> => {
+): Promise<{ allowed: boolean; blocked_until?: string; reason?: string; current_count?: number; max_requests?: number }> => {
   try {
     const { data, error } = await supabase.rpc('check_auth_rate_limit', {
       p_identifier: identifier,
@@ -49,7 +48,9 @@ export const checkAuthRateLimit = async (
     return {
       allowed: Boolean(result.allowed ?? true),
       blocked_until: result.blocked_until ? String(result.blocked_until) : undefined,
-      reason: result.reason ? String(result.reason) : undefined
+      reason: result.reason ? String(result.reason) : undefined,
+      current_count: result.current_count ? Number(result.current_count) : undefined,
+      max_requests: result.max_requests ? Number(result.max_requests) : undefined
     };
 
   } catch (error) {

@@ -1,9 +1,10 @@
-
 export interface ValidationResult {
   isValid: boolean;
   score: number;
   suggestions: string[];
   errors?: string[];
+  warnings?: string[];
+  sanitized?: string;
 }
 
 export const validatePasswordStrength = (password: string): ValidationResult & { isStrong: boolean } => {
@@ -90,22 +91,76 @@ export const validateEmailAdvanced = (email: string): ValidationResult => {
 
 export const validateUsername = (username: string): ValidationResult => {
   const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-  const isValid = usernameRegex.test(username);
+  let sanitized = username;
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  // Sanitize username by removing invalid characters
+  sanitized = username.replace(/[^a-zA-Z0-9_]/g, '');
+  
+  // Check length
+  if (sanitized.length < 3) {
+    errors.push('Le nom d\'utilisateur doit contenir au moins 3 caractères');
+  }
+  if (sanitized.length > 20) {
+    errors.push('Le nom d\'utilisateur ne peut pas dépasser 20 caractères');
+    sanitized = sanitized.slice(0, 20);
+  }
+  
+  // Check if sanitization was needed
+  if (sanitized !== username) {
+    warnings.push('Caractères non autorisés supprimés automatiquement');
+  }
+  
+  const isValid = usernameRegex.test(sanitized) && errors.length === 0;
   
   return {
     isValid,
     score: isValid ? 100 : 0,
-    suggestions: isValid ? [] : ['Le nom d\'utilisateur doit contenir 3-20 caractères alphanumériques']
+    suggestions: isValid ? [] : ['Le nom d\'utilisateur doit contenir 3-20 caractères alphanumériques'],
+    errors,
+    warnings,
+    sanitized: sanitized !== username ? sanitized : undefined
   };
 };
 
 export const validatePhone = (phone: string): ValidationResult => {
   const phoneRegex = /^(\+237)?[62][0-9]{8}$/;
-  const isValid = phoneRegex.test(phone);
+  let sanitized = phone;
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  // Remove all non-digit characters except +
+  let cleanPhone = phone.replace(/[^\d+]/g, '');
+  
+  // If it starts with +237, keep it, otherwise add it if it doesn't start with +
+  if (!cleanPhone.startsWith('+237') && !cleanPhone.startsWith('237')) {
+    if (cleanPhone.length === 9 && /^[62]/.test(cleanPhone)) {
+      cleanPhone = '+237' + cleanPhone;
+    }
+  } else if (cleanPhone.startsWith('237')) {
+    cleanPhone = '+' + cleanPhone;
+  }
+  
+  sanitized = cleanPhone;
+  
+  // Check if sanitization was needed
+  if (sanitized !== phone) {
+    warnings.push('Numéro formaté automatiquement');
+  }
+  
+  const isValid = phoneRegex.test(sanitized);
+  
+  if (!isValid) {
+    errors.push('Format de numéro camerounais invalide');
+  }
   
   return {
     isValid,
     score: isValid ? 100 : 0,
-    suggestions: isValid ? [] : ['Format de numéro camerounais invalide (ex: +237612345678)']
+    suggestions: isValid ? [] : ['Format de numéro camerounais invalide (ex: +237612345678)'],
+    errors,
+    warnings,
+    sanitized: sanitized !== phone ? sanitized : undefined
   };
 };

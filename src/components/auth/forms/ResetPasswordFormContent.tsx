@@ -5,12 +5,12 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetPasswordSchema, ResetPasswordFormValues } from "../validation/authSchemas";
 import PasswordField from "../components/PasswordField";
-import ConfirmPasswordField from "../components/ConfirmPasswordField";
+import { Input } from "@/components/ui/input";
 
 interface ResetPasswordFormContentProps {
   onSubmit: (values: ResetPasswordFormValues) => Promise<void>;
@@ -33,8 +33,45 @@ const ResetPasswordFormContent: React.FC<ResetPasswordFormContentProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
-          <PasswordField form={form} showForgotPassword={false} />
-          <ConfirmPasswordField form={form} />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nouveau mot de passe</FormLabel>
+                <FormControl>
+                  <PasswordField
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Nouveau mot de passe"
+                    name="password"
+                    error={form.formState.errors.password?.message}
+                    showStrengthIndicator={true}
+                    required
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirmer le mot de passe</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Confirmer le mot de passe"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </CardContent>
         
         <CardFooter>

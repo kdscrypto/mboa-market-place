@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
@@ -38,103 +38,110 @@ export const useLygosCallback = () => {
   const [isProcessing, setIsProcessing] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const processCallback = async () => {
-      try {
-        const adId = searchParams.get('ad_id');
-        const paymentId = searchParams.get('payment_id');
-        const status = searchParams.get('status');
-        const transactionId = searchParams.get('transaction_id');
+  const processCallback = useCallback(async () => {
+    try {
+      const adId = searchParams.get('ad_id');
+      const paymentId = searchParams.get('payment_id');
+      const status = searchParams.get('status');
+      const transactionId = searchParams.get('transaction_id');
 
-        console.log('Processing Lygos callback:', { adId, paymentId, status, transactionId });
+      console.log('Processing Lygos callback:', { adId, paymentId, status, transactionId });
 
-        if (!adId) {
-          setCallbackData({
-            status: 'error',
-            message: 'ID d\'annonce manquant dans le callback'
-          });
-          return;
+      if (!adId) {
+        setCallbackData({
+          status: 'error',
+          message: 'ID d\'annonce manquant dans le callback'
+        });
+        return;
+      }
+
+      // Process callback using the service
+      const result = await processLygosCallback(adId, paymentId || undefined, status || undefined);
+
+      if (result.success) {
+        // Map the service status to our callback status
+        let mappedStatus: 'success' | 'failed' | 'expired' | 'error' = 'success';
+        
+        if (result.status === 'completed') {
+          mappedStatus = 'success';
+        } else if (result.status === 'failed') {
+          mappedStatus = 'failed';
+        } else if (result.status === 'expired') {
+          mappedStatus = 'expired';
+        } else {
+          mappedStatus = 'error';
         }
 
-        // Process callback using the service
-        const result = await processLygosCallback(adId, paymentId || undefined, status || undefined);
+        setCallbackData({
+          status: mappedStatus,
+          adId,
+          transactionId,
+          message: result.message,
+          paymentData: { paymentId, status }
+        });
 
-        if (result.success) {
-          // Map the service status to our callback status
-          let mappedStatus: 'success' | 'failed' | 'expired' | 'error' = 'success';
-          
-          if (result.status === 'completed') {
-            mappedStatus = 'success';
-          } else if (result.status === 'failed') {
-            mappedStatus = 'failed';
-          } else if (result.status === 'expired') {
-            mappedStatus = 'expired';
-          } else {
-            mappedStatus = 'error';
-          }
-
-          setCallbackData({
-            status: mappedStatus,
-            adId,
-            transactionId,
-            message: result.message,
-            paymentData: { paymentId, status }
-          });
-
-          // Show toast notification
-          if (mappedStatus === 'success') {
-            toast({
-              title: "Paiement confirmé",
-              description: "Votre paiement a été traité avec succès",
-            });
-          } else if (mappedStatus === 'failed') {
-            toast({
-              title: "Paiement échoué",
-              description: "Votre paiement n'a pas pu être traité",
-              variant: "destructive"
-            });
-          } else if (mappedStatus === 'expired') {
-            toast({
-              title: "Paiement expiré",
-              description: "Votre session de paiement a expiré",
-              variant: "destructive"
-            });
-          }
-        } else {
-          setCallbackData({
-            status: 'error',
-            message: result.message || 'Erreur lors du traitement du callback'
-          });
-          
+        // Show toast notification
+        if (mappedStatus === 'success') {
           toast({
-            title: "Erreur de callback",
-            description: result.message || 'Erreur lors du traitement du callback',
+            title: "Paiement confirmé",
+            description: "Votre paiement a été traité avec succès",
+          });
+        } else if (mappedStatus === 'failed') {
+          toast({
+            title: "Paiement échoué",
+            description: "Votre paiement n'a pas pu être traité",
+            variant: "destructive"
+          });
+        } else if (mappedStatus === 'expired') {
+          toast({
+            title: "Paiement expiré",
+            description: "Votre session de paiement a expiré",
             variant: "destructive"
           });
         }
-      } catch (error) {
-        console.error('Error processing callback:', error);
-        
+      } else {
         setCallbackData({
           status: 'error',
-          message: error instanceof Error ? error.message : 'Erreur inconnue'
+          message: result.message || 'Erreur lors du traitement du callback'
         });
         
         toast({
           title: "Erreur de callback",
-          description: "Une erreur inattendue s'est produite",
+          description: result.message || 'Erreur lors du traitement du callback',
           variant: "destructive"
         });
-      } finally {
-        setIsProcessing(false);
       }
-    };
-
-    processCallback();
+    } catch (error) {
+      console.error('Error processing callback:', error);
+      
+      setCallbackData({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Erreur inconnue'
+      });
+      
+      toast({
+        title: "Erreur de callback",
+        description: "Une erreur inattendue s'est produite",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   }, [searchParams, toast]);
+
+  const retry = useCallback(() => {
+    setIsProcessing(true);
+    setCallbackData({ status: 'loading' });
+    processCallback();
+  }, [processCallback]);
+
+  useEffect(() => {
+    processCallback();
+  }, [processCallback]);
 
   return {
     callbackData,
-    isProcessing
+    isProcessing,
+    retry
   };
 };
