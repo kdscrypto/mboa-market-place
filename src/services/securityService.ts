@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 // Helper function to safely parse JSON response from RPC calls
@@ -43,7 +44,13 @@ export const checkAuthRateLimit = async (
       return { allowed: true }; // En cas d'erreur, permettre l'action
     }
 
-    const result = parseRpcResponse(data, { allowed: true });
+    const result = parseRpcResponse(data, { 
+      allowed: true,
+      blocked_until: undefined,
+      reason: undefined,
+      current_count: undefined,
+      max_requests: undefined
+    });
     
     return {
       allowed: Boolean(result.allowed ?? true),
