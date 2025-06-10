@@ -121,7 +121,7 @@ const Header = () => {
               </>
             ) : (
               <Button variant="outline" asChild>
-                <Link to="/login">Connexion</Link>
+                <Link to="/auth">Connexion</Link>
               </Button>
             )}
           </div>
@@ -200,7 +200,7 @@ const Header = () => {
                 </div>
               ) : (
                 <Button variant="outline" asChild className="w-full">
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
+                  <Link to="/auth" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
                 </Button>
               )}
             </div>
