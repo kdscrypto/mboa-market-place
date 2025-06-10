@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +14,22 @@ interface SecurityOptions {
   checkRateLimit: boolean;
   detectSuspiciousActivity: boolean;
   logAuditEvent: boolean;
+}
+
+// Types pour les réponses des fonctions RPC
+interface RateLimitResponse {
+  allowed: boolean;
+  blocked_until?: string;
+  reason?: string;
+  current_count?: number;
+  max_requests?: number;
+}
+
+interface SuspiciousActivityResponse {
+  risk_score: number;
+  auto_block: boolean;
+  severity: string;
+  event_type: string;
 }
 
 export const usePaymentSecurity = () => {
@@ -55,12 +70,13 @@ export const usePaymentSecurity = () => {
         if (rateLimitError) {
           console.error('Rate limit check error:', rateLimitError);
         } else if (rateLimitData) {
-          securityFlags.rateLimit = rateLimitData;
+          const rateLimitResponse = rateLimitData as RateLimitResponse;
+          securityFlags.rateLimit = rateLimitResponse;
           
-          if (!rateLimitData.allowed) {
+          if (!rateLimitResponse.allowed) {
             blocked = true;
-            blockedUntil = rateLimitData.blocked_until;
-            reason = rateLimitData.reason;
+            blockedUntil = rateLimitResponse.blocked_until;
+            reason = rateLimitResponse.reason;
             riskScore += 50;
           }
         }
@@ -78,10 +94,11 @@ export const usePaymentSecurity = () => {
         if (suspiciousError) {
           console.error('Suspicious activity detection error:', suspiciousError);
         } else if (suspiciousData) {
-          securityFlags.suspiciousActivity = suspiciousData;
-          riskScore += suspiciousData.risk_score || 0;
+          const suspiciousResponse = suspiciousData as SuspiciousActivityResponse;
+          securityFlags.suspiciousActivity = suspiciousResponse;
+          riskScore += suspiciousResponse.risk_score || 0;
           
-          if (suspiciousData.auto_block) {
+          if (suspiciousResponse.auto_block) {
             blocked = true;
             reason = 'suspicious_activity_detected';
           }
@@ -117,7 +134,6 @@ export const usePaymentSecurity = () => {
     } catch (error) {
       console.error('Security check error:', error);
       
-      // In case of security system failure, be conservative
       return {
         allowed: false,
         riskScore: 100,
@@ -136,7 +152,6 @@ export const usePaymentSecurity = () => {
       flags: {} as Record<string, any>
     };
 
-    // Check for unusual amounts
     if (eventData.amount) {
       const amount = Number(eventData.amount);
       if (amount > 500000) {
@@ -149,7 +164,6 @@ export const usePaymentSecurity = () => {
       }
     }
 
-    // Check for rapid succession of payments
     if (eventData.userId) {
       try {
         const { data: recentPayments } = await supabase
@@ -171,9 +185,7 @@ export const usePaymentSecurity = () => {
       }
     }
 
-    // Check for suspicious IP patterns (would need IP geolocation in real implementation)
     if (eventData.clientIp) {
-      // Placeholder for IP-based checks
       checks.flags.ipAnalysis = {
         ip: eventData.clientIp,
         checked: true
