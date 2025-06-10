@@ -71,6 +71,7 @@ const App = () => (
             <Route path="/payment-return" element={<PaymentReturn />} />
             <Route path="/payment-tracking/:transactionId" element={<PaymentTracking />} />
             <Route path="/lygos-callback" element={<LygosCallback />} />
+            <Route path="/lygos-test" element={<LygosTestDashboard />} />
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
           </Routes>

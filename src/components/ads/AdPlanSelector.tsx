@@ -1,90 +1,86 @@
 
-import React from "react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { usePaymentPlans } from "@/hooks/usePaymentPlans";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Loader2 } from "lucide-react";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle } from 'lucide-react';
 
 interface AdPlanSelectorProps {
-  value: string;
-  onChange: (value: string) => void;
+  selectedPlan: string;
+  onPlanSelect: (planId: string) => void;
 }
 
-const AdPlanSelector = ({ value, onChange }: AdPlanSelectorProps) => {
-  const { plans, loading } = usePaymentPlans();
-
-  const formatPrice = (price: number) => {
-    return price === 0 ? "Gratuit" : `${price.toLocaleString('fr-FR')} XAF`;
+const AdPlanSelector: React.FC<AdPlanSelectorProps> = ({ selectedPlan, onPlanSelect }) => {
+  // Since all ads are now free, we only show the standard plan
+  const standardPlan = {
+    id: 'standard',
+    name: 'Annonce Gratuite',
+    price: 0,
+    duration_days: null,
+    description: 'Publication gratuite de votre annonce',
+    features: [
+      'Publication immédiate après modération',
+      'Visibilité dans toutes les catégories',
+      'Photos et description complète',
+      'Contact direct par téléphone/WhatsApp',
+      'Aucun frais caché'
+    ]
   };
 
-  const getDurationText = (days: number) => {
-    if (days === 1) return "24 heures";
-    if (days === 7) return "7 jours";
-    if (days === 15) return "15 jours";
-    if (days === 30) return "30 jours";
-    return `${days} jours`;
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        <label className="block font-medium">
-          Type d'annonce <span className="text-red-500">*</span>
-        </label>
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="ml-2">Chargement des plans...</span>
-        </div>
-      </div>
-    );
-  }
+  React.useEffect(() => {
+    // Auto-select the standard plan since it's the only option
+    onPlanSelect('standard');
+  }, [onPlanSelect]);
 
   return (
-    <div className="space-y-3">
-      <label className="block font-medium">
-        Type d'annonce <span className="text-red-500">*</span>
-      </label>
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Type d'annonce</h3>
       
-      <RadioGroup value={value} onValueChange={onChange} className="space-y-3">
-        {plans.map((plan) => (
-          <Card key={plan.id} className={`cursor-pointer transition-colors ${
-            value === plan.id ? 'ring-2 ring-mboa-orange bg-orange-50' : 'hover:bg-gray-50'
-          }`}>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <RadioGroupItem value={plan.id} id={plan.id} />
-                <Label htmlFor={plan.id} className="flex-1 cursor-pointer">
-                  <div className="flex items-center justify-between w-full">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{plan.name}</span>
-                        {plan.id !== 'standard' && (
-                          <Badge variant="secondary" className="gap-1">
-                            <Star className="h-3 w-3" />
-                            Premium
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600">{plan.description}</p>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Clock className="h-3 w-3" />
-                        {getDurationText(plan.duration_days)}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-mboa-orange">
-                        {formatPrice(plan.price)}
-                      </div>
-                    </div>
-                  </div>
-                </Label>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </RadioGroup>
+      <Card className="border-2 border-green-500 bg-green-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg text-green-700">
+              {standardPlan.name}
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-green-600 text-white">GRATUIT</Badge>
+              <CheckCircle className="h-5 w-5 text-green-600" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-700">0 XAF</div>
+              <div className="text-sm text-green-600">Publication gratuite</div>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="text-sm text-gray-700 font-medium">Fonctionnalités incluses :</p>
+              <ul className="space-y-1">
+                {standardPlan.features.map((feature, index) => (
+                  <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
+                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start gap-2">
+          <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-blue-800">
+            <p className="font-medium mb-1">Bonne nouvelle !</p>
+            <p>
+              Toutes les annonces sur MboaMarket sont désormais entièrement gratuites. 
+              Publiez votre annonce sans aucun frais et profitez de toutes nos fonctionnalités.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
