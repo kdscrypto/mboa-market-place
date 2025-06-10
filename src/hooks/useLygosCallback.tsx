@@ -40,8 +40,11 @@ export const useLygosCallback = () => {
         const result = await processLygosCallback(adId, paymentId || undefined, status || undefined);
 
         if (result.success) {
+          // Map the service status to our callback status
+          const mappedStatus = result.status === 'completed' ? 'success' : result.status;
+          
           setCallbackData({
-            status: result.status,
+            status: mappedStatus,
             adId: result.adId,
             transactionId: result.transactionId,
             paymentData: result.paymentData,

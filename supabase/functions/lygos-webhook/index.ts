@@ -1,154 +1,118 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
+    // Get webhook payload
     const webhookData = await req.json();
     console.log('Received Lygos webhook:', webhookData);
 
-    // Log the webhook
-    await supabase
-      .from('lygos_webhook_logs')
-      .insert({
-        webhook_data: webhookData,
-        processed: false,
-        received_at: new Date().toISOString()
+    // Extract payment information
+    const paymentId = webhookData.payment_id || webhookData.id;
+    const status = webhookData.status;
+    const externalReference = webhookData.reference || webhookData.external_reference;
+
+    if (!paymentId || !status) {
+      console.error('Invalid webhook data:', webhookData);
+      return new Response(
+        JSON.stringify({ error: 'Données webhook invalides' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Update transaction status using the database function
+    const { data: updateResult, error: updateError } = await supabaseClient
+      .rpc('update_lygos_transaction_status', {
+        p_lygos_payment_id: paymentId,
+        p_status: status,
+        p_lygos_data: webhookData,
+        p_completed_at: status === 'completed' || status === 'success' ? new Date().toISOString() : null
       });
 
-    const { 
-      payment_id: lygosPaymentId, 
-      status, 
-      external_reference: transactionId,
-      amount,
-      currency
-    } = webhookData;
-
-    if (!transactionId) {
-      console.error('No external reference (transaction ID) in webhook data');
-      return new Response('Missing transaction reference', { status: 400 });
-    }
-
-    // Find the transaction
-    const { data: transaction, error: findError } = await supabase
-      .from('payment_transactions')
-      .select('*')
-      .eq('id', transactionId)
-      .single();
-
-    if (findError || !transaction) {
-      console.error('Transaction not found:', transactionId);
-      return new Response('Transaction not found', { status: 404 });
-    }
-
-    // Update transaction status based on Lygos status
-    let newStatus = 'pending';
-    let completedAt = null;
-
-    switch (status?.toLowerCase()) {
-      case 'completed':
-      case 'success':
-      case 'paid':
-        newStatus = 'completed';
-        completedAt = new Date().toISOString();
-        break;
-      case 'failed':
-      case 'error':
-      case 'cancelled':
-        newStatus = 'failed';
-        break;
-      case 'expired':
-        newStatus = 'expired';
-        break;
-      default:
-        newStatus = 'pending';
-    }
-
-    // Update the transaction
-    const { error: updateError } = await supabase
-      .from('payment_transactions')
-      .update({
-        status: newStatus,
-        completed_at: completedAt,
-        payment_data: {
-          ...transaction.payment_data,
-          lygosWebhookData: webhookData,
-          lygosStatus: status
-        }
-      })
-      .eq('id', transactionId);
-
     if (updateError) {
-      console.error('Error updating transaction:', updateError);
-      return new Response('Error updating transaction', { status: 500 });
+      console.error('Error updating transaction status:', updateError);
+      return new Response(
+        JSON.stringify({ error: 'Erreur lors de la mise à jour de la transaction' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Update payment attempt
-    await supabase
-      .from('lygos_payment_attempts')
-      .update({
-        status: newStatus,
-        completed_at: completedAt,
-        lygos_response: webhookData
-      })
-      .eq('lygos_payment_id', lygosPaymentId);
+    // If payment is completed, update related ad status
+    if ((status === 'completed' || status === 'success') && externalReference) {
+      // Extract ad ID from external reference if it follows our pattern
+      const adIdMatch = externalReference.match(/ad_[^_]+_(.+)/);
+      if (adIdMatch) {
+        const adId = adIdMatch[1];
+        
+        // Update ad status to active
+        const { error: adUpdateError } = await supabaseClient
+          .from('ads')
+          .update({ 
+            status: 'active',
+            premium_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          })
+          .eq('id', adId);
 
-    // If payment was successful, create/update the ad
-    if (newStatus === 'completed' && transaction.ad_id) {
-      const adType = transaction.payment_data?.adType || 'premium_24h';
-      
-      const { error: adError } = await supabase
-        .from('ads')
-        .update({
-          status: 'active',
-          ad_type: adType,
-          payment_transaction_id: transactionId,
-          premium_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Default 24h
-        })
-        .eq('id', transaction.ad_id);
-
-      if (adError) {
-        console.error('Error updating ad:', adError);
+        if (adUpdateError) {
+          console.error('Error updating ad status:', adUpdateError);
+        } else {
+          console.log('Ad activated successfully:', adId);
+        }
       }
     }
 
-    // Mark webhook as processed
-    await supabase
-      .from('lygos_webhook_logs')
-      .update({ processed: true })
-      .eq('webhook_data->payment_id', lygosPaymentId);
+    // Log webhook processing
+    const { error: logError } = await supabaseClient
+      .from('payment_audit_logs')
+      .insert({
+        transaction_id: 'webhook-processing',
+        event_type: 'lygos_webhook_received',
+        event_data: {
+          payment_id: paymentId,
+          status: status,
+          external_reference: externalReference,
+          webhook_data: webhookData,
+          processed_at: new Date().toISOString()
+        }
+      });
 
-    console.log(`Payment ${lygosPaymentId} updated to status: ${newStatus}`);
+    if (logError) {
+      console.error('Error logging webhook:', logError);
+    }
 
-    return new Response(JSON.stringify({
-      success: true,
-      message: 'Webhook processed successfully'
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+    console.log('Webhook processed successfully');
+    return new Response(
+      JSON.stringify({ success: true, message: 'Webhook traité avec succès' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
-    console.error('Error in lygos-webhook function:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    console.error('Lygos webhook function error:', error);
+    return new Response(
+      JSON.stringify({ error: error.message || 'Erreur interne du serveur' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });

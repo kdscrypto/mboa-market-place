@@ -1,6 +1,5 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,144 +17,114 @@ interface LygosPaymentRequest {
   cancelUrl: string;
   webhookUrl: string;
   externalReference: string;
+  transactionId?: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lygosApiKey = Deno.env.get('LYGOS_API_KEY');
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
 
-    if (!lygosApiKey) {
-      throw new Error('LYGOS_API_KEY is not configured');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Get request body
     const paymentData: LygosPaymentRequest = await req.json();
+    console.log('Creating Lygos payment:', paymentData);
 
-    console.log('Processing Lygos payment request:', paymentData);
+    // Get Lygos configuration
+    const { data: config, error: configError } = await supabaseClient
+      .rpc('get_active_lygos_config');
 
-    // Create payment transaction record
-    const { data: transaction, error: transactionError } = await supabase
-      .from('payment_transactions')
-      .insert({
-        user_id: paymentData.externalReference.split('_')[1], // Extract user ID from reference
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        status: 'pending',
-        payment_method: 'lygos',
-        payment_data: {
-          description: paymentData.description,
-          customerInfo: {
-            name: paymentData.customerName,
-            email: paymentData.customerEmail,
-            phone: paymentData.customerPhone
-          }
-        },
-        return_url: paymentData.returnUrl,
-        cancel_url: paymentData.cancelUrl,
-        notify_url: paymentData.webhookUrl,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
-      })
-      .select()
-      .single();
-
-    if (transactionError) {
-      console.error('Error creating transaction:', transactionError);
-      throw new Error('Failed to create payment transaction');
+    if (configError || !config || !config.api_key) {
+      console.error('Lygos configuration error:', configError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Configuration Lygos manquante ou invalide' 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Call Lygos API to create payment
-    const lygosResponse = await fetch('https://api.lygos.cm/api/v1/payments', {
+    // Prepare Lygos API request
+    const lygosApiUrl = `${config.base_url}/api/v1/payments`;
+    const lygosPayload = {
+      amount: paymentData.amount,
+      currency: paymentData.currency,
+      description: paymentData.description,
+      customer: {
+        name: paymentData.customerName,
+        email: paymentData.customerEmail,
+        phone: paymentData.customerPhone
+      },
+      urls: {
+        return: paymentData.returnUrl,
+        cancel: paymentData.cancelUrl,
+        webhook: paymentData.webhookUrl
+      },
+      reference: paymentData.externalReference
+    };
+
+    console.log('Sending request to Lygos API:', lygosApiUrl);
+
+    // Call Lygos API
+    const lygosResponse = await fetch(lygosApiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lygosApiKey}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.api_key}`,
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        description: paymentData.description,
-        customer: {
-          name: paymentData.customerName,
-          email: paymentData.customerEmail,
-          phone: paymentData.customerPhone
-        },
-        return_url: paymentData.returnUrl,
-        cancel_url: paymentData.cancelUrl,
-        webhook_url: paymentData.webhookUrl,
-        external_reference: transaction.id
-      })
+      body: JSON.stringify(lygosPayload)
     });
-
-    if (!lygosResponse.ok) {
-      const errorText = await lygosResponse.text();
-      console.error('Lygos API error:', errorText);
-      
-      // Update transaction status to failed
-      await supabase
-        .from('payment_transactions')
-        .update({ status: 'failed' })
-        .eq('id', transaction.id);
-
-      throw new Error(`Lygos API error: ${errorText}`);
-    }
 
     const lygosResult = await lygosResponse.json();
-    console.log('Lygos payment created:', lygosResult);
+    console.log('Lygos API response:', lygosResult);
 
-    // Update transaction with Lygos payment details
-    const { error: updateError } = await supabase
-      .from('payment_transactions')
-      .update({
-        payment_url: lygosResult.payment_url,
-        payment_data: {
-          ...transaction.payment_data,
-          lygosPaymentId: lygosResult.payment_id,
-          lygosStatus: lygosResult.status
-        }
-      })
-      .eq('id', transaction.id);
-
-    if (updateError) {
-      console.error('Error updating transaction:', updateError);
+    if (!lygosResponse.ok) {
+      console.error('Lygos API error:', lygosResult);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: lygosResult.message || 'Erreur lors de la création du paiement Lygos' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Log the payment attempt
-    await supabase
-      .from('lygos_payment_attempts')
-      .insert({
-        transaction_id: transaction.id,
-        lygos_payment_id: lygosResult.payment_id,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        status: 'initiated',
-        lygos_response: lygosResult
-      });
-
-    return new Response(JSON.stringify({
-      success: true,
-      paymentId: lygosResult.payment_id,
-      paymentUrl: lygosResult.payment_url,
-      transactionId: transaction.id
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+    // Return success response
+    return new Response(
+      JSON.stringify({
+        success: true,
+        paymentId: lygosResult.payment_id || lygosResult.id,
+        paymentUrl: lygosResult.payment_url || lygosResult.checkout_url,
+        transactionId: paymentData.transactionId,
+        status: lygosResult.status,
+        paymentData: lygosResult
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
-    console.error('Error in lygos-payment function:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    console.error('Lygos payment function error:', error);
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || 'Erreur interne du serveur' 
+      }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });
