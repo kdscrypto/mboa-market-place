@@ -86,6 +86,7 @@ const PaymentRecoveryManager: React.FC<PaymentRecoveryManagerProps> = ({
           currency: transaction.currency,
           status: 'pending',
           payment_method: 'lygos',
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
           payment_data: {
             ...transaction.payment_data,
             recovery_from: transaction.id,
@@ -220,7 +221,6 @@ const PaymentRecoveryManager: React.FC<PaymentRecoveryManagerProps> = ({
                     error={errorDetails}
                     onRetry={() => recoverTransaction(transaction)}
                     isRetrying={isRecovering === transaction.id}
-                    showActions={false}
                   />
                 )}
 
