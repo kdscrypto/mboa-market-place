@@ -1,23 +1,34 @@
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { usePaymentTracking } from '@/hooks/usePaymentTracking';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import PaymentStatusIndicator from '@/components/payment/PaymentStatusIndicator';
-import PaymentProgressTracker from '@/components/payment/PaymentProgressTracker';
-import PaymentSummaryCard from '@/components/payment/PaymentSummaryCard';
-import PaymentRetryManager from '@/components/payment/PaymentRetryManager';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, ArrowLeft, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
+import { usePaymentTracking } from '@/hooks/usePaymentTracking';
+import PaymentRetryManager from '@/components/payment/PaymentRetryManager';
+import { 
+  ArrowLeft,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  RefreshCw,
+  ExternalLink,
+  CreditCard,
+  Shield
+} from 'lucide-react';
 
-const PaymentTracking = () => {
+const PaymentTracking: React.FC = () => {
   const { transactionId } = useParams<{ transactionId: string }>();
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [timeRemaining, setTimeRemaining] = useState<any>(null);
+  const { toast } = useToast();
+  const [timeRemaining, setTimeRemaining] = useState<{
+    minutes: number;
+    seconds: number;
+    expired: boolean;
+  } | null>(null);
   
   const {
     transaction,
@@ -29,244 +40,280 @@ const PaymentTracking = () => {
     isExpiringSoon
   } = usePaymentTracking(transactionId);
 
-  // Update countdown timer
+  // Mock failed transactions data for retry manager
+  const [failedTransactions] = useState([]);
+
   useEffect(() => {
-    if (!transaction || transaction.status !== 'pending') return;
-    
-    const interval = setInterval(() => {
+    if (!transaction) return;
+
+    const updateTimer = () => {
       const remaining = getTimeRemaining();
       setTimeRemaining(remaining);
-      
-      if (remaining?.expired) {
-        refreshTransaction();
-      }
-    }, 1000);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [transaction, getTimeRemaining, refreshTransaction]);
+  }, [transaction, getTimeRemaining]);
 
-  const getProgressStep = () => {
-    if (!transaction) return 0;
-    
-    switch (transaction.status) {
-      case 'pending': return 1;
-      case 'completed': return 2;
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-300">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Complété
+          </Badge>
+        );
       case 'failed':
-      case 'expired': return 0;
-      default: return 0;
+        return (
+          <Badge variant="destructive">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Échoué
+          </Badge>
+        );
+      case 'expired':
+        return (
+          <Badge className="bg-orange-100 text-orange-800 border-orange-300">
+            <Clock className="h-3 w-3 mr-1" />
+            Expiré
+          </Badge>
+        );
+      case 'pending':
+      default:
+        return (
+          <Badge variant="outline">
+            <Clock className="h-3 w-3 mr-1" />
+            En attente
+          </Badge>
+        );
     }
   };
 
+  const getProgressValue = () => {
+    if (!transaction || !timeRemaining) return 0;
+    
+    if (timeRemaining.expired) return 0;
+    
+    const totalSeconds = 24 * 60 * 60; // 24 hours in seconds
+    const remainingSeconds = timeRemaining.minutes * 60 + timeRemaining.seconds;
+    
+    return Math.max(0, (remainingSeconds / totalSeconds) * 100);
+  };
+
   const handleRetrySuccess = (newTransactionId: string) => {
+    toast({
+      title: "Nouvelle tentative créée",
+      description: "Une nouvelle transaction a été créée avec succès",
+    });
     navigate(`/payment-tracking/${newTransactionId}`);
   };
 
   const handleRetryFailed = (error: string) => {
-    console.error('Retry failed:', error);
+    toast({
+      title: "Erreur de nouvelle tentative",
+      description: error,
+      variant: "destructive"
+    });
   };
 
-  if (isLoading && !transaction) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow py-8 bg-mboa-gray">
-          <div className="mboa-container max-w-4xl">
-            <div className="flex items-center justify-center h-64">
-              <RefreshCw className="h-8 w-8 animate-spin text-mboa-orange" />
-            </div>
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center space-y-4">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto text-mboa-orange" />
+            <p className="text-gray-600">Chargement des informations de paiement...</p>
           </div>
-        </main>
-        <Footer />
+        </div>
       </div>
     );
   }
 
   if (error || !transaction) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow py-8 bg-mboa-gray">
-          <div className="mboa-container max-w-4xl">
-            <Alert>
-              <AlertDescription>
-                {error || 'Transaction non trouvée'}
-              </AlertDescription>
-            </Alert>
-            <div className="mt-4">
-              <Button onClick={() => navigate('/dashboard')} variant="outline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Retour au tableau de bord
-              </Button>
-            </div>
-          </div>
-        </main>
-        <Footer />
+      <div className="container mx-auto p-6">
+        <Button
+          onClick={() => navigate(-1)}
+          variant="ghost"
+          className="mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour
+        </Button>
+        
+        <Alert className="border-red-300 bg-red-50">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Erreur de chargement</strong>
+            <br />
+            {error || 'Transaction non trouvée'}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      
-      <main className="flex-grow py-8 bg-mboa-gray">
-        <div className="mboa-container max-w-4xl">
-          {/* Header */}
-          <div className="mb-8">
-            <Button 
-              onClick={() => navigate('/dashboard')} 
-              variant="outline" 
-              className="mb-4"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour au tableau de bord
-            </Button>
-            
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold">Suivi du paiement</h1>
-              <Button onClick={refreshTransaction} variant="outline" size="sm">
-                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                Actualiser
-              </Button>
+    <div className="container mx-auto p-6 space-y-6">
+      {/* En-tête */}
+      <div className="flex items-center justify-between">
+        <Button
+          onClick={() => navigate(-1)}
+          variant="ghost"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour
+        </Button>
+        
+        <Button
+          onClick={refreshTransaction}
+          variant="outline"
+          size="sm"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Actualiser
+        </Button>
+      </div>
+
+      {/* Informations principales de la transaction */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Suivi de Paiement - Phase 5
+            </CardTitle>
+            {getStatusBadge(transaction.status)}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">ID Transaction</p>
+              <p className="font-mono text-sm">{transaction.id}</p>
             </div>
+            <div>
+              <p className="text-sm text-gray-600">Référence Externe</p>
+              <p className="font-mono text-sm">{transaction.external_reference || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Montant</p>
+              <p className="text-lg font-semibold">{transaction.amount.toLocaleString()} {transaction.currency}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Fournisseur</p>
+              <p className="capitalize">{transaction.payment_provider || 'Lygos'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Créé le</p>
+              <p>{new Date(transaction.created_at).toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Expire le</p>
+              <p>{new Date(transaction.expires_at).toLocaleString()}</p>
+            </div>
+            {transaction.completed_at && (
+              <div>
+                <p className="text-sm text-gray-600">Complété le</p>
+                <p>{new Date(transaction.completed_at).toLocaleString()}</p>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Progress Tracker */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Progression du paiement</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <PaymentProgressTracker currentStep={getProgressStep()} />
-                </CardContent>
-              </Card>
-
-              {/* Timer for pending payments */}
-              {transaction.status === 'pending' && timeRemaining && !timeRemaining.expired && (
-                <Card className={isExpiringSoon() ? 'border-orange-300 bg-orange-50' : ''}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="h-5 w-5" />
-                      Temps restant pour le paiement
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-mboa-orange">
-                        {String(timeRemaining.minutes).padStart(2, '0')}:
-                        {String(timeRemaining.seconds).padStart(2, '0')}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-2">
-                        {isExpiringSoon() 
-                          ? 'Attention: Le paiement expire bientôt !' 
-                          : 'Veuillez finaliser votre paiement avant expiration'
-                        }
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Status-specific content */}
-              {transaction.status === 'pending' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Paiement en attente</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600">
-                      Votre paiement est en cours de traitement. Vous recevrez une notification 
-                      dès que le statut sera mis à jour.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {transaction.status === 'completed' && (
-                <Card className="border-green-300 bg-green-50">
-                  <CardHeader>
-                    <CardTitle className="text-green-800">Paiement réussi !</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-green-700">
-                      Votre paiement a été traité avec succès. Votre annonce premium a été créée 
-                      et sera bientôt disponible.
-                    </p>
-                    <div className="mt-4">
-                      <Button 
-                        onClick={() => navigate('/dashboard')}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        Voir mes annonces
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {(transaction.status === 'failed' || transaction.status === 'expired') && (
-                <Card className="border-red-300 bg-red-50">
-                  <CardHeader>
-                    <CardTitle className="text-red-800">
-                      {transaction.status === 'failed' ? 'Paiement échoué' : 'Paiement expiré'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-red-700 mb-4">
-                      {transaction.status === 'failed' 
-                        ? 'Votre paiement n\'a pas pu être traité. Vous pouvez réessayer ou choisir une annonce gratuite.'
-                        : 'Le délai de paiement a été dépassé. Vous pouvez créer un nouveau paiement.'
-                      }
-                    </p>
-                    <PaymentRetryManager
-                      transactionId={transaction.id}
-                      originalAdData={transaction.payment_data?.adData}
-                      originalAdType={transaction.payment_data?.adType}
-                      onRetrySuccess={handleRetrySuccess}
-                      onRetryFailed={handleRetryFailed}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <PaymentSummaryCard
-                transaction={transaction}
-                onRetry={() => {
-                  // This will be handled by the retry manager
-                }}
+          {/* Barre de progression pour les transactions en attente */}
+          {transaction.status === 'pending' && timeRemaining && !timeRemaining.expired && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>Temps restant</span>
+                <span className={isExpiringSoon() ? 'text-red-600 font-medium' : 'text-gray-600'}>
+                  {timeRemaining.minutes}m {timeRemaining.seconds}s
+                </span>
+              </div>
+              <Progress 
+                value={getProgressValue()} 
+                className={`h-2 ${isExpiringSoon() ? 'bg-red-100' : ''}`}
               />
-
-              {/* Additional Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Besoin d'aide ?</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Si vous rencontrez des problèmes avec votre paiement, 
-                    n'hésitez pas à nous contacter.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => navigate('/contact')}
-                  >
-                    Contacter le support
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
+          )}
+
+          {/* Actions disponibles */}
+          <div className="flex gap-2">
+            {transaction.status === 'pending' && transaction.payment_data?.payment_url && (
+              <Button asChild className="bg-mboa-orange hover:bg-mboa-orange/90">
+                <a href={transaction.payment_data.payment_url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Compléter le paiement
+                </a>
+              </Button>
+            )}
           </div>
-        </div>
-      </main>
-      
-      <Footer />
+
+          {/* Alertes conditionnelles */}
+          {isExpiringSoon() && transaction.status === 'pending' && (
+            <Alert className="border-orange-300 bg-orange-50">
+              <Clock className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Attention !</strong> Cette transaction expire bientôt. 
+                Complétez votre paiement rapidement pour éviter l'expiration.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isExpired() && (
+            <Alert className="border-red-300 bg-red-50">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Transaction expirée</strong>
+                <br />
+                Cette transaction a expiré et ne peut plus être complétée. 
+                Vous devrez créer une nouvelle transaction.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {transaction.status === 'completed' && (
+            <Alert className="border-green-300 bg-green-50">
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Paiement confirmé !</strong>
+                <br />
+                Votre paiement a été traité avec succès.
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Gestionnaire de nouvelles tentatives */}
+      <PaymentRetryManager
+        failedTransactions={failedTransactions}
+        onRetrySuccess={handleRetrySuccess}
+        onRefresh={refreshTransaction}
+      />
+
+      {/* Informations de sécurité */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Sécurité & Audit
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm">
+            <p><span className="font-medium">Niveau de sécurité:</span> {transaction.security_score || 100}/100</p>
+            <p><span className="font-medium">Verrouillage de traitement:</span> {transaction.processing_lock ? 'Actif' : 'Inactif'}</p>
+            {transaction.locked_by && (
+              <p><span className="font-medium">Verrouillé par:</span> {transaction.locked_by}</p>
+            )}
+            {transaction.client_fingerprint && (
+              <p><span className="font-medium">Empreinte client:</span> {transaction.client_fingerprint}</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { SecurityEvent, SecurityStats } from '@/types/security';
+import { SecurityEvent, SecurityStats, convertDatabaseSecurityEvent } from '@/types/security';
 
 export const useSecurityMonitor = () => {
   const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
@@ -20,17 +20,19 @@ export const useSecurityMonitor = () => {
 
       if (eventsError) throw eventsError;
 
-      setSecurityEvents(events || []);
+      // Convert database events to our typed format
+      const typedEvents = (events || []).map(convertDatabaseSecurityEvent);
+      setSecurityEvents(typedEvents);
 
       const now = new Date();
       const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
       const stats: SecurityStats = {
-        total_events: events?.length || 0,
-        high_risk_events: events?.filter(e => e.severity === 'high' || e.severity === 'critical').length || 0,
-        auto_blocked_events: events?.filter(e => e.auto_blocked).length || 0,
-        pending_review: events?.filter(e => !e.reviewed && (e.severity === 'high' || e.severity === 'critical')).length || 0,
-        last_24h_events: events?.filter(e => new Date(e.created_at) > last24h).length || 0
+        total_events: typedEvents.length,
+        high_risk_events: typedEvents.filter(e => e.severity === 'high' || e.severity === 'critical').length,
+        auto_blocked_events: typedEvents.filter(e => e.auto_blocked).length,
+        pending_review: typedEvents.filter(e => !e.reviewed && (e.severity === 'high' || e.severity === 'critical')).length,
+        last_24h_events: typedEvents.filter(e => new Date(e.created_at) > last24h).length
       };
 
       setSecurityStats(stats);

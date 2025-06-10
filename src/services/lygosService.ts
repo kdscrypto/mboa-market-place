@@ -112,7 +112,7 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
   } catch (error) {
     console.error('Error creating Lygos payment:', error);
     
-    // Log de l'erreur
+    // Log de l'erreur avec conversion appropriée
     await supabase
       .from('payment_audit_logs')
       .insert({
@@ -120,7 +120,13 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
         event_type: 'payment_creation_failed',
         event_data: {
           error: error instanceof Error ? error.message : 'Unknown error',
-          payment_request: paymentRequest,
+          // Convert complex objects to JSON-compatible format
+          payment_request_summary: {
+            amount: paymentRequest.amount,
+            currency: paymentRequest.currency,
+            description: paymentRequest.description,
+            customer_email: paymentRequest.customer.email
+          },
           timestamp: new Date().toISOString()
         }
       });
@@ -163,8 +169,9 @@ export const verifyLygosPayment = async (paymentId: string): Promise<LygosPaymen
       status: randomStatus,
       amount: transaction.amount,
       currency: transaction.currency,
+      payment_url: `https://payment.lygos.cm/pay/${paymentId}`,
       created_at: transaction.created_at,
-      completed_at: randomStatus === 'completed' ? new Date().toISOString() : null
+      expires_at: transaction.expires_at
     };
 
     // Mettre à jour la transaction si le statut a changé
@@ -242,7 +249,6 @@ export const updateLygosTransactionStatus = async (
   }
 };
 
-// Nettoyer les transactions expirées
 export const cleanupExpiredLygosTransactions = async (): Promise<number> => {
   try {
     const { data, error } = await supabase.rpc('cleanup_expired_lygos_transactions');

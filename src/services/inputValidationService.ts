@@ -1,82 +1,111 @@
 
 export interface ValidationResult {
   isValid: boolean;
-  errors: string[];
-  warnings: string[];
-  sanitized?: string;
+  score: number;
+  suggestions: string[];
+  errors?: string[];
 }
 
-export const sanitizeInput = (input: string): string => {
-  return input
-    .trim()
-    .replace(/[<>]/g, '') // Remove potential HTML tags
-    .replace(/['"]/g, '') // Remove quotes
-    .slice(0, 255); // Limit length
+export const validatePasswordStrength = (password: string): ValidationResult & { isStrong: boolean } => {
+  let score = 0;
+  const suggestions: string[] = [];
+  const errors: string[] = [];
+  
+  // Longueur
+  if (password.length >= 8) {
+    score += 20;
+  } else {
+    suggestions.push('Utilisez au moins 8 caractères');
+    errors.push('Mot de passe trop court');
+  }
+  
+  if (password.length >= 12) score += 10;
+  
+  // Caractères minuscules
+  if (/[a-z]/.test(password)) {
+    score += 15;
+  } else {
+    suggestions.push('Ajoutez des lettres minuscules');
+    errors.push('Manque de lettres minuscules');
+  }
+  
+  // Caractères majuscules
+  if (/[A-Z]/.test(password)) {
+    score += 15;
+  } else {
+    suggestions.push('Ajoutez des lettres majuscules');
+    errors.push('Manque de lettres majuscules');
+  }
+  
+  // Chiffres
+  if (/[0-9]/.test(password)) {
+    score += 15;
+  } else {
+    suggestions.push('Ajoutez des chiffres');
+    errors.push('Manque de chiffres');
+  }
+  
+  // Caractères spéciaux
+  if (/[^a-zA-Z0-9]/.test(password)) {
+    score += 15;
+  } else {
+    suggestions.push('Ajoutez des caractères spéciaux (!@#$%^&*)');
+    errors.push('Manque de caractères spéciaux');
+  }
+  
+  // Pénalités pour les patterns communs
+  if (/(.)\1{2,}/.test(password)) {
+    score -= 10;
+    suggestions.push('Évitez la répétition de caractères');
+    errors.push('Répétition de caractères détectée');
+  }
+  
+  if (/123|abc|qwe|password|admin/i.test(password)) {
+    score -= 20;
+    suggestions.push('Évitez les séquences communes');
+    errors.push('Séquence commune détectée');
+  }
+  
+  const finalScore = Math.max(0, Math.min(100, score));
+  
+  return {
+    isValid: finalScore >= 60,
+    score: finalScore,
+    suggestions,
+    errors,
+    isStrong: finalScore >= 70
+  };
+};
+
+export const validateEmailAdvanced = (email: string): ValidationResult => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isValid = emailRegex.test(email);
+  
+  return {
+    isValid,
+    score: isValid ? 100 : 0,
+    suggestions: isValid ? [] : ['Format d\'email invalide']
+  };
 };
 
 export const validateUsername = (username: string): ValidationResult => {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  
-  const sanitized = sanitizeInput(username);
-  
-  // Length validation
-  if (sanitized.length < 3) {
-    errors.push('Le nom d\'utilisateur doit contenir au moins 3 caractères');
-  }
-  
-  if (sanitized.length > 30) {
-    errors.push('Le nom d\'utilisateur ne peut pas dépasser 30 caractères');
-  }
-  
-  // Character validation
-  if (!/^[a-zA-Z0-9_-]+$/.test(sanitized)) {
-    errors.push('Le nom d\'utilisateur ne peut contenir que des lettres, chiffres, _ et -');
-  }
-  
-  // Reserved words
-  const reservedWords = ['admin', 'root', 'user', 'system', 'api', 'www', 'mail'];
-  if (reservedWords.includes(sanitized.toLowerCase())) {
-    errors.push('Ce nom d\'utilisateur n\'est pas disponible');
-  }
-  
-  // Consecutive special characters
-  if (/[-_]{2,}/.test(sanitized)) {
-    warnings.push('Évitez les caractères spéciaux consécutifs');
-  }
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  const isValid = usernameRegex.test(username);
   
   return {
-    isValid: errors.length === 0,
-    errors,
-    warnings,
-    sanitized
+    isValid,
+    score: isValid ? 100 : 0,
+    suggestions: isValid ? [] : ['Le nom d\'utilisateur doit contenir 3-20 caractères alphanumériques']
   };
 };
 
 export const validatePhone = (phone: string): ValidationResult => {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  
-  let sanitized = phone.replace(/\s+/g, '').replace(/[-()]/g, '');
-  
-  // Cameroon phone validation
-  const cameroonPattern = /^(\+237|237)?[67][0-9]{8}$/;
-  
-  if (!cameroonPattern.test(sanitized)) {
-    errors.push('Format de numéro camerounais invalide (6XXXXXXXX ou 7XXXXXXXX)');
-  }
-  
-  // Normalize format
-  if (sanitized.startsWith('237')) {
-    sanitized = '+' + sanitized;
-  } else if (sanitized.startsWith('6') || sanitized.startsWith('7')) {
-    sanitized = '+237' + sanitized;
-  }
+  const phoneRegex = /^(\+237)?[62][0-9]{8}$/;
+  const isValid = phoneRegex.test(phone);
   
   return {
-    isValid: errors.length === 0,
-    errors,
-    warnings,
-    sanitized
+    isValid,
+    score: isValid ? 100 : 0,
+    suggestions: isValid ? [] : ['Format de numéro camerounais invalide (ex: +237612345678)']
   };
 };

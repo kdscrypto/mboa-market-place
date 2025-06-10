@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,6 +56,11 @@ const PaymentRecoveryManager: React.FC<PaymentRecoveryManagerProps> = ({
   const [processingRecoveries, setProcessingRecoveries] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
+  const getRetryCount = (paymentData: any): number => {
+    if (!paymentData || typeof paymentData !== 'object') return 0;
+    return paymentData.retry_count || 0;
+  };
+
   const loadFailedTransactions = async () => {
     setIsLoading(true);
     try {
@@ -88,7 +92,7 @@ const PaymentRecoveryManager: React.FC<PaymentRecoveryManagerProps> = ({
       const recoverable = transactions?.filter(t => 
         t.status === 'failed' && 
         new Date(t.expires_at) > now &&
-        (!t.payment_data?.retry_count || t.payment_data.retry_count < 3)
+        getRetryCount(t.payment_data) < 3
       ) || [];
 
       // Simuler un taux de succès basé sur l'historique
@@ -126,7 +130,7 @@ const PaymentRecoveryManager: React.FC<PaymentRecoveryManagerProps> = ({
       }
 
       // Simuler une tentative de récupération via Lygos
-      const retryCount = (transaction.payment_data?.retry_count || 0) + 1;
+      const retryCount = getRetryCount(transaction.payment_data) + 1;
       
       // Mettre à jour la transaction avec la tentative de récupération
       const { error: updateError } = await supabase
@@ -249,7 +253,7 @@ const PaymentRecoveryManager: React.FC<PaymentRecoveryManagerProps> = ({
     const recoverableTransactions = failedTransactions.filter(t => 
       t.status === 'failed' && 
       new Date(t.expires_at) > new Date() &&
-      (!t.payment_data?.retry_count || t.payment_data.retry_count < 3) &&
+      getRetryCount(t.payment_data) < 3 &&
       !processingRecoveries.has(t.id)
     ).slice(0, 5); // Limiter à 5 transactions à la fois
 
@@ -278,7 +282,7 @@ const PaymentRecoveryManager: React.FC<PaymentRecoveryManagerProps> = ({
   const isRecoverable = (transaction: FailedTransaction) => {
     return transaction.status === 'failed' && 
            new Date(transaction.expires_at) > new Date() &&
-           (!transaction.payment_data?.retry_count || transaction.payment_data.retry_count < 3);
+           getRetryCount(transaction.payment_data) < 3;
   };
 
   useEffect(() => {
@@ -424,9 +428,9 @@ const PaymentRecoveryManager: React.FC<PaymentRecoveryManagerProps> = ({
                         Créé: {new Date(transaction.created_at).toLocaleString()} |
                         Expire: {new Date(transaction.expires_at).toLocaleString()}
                       </p>
-                      {transaction.payment_data?.retry_count && (
+                      {getRetryCount(transaction.payment_data) > 0 && (
                         <p className="text-xs text-orange-600">
-                          Tentatives: {transaction.payment_data.retry_count}/3
+                          Tentatives: {getRetryCount(transaction.payment_data)}/3
                         </p>
                       )}
                     </div>

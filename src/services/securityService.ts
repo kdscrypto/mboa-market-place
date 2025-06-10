@@ -1,6 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+// Helper function to safely parse JSON response from RPC calls
+const parseRpcResponse = <T>(data: any, defaultValue: T): T => {
+  if (!data || typeof data !== 'object') {
+    return defaultValue;
+  }
+  return data as T;
+};
+
 // Obtenir l'adresse IP du client
 export const getClientIP = async (): Promise<string> => {
   try {
@@ -36,10 +44,12 @@ export const checkAuthRateLimit = async (
       return { allowed: true }; // En cas d'erreur, permettre l'action
     }
 
+    const result = parseRpcResponse(data, { allowed: true });
+    
     return {
-      allowed: data?.allowed ?? true,
-      blocked_until: data?.blocked_until,
-      reason: data?.reason
+      allowed: Boolean(result.allowed ?? true),
+      blocked_until: result.blocked_until ? String(result.blocked_until) : undefined,
+      reason: result.reason ? String(result.reason) : undefined
     };
 
   } catch (error) {
@@ -66,11 +76,18 @@ export const detectSuspiciousActivity = async (
       return null;
     }
 
+    const result = parseRpcResponse(data, { 
+      risk_score: 0, 
+      auto_block: false, 
+      severity: 'low', 
+      event_type: 'unknown' 
+    });
+
     return {
-      risk_score: data?.risk_score ?? 0,
-      auto_block: data?.auto_block ?? false,
-      severity: data?.severity ?? 'low',
-      event_type: data?.event_type ?? 'unknown'
+      risk_score: Number(result.risk_score ?? 0),
+      auto_block: Boolean(result.auto_block ?? false),
+      severity: String(result.severity ?? 'low'),
+      event_type: String(result.event_type ?? 'unknown')
     };
 
   } catch (error) {
@@ -138,7 +155,6 @@ export const checkFormSubmissionTiming = (
   return { isSuspicious: false };
 };
 
-// Valider la force d'un mot de passe
 export const validatePasswordStrength = (password: string): {
   score: number;
   suggestions: string[];
@@ -187,7 +203,6 @@ export const validatePasswordStrength = (password: string): {
   };
 };
 
-// Générer des recommandations de sécurité
 export const generateSecurityRecommendations = (
   passwordScore: number,
   attemptCount: number
@@ -212,7 +227,6 @@ export const generateSecurityRecommendations = (
   return recommendations;
 };
 
-// Nettoyer les anciens événements de sécurité
 export const cleanupSecurityEvents = async (): Promise<void> => {
   try {
     // Supprimer les événements de plus de 90 jours
@@ -232,7 +246,6 @@ export const cleanupSecurityEvents = async (): Promise<void> => {
   }
 };
 
-// Générer un fingerprint du dispositif
 export const generateDeviceFingerprint = (): string => {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');

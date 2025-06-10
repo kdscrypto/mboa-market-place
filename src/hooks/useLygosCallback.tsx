@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { processLygosCallback } from '@/services/lygosCallbackService';
 
 interface CallbackData {
   status: 'loading' | 'success' | 'failed' | 'expired' | 'error';
@@ -11,6 +10,27 @@ interface CallbackData {
   message?: string;
   paymentData?: any;
 }
+
+// Mock service function - replace with actual implementation
+const processLygosCallback = async (
+  adId: string, 
+  paymentId?: string, 
+  status?: string
+): Promise<{ success: boolean; status: string; message?: string }> => {
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Mock response based on status
+  if (status === 'success' || status === 'completed') {
+    return { success: true, status: 'completed', message: 'Payment completed successfully' };
+  } else if (status === 'failed') {
+    return { success: true, status: 'failed', message: 'Payment failed' };
+  } else if (status === 'expired') {
+    return { success: true, status: 'expired', message: 'Payment expired' };
+  } else {
+    return { success: false, status: 'error', message: 'Unknown status' };
+  }
+};
 
 export const useLygosCallback = () => {
   const [searchParams] = useSearchParams();
@@ -52,31 +72,31 @@ export const useLygosCallback = () => {
           } else {
             mappedStatus = 'error';
           }
-          
+
           setCallbackData({
             status: mappedStatus,
-            adId: result.adId,
-            transactionId: result.transactionId,
-            paymentData: result.paymentData,
-            message: result.message
+            adId,
+            transactionId,
+            message: result.message,
+            paymentData: { paymentId, status }
           });
 
-          // Show appropriate toast message
-          if (result.status === 'completed') {
+          // Show toast notification
+          if (mappedStatus === 'success') {
             toast({
-              title: "Paiement réussi!",
-              description: "Votre annonce premium a été activée avec succès.",
+              title: "Paiement confirmé",
+              description: "Votre paiement a été traité avec succès",
             });
-          } else if (result.status === 'failed') {
+          } else if (mappedStatus === 'failed') {
             toast({
               title: "Paiement échoué",
-              description: "Le paiement n'a pas pu être traité. Vous pouvez réessayer.",
+              description: "Votre paiement n'a pas pu être traité",
               variant: "destructive"
             });
-          } else if (result.status === 'expired') {
+          } else if (mappedStatus === 'expired') {
             toast({
               title: "Paiement expiré",
-              description: "Le délai de paiement a été dépassé. Vous pouvez créer un nouveau paiement.",
+              description: "Votre session de paiement a expiré",
               variant: "destructive"
             });
           }
@@ -85,13 +105,25 @@ export const useLygosCallback = () => {
             status: 'error',
             message: result.message || 'Erreur lors du traitement du callback'
           });
+          
+          toast({
+            title: "Erreur de callback",
+            description: result.message || 'Erreur lors du traitement du callback',
+            variant: "destructive"
+          });
         }
-
       } catch (error) {
-        console.error('Callback processing error:', error);
+        console.error('Error processing callback:', error);
+        
         setCallbackData({
           status: 'error',
-          message: 'Erreur lors du traitement du callback de paiement'
+          message: error instanceof Error ? error.message : 'Erreur inconnue'
+        });
+        
+        toast({
+          title: "Erreur de callback",
+          description: "Une erreur inattendue s'est produite",
+          variant: "destructive"
         });
       } finally {
         setIsProcessing(false);
@@ -101,16 +133,8 @@ export const useLygosCallback = () => {
     processCallback();
   }, [searchParams, toast]);
 
-  const retry = () => {
-    setIsProcessing(true);
-    setCallbackData({ status: 'loading' });
-    // Force re-run effect
-    window.location.reload();
-  };
-
   return {
     callbackData,
-    isProcessing,
-    retry
+    isProcessing
   };
 };

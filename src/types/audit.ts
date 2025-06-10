@@ -29,3 +29,15 @@ export const AUDIT_EVENT_TYPES = [
   'user_action',
   'system_action'
 ];
+
+// Type helper for database audit log conversion
+export const convertDatabaseAuditLog = (dbLog: any): AuditLog => ({
+  id: dbLog.id,
+  transaction_id: dbLog.transaction_id,
+  event_type: dbLog.event_type,
+  event_data: typeof dbLog.event_data === 'string' ? JSON.parse(dbLog.event_data) : (dbLog.event_data || {}),
+  ip_address: dbLog.ip_address ? String(dbLog.ip_address) : null,
+  user_agent: dbLog.user_agent || null,
+  security_flags: typeof dbLog.security_flags === 'string' ? JSON.parse(dbLog.security_flags) : (dbLog.security_flags || {}),
+  created_at: dbLog.created_at
+});

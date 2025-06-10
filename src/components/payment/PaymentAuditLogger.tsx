@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +16,7 @@ import {
   Shield,
   Activity
 } from 'lucide-react';
-import { AuditLog, AuditFilters, AUDIT_EVENT_TYPES } from '@/types/audit';
+import { AuditLog, AuditFilters, AUDIT_EVENT_TYPES, convertDatabaseAuditLog } from '@/types/audit';
 
 const PaymentAuditLogger: React.FC = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -53,7 +52,9 @@ const PaymentAuditLogger: React.FC = () => {
 
       if (error) throw error;
 
-      setAuditLogs(data || []);
+      // Convert database logs to our typed format
+      const typedData: AuditLog[] = (data || []).map(convertDatabaseAuditLog);
+      setAuditLogs(typedData);
       
     } catch (error) {
       console.error('Error loading audit logs:', error);

@@ -1,6 +1,6 @@
 
 import { z } from "zod";
-import { validatePasswordStrength } from "@/services/securityService";
+import { validatePasswordStrength } from "@/services/inputValidationService";
 import { validateEmailAdvanced } from "@/services/emailValidationService";
 import { validateUsername, validatePhone } from "@/services/inputValidationService";
 
@@ -20,9 +20,9 @@ const passwordSchema = z.string()
   .min(1, "Le mot de passe est requis")
   .refine((password) => {
     const validation = validatePasswordStrength(password);
-    return validation.isValid && validation.score >= 3;
+    return validation.isValid && validation.score >= 60;
   }, {
-    message: "Le mot de passe ne respecte pas les critères de sécurité requis (score minimum: 3/5)"
+    message: "Le mot de passe ne respecte pas les critères de sécurité requis (score minimum: 60/100)"
   });
 
 // Enhanced username validation

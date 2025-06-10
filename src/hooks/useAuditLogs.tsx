@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { AuditLog, AuditFilters } from '@/types/audit';
+import { AuditLog, AuditFilters, convertDatabaseAuditLog } from '@/types/audit';
 
 export const useAuditLogs = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -32,14 +32,8 @@ export const useAuditLogs = () => {
 
       if (error) throw error;
 
-      // Type conversion avec gestion des valeurs nulles et correction du type ip_address
-      const typedData: AuditLog[] = (data || []).map(item => ({
-        ...item,
-        ip_address: item.ip_address ? String(item.ip_address) : '',
-        user_agent: item.user_agent || '',
-        event_data: item.event_data || {},
-        security_flags: item.security_flags || {}
-      }));
+      // Convert database logs to our typed format
+      const typedData: AuditLog[] = (data || []).map(convertDatabaseAuditLog);
 
       setAuditLogs(typedData);
       
