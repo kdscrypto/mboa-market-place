@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { AdSubmissionData, SubmissionResult } from "./types";
-import { createLygosPayment } from "@/services/lygosService";
+import { createLygosPayment, LygosPaymentRequest } from "@/services/lygosService";
 
 export const createAdWithPayment = async (adData: AdSubmissionData): Promise<SubmissionResult> => {
   console.log('Creating ad with payment integration...', adData);
@@ -80,19 +80,30 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
 
     // Create Lygos payment for premium ads
     try {
-      const paymentResult = await createLygosPayment({
-        adId: ad.id,
-        adType: adData.adType,
+      const paymentRequest: LygosPaymentRequest = {
         amount: getPremiumPrice(adData.adType),
-        title: adData.title
-      });
+        currency: 'XAF',
+        description: `Paiement premium pour l'annonce: ${adData.title}`,
+        customer: {
+          name: session.user.email || 'Utilisateur',
+          email: session.user.email || '',
+          phone: adData.phone
+        },
+        metadata: {
+          adId: ad.id,
+          adType: adData.adType,
+          userId: session.user.id
+        }
+      };
 
-      if (paymentResult.success && paymentResult.paymentUrl) {
+      const paymentResult = await createLygosPayment(paymentRequest);
+
+      if (paymentResult.success && paymentResult.paymentData?.payment_url) {
         return {
           success: true,
           adId: ad.id,
           requiresPayment: true,
-          paymentUrl: paymentResult.paymentUrl,
+          paymentUrl: paymentResult.paymentData.payment_url,
           transactionId: paymentResult.transactionId
         };
       } else {
