@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,6 +32,7 @@ import ResetPassword from "./pages/ResetPassword";
 import PaymentReturn from "./pages/PaymentReturn";
 import PaymentTracking from "./pages/PaymentTracking";
 import LygosCallback from "./pages/LygosCallback";
+import LygosTestDashboard from "./pages/LygosTestDashboard";
 
 const queryClient = new QueryClient();
 

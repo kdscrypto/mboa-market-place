@@ -8,6 +8,11 @@ import { AdFormData } from "@/components/ads/AdFormTypes";
 
 interface CreateAdContentProps {
   isSubmitted: boolean;
+  submissionResult?: {
+    adId: string;
+    requiresPayment: boolean;
+    paymentUrl?: string;
+  };
   onNewAd: () => void;
   form: UseFormReturn<AdFormData>;
   formValues: AdFormData;
@@ -23,6 +28,7 @@ interface CreateAdContentProps {
 
 const CreateAdContent = ({
   isSubmitted,
+  submissionResult,
   onNewAd,
   form,
   formValues,
@@ -39,8 +45,12 @@ const CreateAdContent = ({
     <>
       <CreateAdHeader isSubmitted={isSubmitted} onNewAd={onNewAd} />
       
-      {isSubmitted ? (
-        <CreateAdSuccessMessage />
+      {isSubmitted && submissionResult ? (
+        <CreateAdSuccessMessage 
+          adId={submissionResult.adId}
+          requiresPayment={submissionResult.requiresPayment}
+          paymentUrl={submissionResult.paymentUrl}
+        />
       ) : (
         <CreateAdForm
           form={form}

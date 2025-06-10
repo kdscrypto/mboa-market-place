@@ -47,8 +47,8 @@ const CreateAdForm = ({
         
         {/* Ad Plans */}
         <AdPlanSelector 
-          value={formValues.adType}
-          onChange={(value) => setValue('adType', value)}
+          selectedPlan={formValues.adType}
+          onPlanSelect={(value) => setValue('adType', value)}
         />
         
         {/* Images */}
