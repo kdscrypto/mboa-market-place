@@ -92,13 +92,13 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
         }
       });
 
-    // Simuler une réponse Lygos
+    // Simuler une réponse Lygos - URL interne pour éviter les erreurs de résolution DNS
     const simulatedResponse = {
       id: paymentId,
       status: 'pending',
       amount: paymentRequest.amount,
       currency: paymentRequest.currency,
-      payment_url: `https://payment.lygos.cm/pay/${paymentId}`,
+      payment_url: `/payment-pending?transaction=${transaction.id}&payment_id=${paymentId}`, // URL interne au lieu d'externe
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     };

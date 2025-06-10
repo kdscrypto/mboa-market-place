@@ -78,24 +78,29 @@ export const useAdSubmission = () => {
       
       // Handle different result types
       if (result.requiresPayment && result.paymentUrl) {
+        // Pour les annonces premium, afficher un message informatif au lieu de rediriger automatiquement
         toast({
-          title: "Redirection vers le paiement",
-          description: "Vous allez être redirigé vers Lygos pour effectuer le paiement.",
-          duration: 3000,
+          title: "Annonce premium créée",
+          description: "Votre annonce premium a été créée avec succès. Le système de paiement Lygos sera bientôt disponible. En attendant, votre annonce est en attente de paiement.",
+          duration: 8000,
         });
         
-        // Store transaction info for tracking
+        console.log('Payment URL generated (for future integration):', result.paymentUrl);
+        console.log('Transaction ID:', result.transactionId);
+        
+        // Store transaction info for future tracking
         if (result.transactionId) {
           sessionStorage.setItem('pendingPayment', JSON.stringify({
             transactionId: result.transactionId,
-            adId: result.adId
+            adId: result.adId,
+            paymentUrl: result.paymentUrl
           }));
         }
         
-        // Redirect to Lygos payment
+        // Navigate to dashboard instead of redirecting to payment
         setTimeout(() => {
-          window.location.href = result.paymentUrl!;
-        }, 2000);
+          navigate('/dashboard');
+        }, 3000);
       } else {
         const premiumExpirationDate = getPremiumExpirationDate(validatedData.adType);
         const successMessage = validatedData.adType === 'standard' 
