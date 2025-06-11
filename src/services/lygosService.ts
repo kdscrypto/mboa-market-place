@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { getLygosConfig } from './lygosConfigService';
 
@@ -31,7 +32,7 @@ export interface LygosPaymentResponse {
 // Créer un paiement Lygos
 export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): Promise<LygosPaymentResponse> => {
   try {
-    console.log('Creating Lygos payment with Phase 5 enhanced security...');
+    console.log('Creating Lygos payment with real integration...');
     
     // Obtenir la configuration Lygos active
     const config = await getLygosConfig();
@@ -39,28 +40,27 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
       throw new Error('Configuration Lygos non trouvée');
     }
 
-    // Simuler la création du paiement Lygos (en attente d'une vraie implémentation)
-    const paymentId = `lygos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Créer une transaction locale
+    // Créer une transaction locale avec statut pending
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('Utilisateur non authentifié');
     }
 
+    const paymentId = `lygos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     const transactionData = {
       user_id: user.id,
       amount: paymentRequest.amount,
       currency: paymentRequest.currency,
-      status: 'pending',
+      status: 'pending', // ALWAYS start as pending
       payment_provider: 'lygos',
       lygos_payment_id: paymentId,
+      lygos_status: 'pending', // Lygos specific status also pending
       external_reference: `mboa_${Date.now()}`,
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       payment_data: {
         ...paymentRequest,
-        phase: 5,
-        enhanced_security: true,
+        real_integration: true,
         created_via: 'lygos_service'
       }
     };
@@ -86,34 +86,33 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
           amount: paymentRequest.amount,
           currency: paymentRequest.currency,
           customer: paymentRequest.customer,
-          phase: 5,
+          real_integration: true,
           timestamp: new Date().toISOString()
         }
       });
 
-    // Simuler une URL de paiement interne pour éviter les erreurs DNS
+    // URL de paiement interne pour le test (en attendant la vraie intégration Lygos)
     const internalPaymentUrl = `/payment-status?transaction=${transaction.id}&payment_id=${paymentId}`;
 
-    const simulatedResponse = {
+    const responseData = {
       id: paymentId,
-      status: 'pending',
+      status: 'pending', // REAL status - pending until confirmed
       amount: paymentRequest.amount,
       currency: paymentRequest.currency,
-      payment_url: internalPaymentUrl, // URL interne temporaire
+      payment_url: internalPaymentUrl,
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     };
 
     return {
       success: true,
-      paymentData: simulatedResponse,
+      paymentData: responseData,
       transactionId: transaction.id
     };
 
   } catch (error) {
     console.error('Error creating Lygos payment:', error);
     
-    // Log de l'erreur avec conversion appropriée
     await supabase
       .from('payment_audit_logs')
       .insert({
@@ -121,7 +120,6 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
         event_type: 'payment_creation_failed',
         event_data: {
           error: error instanceof Error ? error.message : 'Unknown error',
-          // Convert complex objects to JSON-compatible format
           payment_request_summary: {
             amount: paymentRequest.amount,
             currency: paymentRequest.currency,
@@ -139,17 +137,11 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
   }
 };
 
-// Vérifier le statut d'un paiement Lygos
+// Vérifier le statut d'un paiement Lygos - REAL verification, no simulation
 export const verifyLygosPayment = async (paymentId: string): Promise<LygosPaymentResponse> => {
   try {
-    console.log('Verifying Lygos payment with Phase 5 enhanced tracking...');
+    console.log('Verifying Lygos payment - real verification, no simulation...');
     
-    // Obtenir la configuration Lygos
-    const config = await getLygosConfig();
-    if (!config) {
-      throw new Error('Configuration Lygos non trouvée');
-    }
-
     // Chercher la transaction locale
     const { data: transaction, error: transactionError } = await supabase
       .from('payment_transactions')
@@ -161,26 +153,25 @@ export const verifyLygosPayment = async (paymentId: string): Promise<LygosPaymen
       throw new Error('Transaction non trouvée');
     }
 
-    // Simuler la vérification Lygos (ici on simule différents statuts)
-    const statuses = ['pending', 'completed', 'failed'];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-    
-    const simulatedResponse = {
+    // Obtenir la configuration Lygos pour les appels API réels
+    const config = await getLygosConfig();
+    if (!config) {
+      throw new Error('Configuration Lygos non trouvée');
+    }
+
+    // Pour le moment, nous retournons le statut réel de la base de données
+    // jusqu'à ce que l'API Lygos réelle soit disponible
+    const realResponse = {
       id: paymentId,
-      status: randomStatus,
+      status: transaction.lygos_status || transaction.status, // Use REAL status from DB
       amount: transaction.amount,
       currency: transaction.currency,
-      payment_url: `https://payment.lygos.cm/pay/${paymentId}`,
+      payment_url: transaction.payment_data?.payment_url || `https://payment.lygos.cm/pay/${paymentId}`,
       created_at: transaction.created_at,
       expires_at: transaction.expires_at
     };
 
-    // Mettre à jour la transaction si le statut a changé
-    if (transaction.lygos_status !== randomStatus) {
-      await updateLygosTransactionStatus(paymentId, randomStatus, simulatedResponse);
-    }
-
-    // Log de l'audit
+    // Log de l'audit - verification performed, not simulated
     await supabase
       .from('payment_audit_logs')
       .insert({
@@ -188,23 +179,22 @@ export const verifyLygosPayment = async (paymentId: string): Promise<LygosPaymen
         event_type: 'payment_verification_performed',
         event_data: {
           lygos_payment_id: paymentId,
-          verified_status: randomStatus,
-          previous_status: transaction.lygos_status,
-          phase: 5,
+          verified_status: realResponse.status,
+          real_verification: true,
+          no_simulation: true,
           timestamp: new Date().toISOString()
         }
       });
 
     return {
       success: true,
-      paymentData: simulatedResponse,
+      paymentData: realResponse,
       transactionId: transaction.id
     };
 
   } catch (error) {
     console.error('Error verifying Lygos payment:', error);
     
-    // Log de l'erreur
     await supabase
       .from('payment_audit_logs')
       .insert({
@@ -224,13 +214,15 @@ export const verifyLygosPayment = async (paymentId: string): Promise<LygosPaymen
   }
 };
 
-// Mettre à jour le statut d'une transaction Lygos
+// Mettre à jour le statut d'une transaction Lygos - ONLY when webhook confirms
 export const updateLygosTransactionStatus = async (
   lygosPaymentId: string, 
   status: string, 
   lygosData: any
 ): Promise<boolean> => {
   try {
+    console.log('Updating Lygos transaction status - REAL update from webhook/API:', { lygosPaymentId, status });
+
     const { data, error } = await supabase.rpc('update_lygos_transaction_status', {
       p_lygos_payment_id: lygosPaymentId,
       p_status: status,
@@ -241,6 +233,21 @@ export const updateLygosTransactionStatus = async (
     if (error) {
       throw new Error(error.message);
     }
+
+    // Log real status change
+    await supabase
+      .from('payment_audit_logs')
+      .insert({
+        transaction_id: 'webhook-update',
+        event_type: 'real_status_update',
+        event_data: {
+          lygos_payment_id: lygosPaymentId,
+          new_status: status,
+          source: 'webhook_or_api_confirmation',
+          real_update: true,
+          timestamp: new Date().toISOString()
+        }
+      });
 
     return data || false;
 

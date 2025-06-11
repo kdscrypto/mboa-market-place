@@ -25,14 +25,14 @@ const PaymentStatus = () => {
     isExpired
   } = usePaymentTracking(transactionId || undefined);
 
-  // Determine payment status based on real transaction data
+  // Determine payment status based on REAL transaction data - NO SIMULATION
   const getPaymentStatus = () => {
     if (!transaction) return 'loading';
     
     // Check if payment has expired
     if (isExpired()) return 'expired';
     
-    // Map transaction status to payment status
+    // Use REAL status from database - no random simulation
     switch (transaction.status) {
       case 'completed':
         return 'success';
@@ -42,6 +42,7 @@ const PaymentStatus = () => {
         return 'expired';
       case 'pending':
       default:
+        // IMPORTANT: Stay pending until REAL confirmation
         return 'pending';
     }
   };
@@ -49,13 +50,13 @@ const PaymentStatus = () => {
   const paymentStatus = getPaymentStatus();
 
   useEffect(() => {
-    // Show toast notifications for status changes
-    if (paymentStatus === 'success') {
+    // Show toast notifications for REAL status changes only
+    if (paymentStatus === 'success' && transaction?.status === 'completed') {
       toast({
         title: "Paiement réussi",
         description: "Votre annonce premium a été activée avec succès !",
       });
-    } else if (paymentStatus === 'failed') {
+    } else if (paymentStatus === 'failed' && transaction?.status === 'failed') {
       toast({
         title: "Paiement échoué",
         description: "Le paiement n'a pas pu être traité. Veuillez réessayer.",
@@ -68,7 +69,7 @@ const PaymentStatus = () => {
         variant: "destructive"
       });
     }
-  }, [paymentStatus, toast]);
+  }, [paymentStatus, transaction?.status, toast]);
 
   const getStatusIcon = () => {
     switch (paymentStatus) {
@@ -112,7 +113,7 @@ const PaymentStatus = () => {
       case 'pending':
         return {
           title: "En attente de paiement",
-          description: "Votre paiement est en cours de traitement via Lygos. Cette page se mettra à jour automatiquement."
+          description: "Votre transaction est en attente. Veuillez compléter le paiement via Lygos pour activer votre annonce premium."
         };
       default:
         return { title: "", description: "" };
@@ -122,6 +123,9 @@ const PaymentStatus = () => {
   const handleAction = () => {
     if (paymentStatus === 'success') {
       navigate('/dashboard');
+    } else if (paymentStatus === 'pending' && transaction?.payment_data?.payment_url) {
+      // Redirect to complete payment
+      window.location.href = transaction.payment_data.payment_url;
     } else {
       navigate('/publier-annonce');
     }
@@ -149,11 +153,25 @@ const PaymentStatus = () => {
             </p>
           )}
 
+          {/* Show real transaction details */}
+          {transaction && (
+            <div className="bg-gray-50 border rounded-lg p-3 mb-4 text-sm">
+              <p><strong>Statut réel:</strong> {transaction.status}</p>
+              {transaction.lygos_status && (
+                <p><strong>Statut Lygos:</strong> {transaction.lygos_status}</p>
+              )}
+              <p><strong>Montant:</strong> {transaction.amount} {transaction.currency}</p>
+            </div>
+          )}
+
           {/* Show time remaining for pending payments */}
           {paymentStatus === 'pending' && timeRemaining && !timeRemaining.expired && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
               <p className="text-sm text-yellow-700">
                 Temps restant: {timeRemaining.minutes}m {timeRemaining.seconds}s
+              </p>
+              <p className="text-xs text-yellow-600 mt-1">
+                Le statut restera "pending" jusqu'à confirmation de Lygos
               </p>
             </div>
           )}
@@ -174,7 +192,9 @@ const PaymentStatus = () => {
                 className="w-full bg-mboa-orange hover:bg-mboa-orange/90"
               >
                 {paymentStatus === 'success' 
-                  ? 'Aller au tableau de bord' 
+                  ? 'Aller au tableau de bord'
+                  : paymentStatus === 'pending'
+                  ? 'Compléter le paiement'
                   : 'Réessayer le paiement'
                 }
               </Button>
