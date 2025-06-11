@@ -34,18 +34,30 @@ export const usePaymentStatusHandlers = () => {
     let paymentUrl = paymentData?.payment_url;
     console.log('Method 1 - Direct payment_url:', paymentUrl);
     
-    // Method 2: If not found, try to reconstruct from lygos_payment_id
+    // Method 2: If not found, try to reconstruct with different base URLs
     if (!paymentUrl && transaction.lygos_payment_id) {
       console.log('Method 2 - Reconstructing URL from lygos_payment_id:', transaction.lygos_payment_id);
-      paymentUrl = `https://payment.lygos.cm/pay/${transaction.lygos_payment_id}`;
+      
+      // Try different possible Lygos URL structures
+      const possibleUrls = [
+        `https://api.lygos.cm/payment/checkout/${transaction.lygos_payment_id}`,
+        `https://api.lygos.cm/checkout/${transaction.lygos_payment_id}`,
+        `https://api.lygos.cm/pay/${transaction.lygos_payment_id}`,
+        `https://checkout.lygos.cm/pay/${transaction.lygos_payment_id}`,
+        `https://pay.lygos.cm/${transaction.lygos_payment_id}`,
+        `https://lygos.cm/pay/${transaction.lygos_payment_id}`
+      ];
+      
+      paymentUrl = possibleUrls[0]; // Use the first one as default
       console.log('Reconstructed URL:', paymentUrl);
+      console.log('Alternative URLs available:', possibleUrls.slice(1));
     }
     
     // Method 3: Fallback URL generation
     if (!paymentUrl) {
       console.log('Method 3 - Using fallback URL generation');
       const fallbackId = transaction.lygos_payment_id || `fallback_${Date.now()}`;
-      paymentUrl = `https://payment.lygos.cm/pay/${fallbackId}`;
+      paymentUrl = `https://api.lygos.cm/payment/${fallbackId}`;
       console.log('Fallback URL:', paymentUrl);
     }
     
@@ -66,8 +78,9 @@ export const usePaymentStatusHandlers = () => {
       
       if (lygosUrl) {
         console.log('SUCCESS: Redirecting to Lygos payment:', lygosUrl);
-        // Open in new window to avoid navigation issues
-        const paymentWindow = window.open(lygosUrl, '_blank', 'width=800,height=600');
+        
+        // Try to open the payment window
+        const paymentWindow = window.open(lygosUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
         
         if (!paymentWindow) {
           toast({
@@ -75,22 +88,48 @@ export const usePaymentStatusHandlers = () => {
             description: "Veuillez autoriser les popups pour accéder au paiement Lygos.",
             variant: "destructive"
           });
+          
+          // Fallback: show the URL to the user
+          toast({
+            title: "URL de paiement Lygos",
+            description: `Copiez cette URL dans votre navigateur: ${lygosUrl}`,
+            duration: 10000,
+          });
         } else {
           toast({
             title: "Fenêtre de paiement ouverte",
-            description: "Complétez votre paiement dans la nouvelle fenêtre.",
+            description: "Complétez votre paiement dans la nouvelle fenêtre. Si la page ne se charge pas, contactez le support.",
           });
+          
+          // Monitor if the window fails to load
+          setTimeout(() => {
+            if (paymentWindow.closed) {
+              console.log('Payment window was closed');
+            } else {
+              try {
+                // Try to access the window to see if it loaded
+                if (paymentWindow.location.href === 'about:blank') {
+                  console.warn('Payment window may have failed to load');
+                  toast({
+                    title: "Problème de chargement",
+                    description: "La page Lygos semble avoir des difficultés à se charger. Contactez le support si le problème persiste.",
+                    variant: "destructive"
+                  });
+                }
+              } catch (e) {
+                // Cross-origin restriction, which is normal
+                console.log('Cannot access payment window (normal cross-origin behavior)');
+              }
+            }
+          }, 3000);
         }
       } else {
         console.error('FAILED: No Lygos payment URL available');
         toast({
-          title: "Erreur",
-          description: "URL de paiement Lygos non disponible. Rechargement en cours...",
+          title: "Erreur de configuration",
+          description: "URL de paiement Lygos non disponible. Veuillez contacter le support.",
           variant: "destructive"
         });
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
       }
     } else {
       navigate('/publier-annonce');

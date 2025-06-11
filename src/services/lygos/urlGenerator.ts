@@ -18,11 +18,20 @@ export const generateLygosPaymentUrl = async (
       throw new Error('Configuration Lygos manquante');
     }
 
-    // Use payment.lygos.cm as the base URL for the payment page
-    const baseUrl = 'https://payment.lygos.cm';
+    // Try different possible base URLs for Lygos payment
+    const possibleBaseUrls = [
+      'https://api.lygos.cm',
+      'https://checkout.lygos.cm', 
+      'https://pay.lygos.cm',
+      'https://lygos.cm',
+      config.base_url
+    ].filter(Boolean);
+
+    // Use the configured base_url or fall back to api.lygos.cm
+    const baseUrl = config.base_url || 'https://api.lygos.cm';
     console.log('Using base URL:', baseUrl);
     
-    // Create a simplified payment URL without exposing API key in URL
+    // Create payment URL with proper Lygos API endpoint structure
     const paymentParams = new URLSearchParams({
       payment_id: paymentId,
       amount: amount.toString(),
@@ -34,13 +43,23 @@ export const generateLygosPaymentUrl = async (
       cancel_url: config.cancel_url || `${window.location.origin}/publier-annonce`
     });
 
-    const fullUrl = `${baseUrl}/pay?${paymentParams.toString()}`;
+    // Try different endpoint structures
+    const possibleEndpoints = [
+      `${baseUrl}/payment/checkout?${paymentParams.toString()}`,
+      `${baseUrl}/checkout?${paymentParams.toString()}`,
+      `${baseUrl}/pay?${paymentParams.toString()}`,
+      `${baseUrl}/api/payment?${paymentParams.toString()}`
+    ];
+
+    const fullUrl = possibleEndpoints[0]; // Use the first one as default
     console.log('Generated Lygos payment URL:', fullUrl);
+    console.log('Alternative URLs to try if this fails:', possibleEndpoints.slice(1));
+    
     return fullUrl;
   } catch (error) {
     console.error('Error generating Lygos payment URL:', error);
-    // Use a more reliable fallback URL structure
-    const fallbackUrl = `https://payment.lygos.cm/pay/${paymentId}`;
+    // Use a more conservative fallback - just the payment ID
+    const fallbackUrl = `https://api.lygos.cm/payment/${paymentId}`;
     console.log('Using fallback URL:', fallbackUrl);
     return fallbackUrl;
   }
