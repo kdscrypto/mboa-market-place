@@ -51,6 +51,7 @@ function App() {
               <Route path="/publier-annonce" element={<CreateAd />} />
               <Route path="/annonce/:id" element={<AdDetail />} />
               <Route path="/connexion" element={<Login />} />
+              <Route path="/auth" element={<Login />} />
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/categorie/:slug" element={<CategoryPage />} />

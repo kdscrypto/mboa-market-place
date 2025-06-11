@@ -50,7 +50,7 @@ const Header = () => {
     if (user) {
       navigate('/publier-annonce');
     } else {
-      navigate('/auth', { state: { from: '/publier-annonce' } });
+      navigate('/connexion', { state: { from: '/publier-annonce' } });
     }
   };
 
@@ -130,7 +130,7 @@ const Header = () => {
               </>
             ) : (
               <Button variant="outline" asChild>
-                <Link to="/auth">Connexion</Link>
+                <Link to="/connexion">Connexion</Link>
               </Button>
             )}
           </div>
@@ -213,7 +213,7 @@ const Header = () => {
                 </div>
               ) : (
                 <Button variant="outline" asChild className="w-full">
-                  <Link to="/auth" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
+                  <Link to="/connexion" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
                 </Button>
               )}
             </div>

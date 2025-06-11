@@ -22,7 +22,7 @@ const HeroSection: React.FC = () => {
             className="bg-white text-mboa-orange hover:bg-gray-100 hover-scale"
           >
             <Link 
-              to="/auth" 
+              to="/connexion" 
               state={{ from: "/publier-annonce" }}
             >
               Publier une annonce gratuitement
