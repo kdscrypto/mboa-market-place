@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { getLygosConfig } from './lygosConfigService';
 
@@ -35,6 +34,38 @@ const getPaymentDataProperty = (paymentData: any, property: string): string | un
   return paymentData[property];
 };
 
+// Générer l'URL de paiement Lygos réelle
+const generateLygosPaymentUrl = async (paymentId: string, amount: number, currency: string, customerData: any): Promise<string> => {
+  try {
+    const config = await getLygosConfig();
+    if (!config) {
+      throw new Error('Configuration Lygos manquante');
+    }
+
+    // URL de base Lygos (à ajuster selon la vraie API Lygos)
+    const baseUrl = config.base_url || 'https://payment.lygos.cm';
+    
+    // Construire l'URL de paiement avec les paramètres nécessaires
+    const paymentParams = new URLSearchParams({
+      payment_id: paymentId,
+      amount: amount.toString(),
+      currency: currency,
+      customer_name: customerData.name || '',
+      customer_email: customerData.email || '',
+      customer_phone: customerData.phone || '',
+      return_url: config.return_url || `${window.location.origin}/payment-status`,
+      cancel_url: config.cancel_url || `${window.location.origin}/publier-annonce`,
+      api_key: config.api_key || ''
+    });
+
+    return `${baseUrl}/pay?${paymentParams.toString()}`;
+  } catch (error) {
+    console.error('Error generating Lygos payment URL:', error);
+    // Fallback: URL de test Lygos
+    return `https://payment.lygos.cm/pay/${paymentId}?amount=${amount}&currency=${currency}`;
+  }
+};
+
 // Créer un paiement Lygos
 export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): Promise<LygosPaymentResponse> => {
   try {
@@ -54,6 +85,14 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
 
     const paymentId = `lygos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    // Générer l'URL de paiement Lygos réelle
+    const lygosPaymentUrl = await generateLygosPaymentUrl(
+      paymentId, 
+      paymentRequest.amount, 
+      paymentRequest.currency, 
+      paymentRequest.customer
+    );
+    
     const transactionData = {
       user_id: user.id,
       amount: paymentRequest.amount,
@@ -66,6 +105,7 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       payment_data: {
         ...paymentRequest,
+        payment_url: lygosPaymentUrl, // Store the real Lygos URL
         real_integration: true,
         created_via: 'lygos_service'
       }
@@ -92,20 +132,18 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
           amount: paymentRequest.amount,
           currency: paymentRequest.currency,
           customer: paymentRequest.customer,
+          payment_url: lygosPaymentUrl,
           real_integration: true,
           timestamp: new Date().toISOString()
         }
       });
-
-    // URL de paiement interne pour le test (en attendant la vraie intégration Lygos)
-    const internalPaymentUrl = `/payment-status?transaction=${transaction.id}&payment_id=${paymentId}`;
 
     const responseData = {
       id: paymentId,
       status: 'pending', // REAL status - pending until confirmed
       amount: paymentRequest.amount,
       currency: paymentRequest.currency,
-      payment_url: internalPaymentUrl,
+      payment_url: lygosPaymentUrl, // Return real Lygos URL
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     };

@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Clock, ExternalLink } from "lucide-react";
 import { usePaymentTracking } from "@/hooks/usePaymentTracking";
 
 const PaymentStatus = () => {
@@ -48,6 +48,14 @@ const PaymentStatus = () => {
   };
 
   const paymentStatus = getPaymentStatus();
+
+  // Get the real Lygos payment URL from transaction data
+  const getLygosPaymentUrl = () => {
+    if (!transaction || !transaction.payment_data) return null;
+    
+    const paymentData = transaction.payment_data as any;
+    return paymentData?.payment_url || null;
+  };
 
   useEffect(() => {
     // Show toast notifications for REAL status changes only
@@ -113,19 +121,29 @@ const PaymentStatus = () => {
       case 'pending':
         return {
           title: "En attente de paiement",
-          description: "Votre transaction est en attente. Veuillez compléter le paiement via Lygos pour activer votre annonce premium."
+          description: "Votre transaction est en attente. Cliquez sur 'Payer sur Lygos' pour compléter votre paiement."
         };
       default:
         return { title: "", description: "" };
     }
   };
 
-  const handleAction = () => {
+  const handlePaymentAction = () => {
     if (paymentStatus === 'success') {
       navigate('/dashboard');
-    } else if (paymentStatus === 'pending' && transaction?.payment_data?.payment_url) {
-      // Redirect to complete payment
-      window.location.href = transaction.payment_data.payment_url;
+    } else if (paymentStatus === 'pending') {
+      const lygosUrl = getLygosPaymentUrl();
+      if (lygosUrl) {
+        console.log('Redirecting to Lygos payment:', lygosUrl);
+        // Redirection vers la vraie plateforme Lygos
+        window.open(lygosUrl, '_blank');
+      } else {
+        toast({
+          title: "Erreur",
+          description: "URL de paiement Lygos non disponible",
+          variant: "destructive"
+        });
+      }
     } else {
       navigate('/publier-annonce');
     }
@@ -133,6 +151,7 @@ const PaymentStatus = () => {
 
   const statusMessage = getStatusMessage();
   const timeRemaining = getTimeRemaining();
+  const lygosPaymentUrl = getLygosPaymentUrl();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -188,16 +207,27 @@ const PaymentStatus = () => {
           {paymentStatus !== 'loading' && (
             <div className="space-y-3">
               <Button 
-                onClick={handleAction}
-                className="w-full bg-mboa-orange hover:bg-mboa-orange/90"
+                onClick={handlePaymentAction}
+                className="w-full bg-mboa-orange hover:bg-mboa-orange/90 flex items-center justify-center gap-2"
               >
                 {paymentStatus === 'success' 
                   ? 'Aller au tableau de bord'
                   : paymentStatus === 'pending'
-                  ? 'Compléter le paiement'
+                  ? (
+                    <>
+                      <ExternalLink className="h-4 w-4" />
+                      Payer sur Lygos
+                    </>
+                  )
                   : 'Réessayer le paiement'
                 }
               </Button>
+              
+              {paymentStatus === 'pending' && lygosPaymentUrl && (
+                <p className="text-xs text-gray-500">
+                  Cela ouvrira la plateforme de paiement Lygos dans un nouvel onglet
+                </p>
+              )}
               
               <Button 
                 variant="outline" 
