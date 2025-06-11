@@ -34,13 +34,20 @@ export const usePaymentStatusHandlers = () => {
     let paymentUrl = paymentData?.payment_url;
     console.log('Method 1 - Direct payment_url:', paymentUrl);
     
-    // Method 2: If not found, try to reconstruct with correct Lygos endpoint
+    // Method 2: If not found, try to reconstruct with correct endpoint
     if (!paymentUrl && transaction.lygos_payment_id) {
       console.log('Method 2 - Reconstructing URL from lygos_payment_id:', transaction.lygos_payment_id);
       
-      // Use the correct Lygos API endpoint provided by support
+      // Use the direct payment endpoint without /checkout
       const baseUrl = 'https://api.lygosapp.com/v1';
-      paymentUrl = `${baseUrl}/payment/checkout/${transaction.lygos_payment_id}`;
+      const params = new URLSearchParams({
+        payment_id: transaction.lygos_payment_id,
+        amount: transaction.amount.toString(),
+        currency: transaction.currency,
+        return_url: `${window.location.origin}/payment-return`,
+        cancel_url: `${window.location.origin}/publier-annonce`
+      });
+      paymentUrl = `${baseUrl}/payment?${params.toString()}`;
       console.log('Reconstructed URL with correct endpoint:', paymentUrl);
     }
     
@@ -48,7 +55,7 @@ export const usePaymentStatusHandlers = () => {
     if (!paymentUrl) {
       console.log('Method 3 - Using fallback URL generation');
       const fallbackId = transaction.lygos_payment_id || `fallback_${Date.now()}`;
-      paymentUrl = `https://api.lygosapp.com/v1/payment/${fallbackId}`;
+      paymentUrl = `https://api.lygosapp.com/v1/payment?payment_id=${fallbackId}&amount=${transaction.amount}&currency=${transaction.currency}`;
       console.log('Fallback URL:', paymentUrl);
     }
     
@@ -89,7 +96,7 @@ export const usePaymentStatusHandlers = () => {
         } else {
           toast({
             title: "Fenêtre de paiement ouverte",
-            description: "Complétez votre paiement dans la nouvelle fenêtre. Si la page ne se charge pas, contactez le support.",
+            description: "Complétez votre paiement dans la nouvelle fenêtre. Si la page affiche 'Not Found', contactez le support Lygos.",
           });
           
           // Monitor if the window fails to load
@@ -103,7 +110,7 @@ export const usePaymentStatusHandlers = () => {
                   console.warn('Payment window may have failed to load');
                   toast({
                     title: "Problème de chargement",
-                    description: "La page Lygos semble avoir des difficultés à se charger. Contactez le support si le problème persiste.",
+                    description: "La page Lygos semble avoir des difficultés à se charger. L'endpoint /payment/checkout pourrait ne pas être disponible.",
                     variant: "destructive"
                   });
                 }
@@ -118,7 +125,7 @@ export const usePaymentStatusHandlers = () => {
         console.error('FAILED: No Lygos payment URL available');
         toast({
           title: "Erreur de configuration",
-          description: "URL de paiement Lygos non disponible. Veuillez contacter le support.",
+          description: "URL de paiement Lygos non disponible. L'endpoint Lygos pourrait être incorrect.",
           variant: "destructive"
         });
       }

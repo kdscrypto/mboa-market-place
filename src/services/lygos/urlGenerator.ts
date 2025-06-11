@@ -18,11 +18,11 @@ export const generateLygosPaymentUrl = async (
       throw new Error('Configuration Lygos manquante');
     }
 
-    // Use the correct Lygos API endpoint provided by support
+    // Use the correct Lygos API endpoint - seems like /checkout might not be the right path
     const baseUrl = config.base_url || 'https://api.lygosapp.com/v1';
     console.log('Using base URL:', baseUrl);
     
-    // Create payment URL with proper Lygos API endpoint structure
+    // Try the direct payment endpoint instead of checkout
     const paymentParams = new URLSearchParams({
       payment_id: paymentId,
       amount: amount.toString(),
@@ -34,15 +34,15 @@ export const generateLygosPaymentUrl = async (
       cancel_url: config.cancel_url || `${window.location.origin}/publier-annonce`
     });
 
-    // Use the correct Lygos endpoint structure
-    const fullUrl = `${baseUrl}/payment/checkout?${paymentParams.toString()}`;
+    // Use the direct payment endpoint without /checkout
+    const fullUrl = `${baseUrl}/payment?${paymentParams.toString()}`;
     console.log('Generated Lygos payment URL:', fullUrl);
     
     return fullUrl;
   } catch (error) {
     console.error('Error generating Lygos payment URL:', error);
-    // Use the correct fallback endpoint
-    const fallbackUrl = `https://api.lygosapp.com/v1/payment/${paymentId}`;
+    // Use a simpler fallback endpoint
+    const fallbackUrl = `https://api.lygosapp.com/v1/payment?payment_id=${paymentId}&amount=${amount}&currency=${currency}`;
     console.log('Using fallback URL:', fallbackUrl);
     return fallbackUrl;
   }
