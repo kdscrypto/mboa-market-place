@@ -28,6 +28,7 @@ const PaymentStatus = () => {
 
   const { getLygosPaymentUrl, handlePaymentAction } = usePaymentStatusHandlers();
   const [timeRemaining, setTimeRemaining] = useState(getTimeRemaining());
+  const [lygosPaymentUrl, setLygosPaymentUrl] = useState<string | null>(null);
 
   // Update time remaining every second
   useEffect(() => {
@@ -37,6 +38,18 @@ const PaymentStatus = () => {
 
     return () => clearInterval(interval);
   }, [getTimeRemaining]);
+
+  // Get Lygos payment URL when transaction changes
+  useEffect(() => {
+    const fetchLygosUrl = async () => {
+      if (transaction) {
+        const url = await getLygosPaymentUrl(transaction);
+        setLygosPaymentUrl(url);
+      }
+    };
+    
+    fetchLygosUrl();
+  }, [transaction, getLygosPaymentUrl]);
 
   // Determine payment status based on REAL transaction data - NO SIMULATION
   const getPaymentStatus = () => {
@@ -61,7 +74,6 @@ const PaymentStatus = () => {
   };
 
   const paymentStatus = getPaymentStatus();
-  const lygosPaymentUrl = getLygosPaymentUrl(transaction);
 
   // Use payment status effects
   usePaymentStatusEffects(paymentStatus, transaction);
