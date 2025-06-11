@@ -49,12 +49,26 @@ const PaymentStatus = () => {
 
   const paymentStatus = getPaymentStatus();
 
-  // Get the real Lygos payment URL from transaction data
+  // Get the real Lygos payment URL from transaction data with better error handling
   const getLygosPaymentUrl = () => {
-    if (!transaction || !transaction.payment_data) return null;
+    console.log('Getting Lygos payment URL from transaction:', transaction);
+    
+    if (!transaction || !transaction.payment_data) {
+      console.error('No transaction or payment_data found');
+      return null;
+    }
     
     const paymentData = transaction.payment_data as any;
-    return paymentData?.payment_url || null;
+    const paymentUrl = paymentData?.payment_url;
+    
+    console.log('Payment URL found in transaction:', paymentUrl);
+    
+    if (!paymentUrl) {
+      console.error('No payment_url found in payment_data:', paymentData);
+      return null;
+    }
+    
+    return paymentUrl;
   };
 
   useEffect(() => {
@@ -133,14 +147,17 @@ const PaymentStatus = () => {
       navigate('/dashboard');
     } else if (paymentStatus === 'pending') {
       const lygosUrl = getLygosPaymentUrl();
+      console.log('Attempting to redirect to Lygos URL:', lygosUrl);
+      
       if (lygosUrl) {
         console.log('Redirecting to Lygos payment:', lygosUrl);
         // Redirection vers la vraie plateforme Lygos
         window.open(lygosUrl, '_blank');
       } else {
+        console.error('No Lygos payment URL available');
         toast({
           title: "Erreur",
-          description: "URL de paiement Lygos non disponible",
+          description: "URL de paiement Lygos non disponible. Veuillez réessayer plus tard.",
           variant: "destructive"
         });
       }
@@ -152,6 +169,18 @@ const PaymentStatus = () => {
   const statusMessage = getStatusMessage();
   const timeRemaining = getTimeRemaining();
   const lygosPaymentUrl = getLygosPaymentUrl();
+
+  // Debug information in development
+  useEffect(() => {
+    console.log('PaymentStatus Debug Info:', {
+      transactionId,
+      paymentId,
+      transaction,
+      paymentStatus,
+      lygosPaymentUrl,
+      trackingError
+    });
+  }, [transactionId, paymentId, transaction, paymentStatus, lygosPaymentUrl, trackingError]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -201,6 +230,15 @@ const PaymentStatus = () => {
               <p className="text-sm text-red-700">
                 Erreur de suivi: {trackingError}
               </p>
+            </div>
+          )}
+
+          {/* Debug information for development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs">
+              <p><strong>Debug:</strong></p>
+              <p>URL Lygos: {lygosPaymentUrl || 'Non disponible'}</p>
+              <p>Payment Data: {transaction?.payment_data ? 'Disponible' : 'Manquant'}</p>
             </div>
           )}
           

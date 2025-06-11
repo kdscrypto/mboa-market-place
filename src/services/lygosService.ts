@@ -37,13 +37,19 @@ const getPaymentDataProperty = (paymentData: any, property: string): string | un
 // Générer l'URL de paiement Lygos réelle
 const generateLygosPaymentUrl = async (paymentId: string, amount: number, currency: string, customerData: any): Promise<string> => {
   try {
+    console.log('Generating Lygos payment URL with params:', { paymentId, amount, currency, customerData });
+    
     const config = await getLygosConfig();
+    console.log('Lygos config retrieved:', config ? 'Config found' : 'No config found');
+    
     if (!config) {
+      console.error('No Lygos configuration found');
       throw new Error('Configuration Lygos manquante');
     }
 
     // URL de base Lygos (à ajuster selon la vraie API Lygos)
     const baseUrl = config.base_url || 'https://payment.lygos.cm';
+    console.log('Using base URL:', baseUrl);
     
     // Construire l'URL de paiement avec les paramètres nécessaires
     const paymentParams = new URLSearchParams({
@@ -58,18 +64,22 @@ const generateLygosPaymentUrl = async (paymentId: string, amount: number, curren
       api_key: config.api_key || ''
     });
 
-    return `${baseUrl}/pay?${paymentParams.toString()}`;
+    const fullUrl = `${baseUrl}/pay?${paymentParams.toString()}`;
+    console.log('Generated Lygos payment URL:', fullUrl);
+    return fullUrl;
   } catch (error) {
     console.error('Error generating Lygos payment URL:', error);
     // Fallback: URL de test Lygos
-    return `https://payment.lygos.cm/pay/${paymentId}?amount=${amount}&currency=${currency}`;
+    const fallbackUrl = `https://payment.lygos.cm/pay/${paymentId}?amount=${amount}&currency=${currency}`;
+    console.log('Using fallback URL:', fallbackUrl);
+    return fallbackUrl;
   }
 };
 
 // Créer un paiement Lygos
 export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): Promise<LygosPaymentResponse> => {
   try {
-    console.log('Creating Lygos payment with real integration...');
+    console.log('Creating Lygos payment with real integration...', paymentRequest);
     
     // Obtenir la configuration Lygos active
     const config = await getLygosConfig();
@@ -84,6 +94,7 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
     }
 
     const paymentId = `lygos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log('Generated Lygos payment ID:', paymentId);
     
     // Générer l'URL de paiement Lygos réelle
     const lygosPaymentUrl = await generateLygosPaymentUrl(
@@ -92,6 +103,8 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
       paymentRequest.currency, 
       paymentRequest.customer
     );
+    
+    console.log('Generated payment URL:', lygosPaymentUrl);
     
     const transactionData = {
       user_id: user.id,
@@ -107,9 +120,12 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
         ...paymentRequest,
         payment_url: lygosPaymentUrl, // Store the real Lygos URL
         real_integration: true,
-        created_via: 'lygos_service'
+        created_via: 'lygos_service',
+        payment_id: paymentId // Also store payment ID in payment_data
       }
     };
+
+    console.log('Creating transaction with data:', transactionData);
 
     const { data: transaction, error: transactionError } = await supabase
       .from('payment_transactions')
@@ -118,8 +134,11 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
       .single();
 
     if (transactionError) {
+      console.error('Transaction creation error:', transactionError);
       throw new Error(`Erreur de transaction: ${transactionError.message}`);
     }
+
+    console.log('Transaction created successfully:', transaction);
 
     // Log de l'audit
     await supabase
@@ -147,6 +166,8 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     };
+
+    console.log('Returning payment response:', responseData);
 
     return {
       success: true,
