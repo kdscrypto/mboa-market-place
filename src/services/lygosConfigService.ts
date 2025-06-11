@@ -5,6 +5,7 @@ export interface LygosConfig {
   id: string;
   api_key: string;
   base_url: string;
+  checkout_base_url: string; // Add separate checkout URL
   webhook_url: string;
   return_url: string;
   cancel_url: string;
@@ -21,13 +22,16 @@ export const getLygosConfig = async (): Promise<LygosConfig | null> => {
       return null;
     }
 
-    // If no config found, return a default one with the correct endpoint
+    // If no config found, return a default one with CORRECTED endpoints
     if (!data || (Array.isArray(data) && data.length === 0)) {
-      console.log('No Lygos config found, using default with correct endpoint');
+      console.log('No Lygos config found, using default with corrected endpoints');
       return {
         id: 'default',
         api_key: '',
         base_url: 'https://api.lygosapp.com/v1',
+        // IMPORTANT: This URL needs to be verified with Lygos documentation
+        // Common alternatives: pay.lygosapp.com, api.lygosapp.com/v1/checkout
+        checkout_base_url: 'https://pay.lygosapp.com', // Changed from checkout.lygosapp.com
         webhook_url: '',
         return_url: `${window.location.origin}/payment-return`,
         cancel_url: `${window.location.origin}/publier-annonce`,
@@ -39,10 +43,17 @@ export const getLygosConfig = async (): Promise<LygosConfig | null> => {
     // Safely cast the data after validation
     if (data && typeof data === 'object' && !Array.isArray(data)) {
       const config = data as unknown as LygosConfig;
-      // Ensure we use the correct endpoint
+      
+      // Ensure we use the correct API endpoint
       if (config.base_url && !config.base_url.includes('lygosapp.com')) {
         config.base_url = 'https://api.lygosapp.com/v1';
       }
+      
+      // Add checkout_base_url if missing and set to corrected URL
+      if (!config.checkout_base_url) {
+        config.checkout_base_url = 'https://pay.lygosapp.com'; // Changed from checkout.lygosapp.com
+      }
+      
       return config;
     }
     

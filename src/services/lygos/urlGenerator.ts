@@ -20,8 +20,10 @@ export const generateLygosPaymentUrl = async (
       throw new Error('Configuration Lygos manquante');
     }
 
-    // Fallback URL for backward compatibility
-    const fallbackUrl = `https://checkout.lygosapp.com/${paymentId}`;
+    // Use the configured checkout base URL instead of hardcoded domain
+    const checkoutBaseUrl = config.checkout_base_url || 'https://pay.lygosapp.com';
+    const fallbackUrl = `${checkoutBaseUrl}/${paymentId}`;
+    
     console.log('Using fallback checkout URL:', fallbackUrl);
     return fallbackUrl;
   } catch (error) {

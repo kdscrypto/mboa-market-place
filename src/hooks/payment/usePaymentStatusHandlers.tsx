@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { createLygosPayment } from '@/services/lygos/paymentInitiator';
+import { getLygosConfig } from '@/services/lygosConfigService';
 
 interface PaymentTransaction {
   id: string;
@@ -15,7 +16,7 @@ export const usePaymentStatusHandlers = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const getLygosPaymentUrl = (transaction: PaymentTransaction | null): string | null => {
+  const getLygosPaymentUrl = async (transaction: PaymentTransaction | null): Promise<string | null> => {
     console.log('=== Getting Lygos payment URL ===');
     console.log('Transaction data:', transaction);
     
@@ -32,17 +33,31 @@ export const usePaymentStatusHandlers = () => {
     const paymentData = transaction.payment_data as any;
     console.log('Payment data object:', paymentData);
     
-    // Method 1: Direct checkout_url from Lygos response
+    // Method 1: Direct checkout_url from Lygos response (preferred)
     let paymentUrl = paymentData?.checkout_url || paymentData?.lygos_response?.checkout_url || paymentData?.lygos_response?.payment_url;
     console.log('Method 1 - Direct checkout_url from Lygos:', paymentUrl);
     
-    // Method 2: If we have a Lygos payment ID, construct the standard checkout URL
+    // Method 2: If we have a Lygos payment ID, construct the checkout URL using config
     if (!paymentUrl && transaction.lygos_payment_id) {
       console.log('Method 2 - Constructing checkout URL from lygos_payment_id:', transaction.lygos_payment_id);
       
-      // Use the standard Lygos checkout endpoint
-      paymentUrl = `https://checkout.lygosapp.com/${transaction.lygos_payment_id}`;
-      console.log('Constructed Lygos checkout URL:', paymentUrl);
+      try {
+        const config = await getLygosConfig();
+        if (config && config.checkout_base_url) {
+          paymentUrl = `${config.checkout_base_url}/${transaction.lygos_payment_id}`;
+          console.log('Constructed Lygos checkout URL using config:', paymentUrl);
+        } else {
+          console.warn('No Lygos config found, using fallback URL');
+          // Fallback to the corrected URL - VERIFY THIS WITH LYGOS DOCS
+          paymentUrl = `https://pay.lygosapp.com/${transaction.lygos_payment_id}`;
+          console.log('Using fallback checkout URL:', paymentUrl);
+        }
+      } catch (error) {
+        console.error('Error getting Lygos config:', error);
+        // Use fallback URL
+        paymentUrl = `https://pay.lygosapp.com/${transaction.lygos_payment_id}`;
+        console.log('Error fallback checkout URL:', paymentUrl);
+      }
     }
     
     console.log('Final payment URL:', paymentUrl);
@@ -69,7 +84,7 @@ export const usePaymentStatusHandlers = () => {
       console.log('Transaction:', transaction);
 
       // Check if we already have a Lygos checkout URL
-      let lygosUrl = getLygosPaymentUrl(transaction);
+      let lygosUrl = await getLygosPaymentUrl(transaction);
       
       // If no URL, we need to create the payment with Lygos first
       if (!lygosUrl) {
@@ -102,6 +117,19 @@ export const usePaymentStatusHandlers = () => {
       
       if (lygosUrl) {
         console.log('SUCCESS: Redirecting to Lygos payment:', lygosUrl);
+        
+        // Validate URL before redirecting
+        try {
+          new URL(lygosUrl);
+        } catch (urlError) {
+          console.error('Invalid Lygos URL:', lygosUrl);
+          toast({
+            title: "URL de paiement invalide",
+            description: "L'URL de paiement Lygos est invalide. Veuillez contacter le support.",
+            variant: "destructive"
+          });
+          return;
+        }
         
         // Try to open the payment window
         const paymentWindow = window.open(lygosUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
