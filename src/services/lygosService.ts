@@ -29,6 +29,12 @@ export interface LygosPaymentResponse {
   transactionId?: string;
 }
 
+// Helper function to safely access payment_data properties
+const getPaymentDataProperty = (paymentData: any, property: string): string | undefined => {
+  if (!paymentData || typeof paymentData !== 'object') return undefined;
+  return paymentData[property];
+};
+
 // Créer un paiement Lygos
 export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): Promise<LygosPaymentResponse> => {
   try {
@@ -159,6 +165,9 @@ export const verifyLygosPayment = async (paymentId: string): Promise<LygosPaymen
       throw new Error('Configuration Lygos non trouvée');
     }
 
+    // Safely get payment_url from payment_data
+    const paymentUrl = getPaymentDataProperty(transaction.payment_data, 'payment_url') || `https://payment.lygos.cm/pay/${paymentId}`;
+
     // Pour le moment, nous retournons le statut réel de la base de données
     // jusqu'à ce que l'API Lygos réelle soit disponible
     const realResponse = {
@@ -166,7 +175,7 @@ export const verifyLygosPayment = async (paymentId: string): Promise<LygosPaymen
       status: transaction.lygos_status || transaction.status, // Use REAL status from DB
       amount: transaction.amount,
       currency: transaction.currency,
-      payment_url: transaction.payment_data?.payment_url || `https://payment.lygos.cm/pay/${paymentId}`,
+      payment_url: paymentUrl,
       created_at: transaction.created_at,
       expires_at: transaction.expires_at
     };
