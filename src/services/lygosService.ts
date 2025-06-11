@@ -153,13 +153,16 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
     if (!savedUrl) {
       console.error('CRITICAL: Payment URL was not saved in database!');
       // Essayer de mettre à jour la transaction avec l'URL
+      const currentPaymentData = transaction.payment_data || {};
+      const updatedPaymentData = {
+        ...currentPaymentData,
+        payment_url: lygosPaymentUrl
+      };
+      
       const { error: updateError } = await supabase
         .from('payment_transactions')
         .update({
-          payment_data: {
-            ...transaction.payment_data,
-            payment_url: lygosPaymentUrl
-          }
+          payment_data: updatedPaymentData
         })
         .eq('id', transaction.id);
         
