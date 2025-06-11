@@ -18,9 +18,11 @@ export const generateLygosPaymentUrl = async (
       throw new Error('Configuration Lygos manquante');
     }
 
-    const baseUrl = config.base_url || 'https://payment.lygos.cm';
+    // Use payment.lygos.cm as the base URL for the payment page
+    const baseUrl = 'https://payment.lygos.cm';
     console.log('Using base URL:', baseUrl);
     
+    // Create a simplified payment URL without exposing API key in URL
     const paymentParams = new URLSearchParams({
       payment_id: paymentId,
       amount: amount.toString(),
@@ -28,9 +30,8 @@ export const generateLygosPaymentUrl = async (
       customer_name: customerData.name || '',
       customer_email: customerData.email || '',
       customer_phone: customerData.phone || '',
-      return_url: config.return_url || `${window.location.origin}/payment-status`,
-      cancel_url: config.cancel_url || `${window.location.origin}/publier-annonce`,
-      api_key: config.api_key || ''
+      return_url: config.return_url || `${window.location.origin}/payment-return`,
+      cancel_url: config.cancel_url || `${window.location.origin}/publier-annonce`
     });
 
     const fullUrl = `${baseUrl}/pay?${paymentParams.toString()}`;
@@ -38,7 +39,8 @@ export const generateLygosPaymentUrl = async (
     return fullUrl;
   } catch (error) {
     console.error('Error generating Lygos payment URL:', error);
-    const fallbackUrl = `https://payment.lygos.cm/pay/${paymentId}?amount=${amount}&currency=${currency}`;
+    // Use a more reliable fallback URL structure
+    const fallbackUrl = `https://payment.lygos.cm/pay/${paymentId}`;
     console.log('Using fallback URL:', fallbackUrl);
     return fallbackUrl;
   }

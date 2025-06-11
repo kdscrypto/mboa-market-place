@@ -97,9 +97,9 @@ export const useAdSubmission = () => {
           }));
         }
         
-        // Redirect to Lygos payment (temporary internal URL for now)
+        // Redirect to payment status page instead of external Lygos URL
         setTimeout(() => {
-          window.location.href = result.paymentUrl!;
+          navigate(`/payment-status?transaction=${result.transactionId}`);
         }, 2000);
       } else {
         const premiumExpirationDate = getPremiumExpirationDate(validatedData.adType);

@@ -37,7 +37,7 @@ export const usePaymentStatusHandlers = () => {
     // Method 2: If not found, try to reconstruct from lygos_payment_id
     if (!paymentUrl && transaction.lygos_payment_id) {
       console.log('Method 2 - Reconstructing URL from lygos_payment_id:', transaction.lygos_payment_id);
-      paymentUrl = `https://payment.lygos.cm/pay/${transaction.lygos_payment_id}?amount=${transaction.amount}&currency=${transaction.currency}`;
+      paymentUrl = `https://payment.lygos.cm/pay/${transaction.lygos_payment_id}`;
       console.log('Reconstructed URL:', paymentUrl);
     }
     
@@ -45,7 +45,7 @@ export const usePaymentStatusHandlers = () => {
     if (!paymentUrl) {
       console.log('Method 3 - Using fallback URL generation');
       const fallbackId = transaction.lygos_payment_id || `fallback_${Date.now()}`;
-      paymentUrl = `https://payment.lygos.cm/pay?payment_id=${fallbackId}&amount=${transaction.amount}&currency=${transaction.currency}`;
+      paymentUrl = `https://payment.lygos.cm/pay/${fallbackId}`;
       console.log('Fallback URL:', paymentUrl);
     }
     
@@ -66,7 +66,21 @@ export const usePaymentStatusHandlers = () => {
       
       if (lygosUrl) {
         console.log('SUCCESS: Redirecting to Lygos payment:', lygosUrl);
-        window.open(lygosUrl, '_blank');
+        // Open in new window to avoid navigation issues
+        const paymentWindow = window.open(lygosUrl, '_blank', 'width=800,height=600');
+        
+        if (!paymentWindow) {
+          toast({
+            title: "Popup bloqué",
+            description: "Veuillez autoriser les popups pour accéder au paiement Lygos.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Fenêtre de paiement ouverte",
+            description: "Complétez votre paiement dans la nouvelle fenêtre.",
+          });
+        }
       } else {
         console.error('FAILED: No Lygos payment URL available');
         toast({
