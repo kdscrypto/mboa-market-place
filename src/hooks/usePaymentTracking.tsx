@@ -17,8 +17,10 @@ export const usePaymentTracking = (transactionId?: string) => {
   const { verifyPaymentStatus } = usePaymentVerification();
   const { getTimeRemaining, isExpired, isExpiringSoon } = usePaymentTimeTracking();
 
-  // Setup realtime updates
-  usePaymentRealtime(transactionId, setTransaction);
+  // Setup realtime updates with proper type handling
+  usePaymentRealtime(transactionId, (updatedTransaction) => {
+    setTransaction(updatedTransaction);
+  });
 
   const refreshTransaction = async () => {
     if (!transactionId) return;
@@ -26,7 +28,9 @@ export const usePaymentTracking = (transactionId?: string) => {
     await fetchTransaction(transactionId);
     
     if (transaction) {
-      await verifyPaymentStatus(transaction, setTransaction);
+      await verifyPaymentStatus(transaction, (updatedTransaction) => {
+        setTransaction(updatedTransaction);
+      });
     }
   };
 
@@ -40,7 +44,9 @@ export const usePaymentTracking = (transactionId?: string) => {
   // Verification après fetch
   useEffect(() => {
     if (transaction) {
-      verifyPaymentStatus(transaction, setTransaction);
+      verifyPaymentStatus(transaction, (updatedTransaction) => {
+        setTransaction(updatedTransaction);
+      });
     }
   }, [transaction?.id]);
 

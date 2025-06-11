@@ -10,7 +10,7 @@ interface PaymentTransaction {
 
 export const usePaymentRealtime = (
   transactionId: string | undefined,
-  setTransaction: (transaction: PaymentTransaction) => void
+  onTransactionUpdate: (transaction: PaymentTransaction) => void
 ) => {
   const { toast } = useToast();
 
@@ -29,7 +29,7 @@ export const usePaymentRealtime = (
         },
         (payload) => {
           console.log('Transaction updated:', payload);
-          setTransaction(payload.new as PaymentTransaction);
+          onTransactionUpdate(payload.new as PaymentTransaction);
           
           // Notifier l'utilisateur des changements de statut
           if (payload.old?.status !== payload.new?.status) {
@@ -66,5 +66,5 @@ export const usePaymentRealtime = (
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [transactionId, toast, setTransaction]);
+  }, [transactionId, toast, onTransactionUpdate]);
 };
