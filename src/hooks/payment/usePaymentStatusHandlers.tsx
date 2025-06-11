@@ -34,30 +34,21 @@ export const usePaymentStatusHandlers = () => {
     let paymentUrl = paymentData?.payment_url;
     console.log('Method 1 - Direct payment_url:', paymentUrl);
     
-    // Method 2: If not found, try to reconstruct with different base URLs
+    // Method 2: If not found, try to reconstruct with correct Lygos endpoint
     if (!paymentUrl && transaction.lygos_payment_id) {
       console.log('Method 2 - Reconstructing URL from lygos_payment_id:', transaction.lygos_payment_id);
       
-      // Try different possible Lygos URL structures
-      const possibleUrls = [
-        `https://api.lygos.cm/payment/checkout/${transaction.lygos_payment_id}`,
-        `https://api.lygos.cm/checkout/${transaction.lygos_payment_id}`,
-        `https://api.lygos.cm/pay/${transaction.lygos_payment_id}`,
-        `https://checkout.lygos.cm/pay/${transaction.lygos_payment_id}`,
-        `https://pay.lygos.cm/${transaction.lygos_payment_id}`,
-        `https://lygos.cm/pay/${transaction.lygos_payment_id}`
-      ];
-      
-      paymentUrl = possibleUrls[0]; // Use the first one as default
-      console.log('Reconstructed URL:', paymentUrl);
-      console.log('Alternative URLs available:', possibleUrls.slice(1));
+      // Use the correct Lygos API endpoint provided by support
+      const baseUrl = 'https://api.lygosapp.com/v1';
+      paymentUrl = `${baseUrl}/payment/checkout/${transaction.lygos_payment_id}`;
+      console.log('Reconstructed URL with correct endpoint:', paymentUrl);
     }
     
     // Method 3: Fallback URL generation
     if (!paymentUrl) {
       console.log('Method 3 - Using fallback URL generation');
       const fallbackId = transaction.lygos_payment_id || `fallback_${Date.now()}`;
-      paymentUrl = `https://api.lygos.cm/payment/${fallbackId}`;
+      paymentUrl = `https://api.lygosapp.com/v1/payment/${fallbackId}`;
       console.log('Fallback URL:', paymentUrl);
     }
     

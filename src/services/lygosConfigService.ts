@@ -21,9 +21,29 @@ export const getLygosConfig = async (): Promise<LygosConfig | null> => {
       return null;
     }
 
+    // If no config found, return a default one with the correct endpoint
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      console.log('No Lygos config found, using default with correct endpoint');
+      return {
+        id: 'default',
+        api_key: '',
+        base_url: 'https://api.lygosapp.com/v1',
+        webhook_url: '',
+        return_url: `${window.location.origin}/payment-return`,
+        cancel_url: `${window.location.origin}/publier-annonce`,
+        environment: 'production',
+        is_active: true
+      };
+    }
+
     // Safely cast the data after validation
     if (data && typeof data === 'object' && !Array.isArray(data)) {
-      return data as unknown as LygosConfig;
+      const config = data as unknown as LygosConfig;
+      // Ensure we use the correct endpoint
+      if (config.base_url && !config.base_url.includes('lygosapp.com')) {
+        config.base_url = 'https://api.lygosapp.com/v1';
+      }
+      return config;
     }
     
     return null;
