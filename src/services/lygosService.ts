@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { getLygosConfig } from './lygosConfigService';
 
@@ -96,7 +97,7 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
     const paymentId = `lygos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     console.log('Generated Lygos payment ID:', paymentId);
     
-    // Générer l'URL de paiement Lygos réelle
+    // IMPORTANT: Générer l'URL de paiement Lygos réelle AVANT l'insertion
     const lygosPaymentUrl = await generateLygosPaymentUrl(
       paymentId, 
       paymentRequest.amount, 
@@ -104,25 +105,30 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
       paymentRequest.customer
     );
     
-    console.log('Generated payment URL:', lygosPaymentUrl);
+    console.log('Generated payment URL before insertion:', lygosPaymentUrl);
+    
+    // CORRECTION: Construire correctement payment_data avec l'URL
+    const paymentData = {
+      ...paymentRequest,
+      payment_url: lygosPaymentUrl, // CRUCIAL: Stocker l'URL ici
+      real_integration: true,
+      created_via: 'lygos_service',
+      payment_id: paymentId
+    };
+    
+    console.log('Payment data with URL:', paymentData);
     
     const transactionData = {
       user_id: user.id,
       amount: paymentRequest.amount,
       currency: paymentRequest.currency,
-      status: 'pending', // ALWAYS start as pending
+      status: 'pending',
       payment_provider: 'lygos',
       lygos_payment_id: paymentId,
-      lygos_status: 'pending', // Lygos specific status also pending
+      lygos_status: 'pending',
       external_reference: `mboa_${Date.now()}`,
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      payment_data: {
-        ...paymentRequest,
-        payment_url: lygosPaymentUrl, // Store the real Lygos URL
-        real_integration: true,
-        created_via: 'lygos_service',
-        payment_id: paymentId // Also store payment ID in payment_data
-      }
+      payment_data: paymentData // Utiliser l'objet complet avec l'URL
     };
 
     console.log('Creating transaction with data:', transactionData);
@@ -139,6 +145,30 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
     }
 
     console.log('Transaction created successfully:', transaction);
+
+    // Vérification immédiate que l'URL a été sauvegardée
+    const savedUrl = getPaymentDataProperty(transaction.payment_data, 'payment_url');
+    console.log('URL saved in database:', savedUrl);
+    
+    if (!savedUrl) {
+      console.error('CRITICAL: Payment URL was not saved in database!');
+      // Essayer de mettre à jour la transaction avec l'URL
+      const { error: updateError } = await supabase
+        .from('payment_transactions')
+        .update({
+          payment_data: {
+            ...transaction.payment_data,
+            payment_url: lygosPaymentUrl
+          }
+        })
+        .eq('id', transaction.id);
+        
+      if (updateError) {
+        console.error('Failed to update transaction with payment URL:', updateError);
+      } else {
+        console.log('Successfully updated transaction with payment URL');
+      }
+    }
 
     // Log de l'audit
     await supabase
@@ -159,10 +189,10 @@ export const createLygosPayment = async (paymentRequest: LygosPaymentRequest): P
 
     const responseData = {
       id: paymentId,
-      status: 'pending', // REAL status - pending until confirmed
+      status: 'pending',
       amount: paymentRequest.amount,
       currency: paymentRequest.currency,
-      payment_url: lygosPaymentUrl, // Return real Lygos URL
+      payment_url: lygosPaymentUrl,
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     };

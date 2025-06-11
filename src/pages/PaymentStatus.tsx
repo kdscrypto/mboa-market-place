@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -49,25 +48,44 @@ const PaymentStatus = () => {
 
   const paymentStatus = getPaymentStatus();
 
-  // Get the real Lygos payment URL from transaction data with better error handling
+  // IMPROVED: Get the real Lygos payment URL with better error handling and multiple fallbacks
   const getLygosPaymentUrl = () => {
-    console.log('Getting Lygos payment URL from transaction:', transaction);
+    console.log('=== Getting Lygos payment URL ===');
+    console.log('Transaction data:', transaction);
     
-    if (!transaction || !transaction.payment_data) {
-      console.error('No transaction or payment_data found');
+    if (!transaction) {
+      console.error('No transaction found');
+      return null;
+    }
+    
+    if (!transaction.payment_data) {
+      console.error('No payment_data found in transaction');
       return null;
     }
     
     const paymentData = transaction.payment_data as any;
-    const paymentUrl = paymentData?.payment_url;
+    console.log('Payment data object:', paymentData);
     
-    console.log('Payment URL found in transaction:', paymentUrl);
+    // Method 1: Direct payment_url property
+    let paymentUrl = paymentData?.payment_url;
+    console.log('Method 1 - Direct payment_url:', paymentUrl);
     
-    if (!paymentUrl) {
-      console.error('No payment_url found in payment_data:', paymentData);
-      return null;
+    // Method 2: If not found, try to reconstruct from lygos_payment_id
+    if (!paymentUrl && transaction.lygos_payment_id) {
+      console.log('Method 2 - Reconstructing URL from lygos_payment_id:', transaction.lygos_payment_id);
+      paymentUrl = `https://payment.lygos.cm/pay/${transaction.lygos_payment_id}?amount=${transaction.amount}&currency=${transaction.currency}`;
+      console.log('Reconstructed URL:', paymentUrl);
     }
     
+    // Method 3: Fallback URL generation
+    if (!paymentUrl) {
+      console.log('Method 3 - Using fallback URL generation');
+      const fallbackId = transaction.lygos_payment_id || `fallback_${Date.now()}`;
+      paymentUrl = `https://payment.lygos.cm/pay?payment_id=${fallbackId}&amount=${transaction.amount}&currency=${transaction.currency}`;
+      console.log('Fallback URL:', paymentUrl);
+    }
+    
+    console.log('Final payment URL:', paymentUrl);
     return paymentUrl;
   };
 
@@ -147,19 +165,24 @@ const PaymentStatus = () => {
       navigate('/dashboard');
     } else if (paymentStatus === 'pending') {
       const lygosUrl = getLygosPaymentUrl();
+      console.log('=== Payment Action Handler ===');
       console.log('Attempting to redirect to Lygos URL:', lygosUrl);
       
       if (lygosUrl) {
-        console.log('Redirecting to Lygos payment:', lygosUrl);
+        console.log('SUCCESS: Redirecting to Lygos payment:', lygosUrl);
         // Redirection vers la vraie plateforme Lygos
         window.open(lygosUrl, '_blank');
       } else {
-        console.error('No Lygos payment URL available');
+        console.error('FAILED: No Lygos payment URL available');
         toast({
           title: "Erreur",
-          description: "URL de paiement Lygos non disponible. Veuillez réessayer plus tard.",
+          description: "URL de paiement Lygos non disponible. Rechargement en cours...",
           variant: "destructive"
         });
+        // Essayer de recharger la page pour refetch la transaction
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       }
     } else {
       navigate('/publier-annonce');
@@ -172,13 +195,14 @@ const PaymentStatus = () => {
 
   // Debug information in development
   useEffect(() => {
-    console.log('PaymentStatus Debug Info:', {
+    console.log('=== PaymentStatus Debug Info ===', {
       transactionId,
       paymentId,
       transaction,
       paymentStatus,
       lygosPaymentUrl,
-      trackingError
+      trackingError,
+      payment_data_keys: transaction?.payment_data ? Object.keys(transaction.payment_data) : 'No payment_data'
     });
   }, [transactionId, paymentId, transaction, paymentStatus, lygosPaymentUrl, trackingError]);
 
@@ -233,12 +257,16 @@ const PaymentStatus = () => {
             </div>
           )}
 
-          {/* Debug information for development */}
+          {/* Enhanced debug information */}
           {process.env.NODE_ENV === 'development' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs">
-              <p><strong>Debug:</strong></p>
+              <p><strong>Debug détaillé:</strong></p>
               <p>URL Lygos: {lygosPaymentUrl || 'Non disponible'}</p>
               <p>Payment Data: {transaction?.payment_data ? 'Disponible' : 'Manquant'}</p>
+              {transaction?.payment_data && (
+                <p>Payment Data Keys: {Object.keys(transaction.payment_data).join(', ')}</p>
+              )}
+              <p>Lygos Payment ID: {transaction?.lygos_payment_id || 'Non disponible'}</p>
             </div>
           )}
           
@@ -261,9 +289,12 @@ const PaymentStatus = () => {
                 }
               </Button>
               
-              {paymentStatus === 'pending' && lygosPaymentUrl && (
+              {paymentStatus === 'pending' && (
                 <p className="text-xs text-gray-500">
-                  Cela ouvrira la plateforme de paiement Lygos dans un nouvel onglet
+                  {lygosPaymentUrl 
+                    ? "Cela ouvrira la plateforme de paiement Lygos dans un nouvel onglet"
+                    : "Chargement de l'URL de paiement..."
+                  }
                 </p>
               )}
               
