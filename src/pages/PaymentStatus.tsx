@@ -6,40 +6,69 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, XCircle, Clock } from "lucide-react";
+import { usePaymentTracking } from "@/hooks/usePaymentTracking";
 
 const PaymentStatus = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [paymentStatus, setPaymentStatus] = useState<'loading' | 'success' | 'failed' | 'pending'>('loading');
   
   const transactionId = searchParams.get('transaction');
   const paymentId = searchParams.get('payment_id');
+  
+  // Use the payment tracking hook for real payment status
+  const { 
+    transaction, 
+    isLoading: isTrackingLoading, 
+    error: trackingError,
+    getTimeRemaining,
+    isExpired
+  } = usePaymentTracking(transactionId || undefined);
+
+  // Determine payment status based on real transaction data
+  const getPaymentStatus = () => {
+    if (!transaction) return 'loading';
+    
+    // Check if payment has expired
+    if (isExpired()) return 'expired';
+    
+    // Map transaction status to payment status
+    switch (transaction.status) {
+      case 'completed':
+        return 'success';
+      case 'failed':
+        return 'failed';
+      case 'expired':
+        return 'expired';
+      case 'pending':
+      default:
+        return 'pending';
+    }
+  };
+
+  const paymentStatus = getPaymentStatus();
 
   useEffect(() => {
-    // Simulate payment processing
-    const timer = setTimeout(() => {
-      // For demo purposes, randomly assign status
-      const outcomes = ['success', 'failed', 'pending'];
-      const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)] as typeof paymentStatus;
-      setPaymentStatus(randomOutcome);
-      
-      if (randomOutcome === 'success') {
-        toast({
-          title: "Paiement réussi",
-          description: "Votre annonce premium a été activée avec succès !",
-        });
-      } else if (randomOutcome === 'failed') {
-        toast({
-          title: "Paiement échoué",
-          description: "Le paiement n'a pas pu être traité. Veuillez réessayer.",
-          variant: "destructive"
-        });
-      }
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [toast]);
+    // Show toast notifications for status changes
+    if (paymentStatus === 'success') {
+      toast({
+        title: "Paiement réussi",
+        description: "Votre annonce premium a été activée avec succès !",
+      });
+    } else if (paymentStatus === 'failed') {
+      toast({
+        title: "Paiement échoué",
+        description: "Le paiement n'a pas pu être traité. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    } else if (paymentStatus === 'expired') {
+      toast({
+        title: "Paiement expiré",
+        description: "Le délai de paiement a expiré. Vous pouvez créer une nouvelle transaction.",
+        variant: "destructive"
+      });
+    }
+  }, [paymentStatus, toast]);
 
   const getStatusIcon = () => {
     switch (paymentStatus) {
@@ -49,6 +78,8 @@ const PaymentStatus = () => {
         return <CheckCircle className="h-16 w-16 text-green-500" />;
       case 'failed':
         return <XCircle className="h-16 w-16 text-red-500" />;
+      case 'expired':
+        return <XCircle className="h-16 w-16 text-orange-500" />;
       case 'pending':
         return <Clock className="h-16 w-16 text-yellow-500" />;
       default:
@@ -60,8 +91,8 @@ const PaymentStatus = () => {
     switch (paymentStatus) {
       case 'loading':
         return {
-          title: "Traitement du paiement en cours...",
-          description: "Veuillez patienter pendant que nous vérifions votre paiement."
+          title: "Chargement du statut de paiement...",
+          description: "Veuillez patienter pendant que nous récupérons les informations de votre paiement."
         };
       case 'success':
         return {
@@ -73,10 +104,15 @@ const PaymentStatus = () => {
           title: "Paiement échoué",
           description: "Le paiement n'a pas pu être traité. Votre annonce est en attente."
         };
+      case 'expired':
+        return {
+          title: "Paiement expiré",
+          description: "Le délai de paiement a expiré. Vous pouvez créer une nouvelle transaction."
+        };
       case 'pending':
         return {
-          title: "Paiement en attente",
-          description: "Votre paiement est en cours de vérification."
+          title: "En attente de paiement",
+          description: "Votre paiement est en cours de traitement via Lygos. Cette page se mettra à jour automatiquement."
         };
       default:
         return { title: "", description: "" };
@@ -84,14 +120,15 @@ const PaymentStatus = () => {
   };
 
   const handleAction = () => {
-    if (paymentStatus === 'success' || paymentStatus === 'pending') {
+    if (paymentStatus === 'success') {
       navigate('/dashboard');
-    } else if (paymentStatus === 'failed') {
+    } else {
       navigate('/publier-annonce');
     }
   };
 
   const statusMessage = getStatusMessage();
+  const timeRemaining = getTimeRemaining();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -111,6 +148,24 @@ const PaymentStatus = () => {
               Transaction ID: {transactionId}
             </p>
           )}
+
+          {/* Show time remaining for pending payments */}
+          {paymentStatus === 'pending' && timeRemaining && !timeRemaining.expired && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-yellow-700">
+                Temps restant: {timeRemaining.minutes}m {timeRemaining.seconds}s
+              </p>
+            </div>
+          )}
+
+          {/* Show error if tracking failed */}
+          {trackingError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-red-700">
+                Erreur de suivi: {trackingError}
+              </p>
+            </div>
+          )}
           
           {paymentStatus !== 'loading' && (
             <div className="space-y-3">
@@ -118,7 +173,7 @@ const PaymentStatus = () => {
                 onClick={handleAction}
                 className="w-full bg-mboa-orange hover:bg-mboa-orange/90"
               >
-                {paymentStatus === 'success' || paymentStatus === 'pending' 
+                {paymentStatus === 'success' 
                   ? 'Aller au tableau de bord' 
                   : 'Réessayer le paiement'
                 }
