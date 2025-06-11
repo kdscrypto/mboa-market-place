@@ -49,7 +49,7 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
       };
     }
 
-    // For premium ads, create the ad first with pending status
+    // For premium ads, create the ad first with pending_payment status
     console.log('Creating premium ad that requires payment...');
     
     const { data: ad, error: adError } = await supabase
