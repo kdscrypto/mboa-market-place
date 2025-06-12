@@ -1,11 +1,10 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface LygosConfig {
   id: string;
   api_key: string;
   base_url: string;
-  checkout_base_url: string; // Add separate checkout URL
+  checkout_base_url: string;
   webhook_url: string;
   return_url: string;
   cancel_url: string;
@@ -29,9 +28,7 @@ export const getLygosConfig = async (): Promise<LygosConfig | null> => {
         id: 'default',
         api_key: '',
         base_url: 'https://api.lygosapp.com/v1',
-        // IMPORTANT: This URL needs to be verified with Lygos documentation
-        // Common alternatives: pay.lygosapp.com, api.lygosapp.com/v1/checkout
-        checkout_base_url: 'https://pay.lygosapp.com', // Changed from checkout.lygosapp.com
+        checkout_base_url: 'https://api.lygosapp.com', // Corrected base URL for payment links
         webhook_url: '',
         return_url: `${window.location.origin}/payment-return`,
         cancel_url: `${window.location.origin}/publier-annonce`,
@@ -49,9 +46,9 @@ export const getLygosConfig = async (): Promise<LygosConfig | null> => {
         config.base_url = 'https://api.lygosapp.com/v1';
       }
       
-      // Add checkout_base_url if missing and set to corrected URL
+      // Set correct checkout_base_url for payment links
       if (!config.checkout_base_url) {
-        config.checkout_base_url = 'https://pay.lygosapp.com'; // Changed from checkout.lygosapp.com
+        config.checkout_base_url = 'https://api.lygosapp.com';
       }
       
       return config;

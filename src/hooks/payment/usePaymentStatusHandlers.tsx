@@ -2,7 +2,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { createLygosPayment } from '@/services/lygos/paymentInitiator';
-import { getLygosConfig } from '@/services/lygosConfigService';
 
 interface PaymentTransaction {
   id: string;
@@ -34,34 +33,27 @@ export const usePaymentStatusHandlers = () => {
     console.log('Payment data object:', paymentData);
     
     // Method 1: Direct checkout_url from Lygos response (preferred)
-    let paymentUrl = paymentData?.checkout_url || paymentData?.lygos_response?.checkout_url || paymentData?.lygos_response?.payment_url;
+    let paymentUrl = paymentData?.checkout_url || 
+                     paymentData?.lygos_response?.link || 
+                     paymentData?.lygos_response?.checkout_url || 
+                     paymentData?.lygos_response?.payment_url;
+    
     console.log('Method 1 - Direct checkout_url from Lygos:', paymentUrl);
     
-    // Method 2: If we have a Lygos payment ID, construct the checkout URL using config
-    if (!paymentUrl && transaction.lygos_payment_id) {
-      console.log('Method 2 - Constructing checkout URL from lygos_payment_id:', transaction.lygos_payment_id);
-      
+    // Validate URL if found
+    if (paymentUrl) {
       try {
-        const config = await getLygosConfig();
-        if (config && config.checkout_base_url) {
-          paymentUrl = `${config.checkout_base_url}/${transaction.lygos_payment_id}`;
-          console.log('Constructed Lygos checkout URL using config:', paymentUrl);
-        } else {
-          console.warn('No Lygos config found, using fallback URL');
-          // Fallback to the corrected URL - VERIFY THIS WITH LYGOS DOCS
-          paymentUrl = `https://pay.lygosapp.com/${transaction.lygos_payment_id}`;
-          console.log('Using fallback checkout URL:', paymentUrl);
-        }
-      } catch (error) {
-        console.error('Error getting Lygos config:', error);
-        // Use fallback URL
-        paymentUrl = `https://pay.lygosapp.com/${transaction.lygos_payment_id}`;
-        console.log('Error fallback checkout URL:', paymentUrl);
+        new URL(paymentUrl);
+        console.log('Valid payment URL found:', paymentUrl);
+        return paymentUrl;
+      } catch (urlError) {
+        console.error('Invalid payment URL found:', paymentUrl);
+        paymentUrl = null;
       }
     }
     
-    console.log('Final payment URL:', paymentUrl);
-    return paymentUrl;
+    console.log('No valid payment URL found in transaction data');
+    return null;
   };
 
   const handlePaymentAction = async (
@@ -131,41 +123,14 @@ export const usePaymentStatusHandlers = () => {
           return;
         }
         
-        // Try to open the payment window
-        const paymentWindow = window.open(lygosUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+        // Redirect to the payment page directly (no popup)
+        toast({
+          title: "Redirection vers Lygos",
+          description: "Vous allez être redirigé vers la page de paiement Lygos.",
+        });
         
-        if (!paymentWindow) {
-          toast({
-            title: "Popup bloqué",
-            description: "Veuillez autoriser les popups pour accéder au paiement Lygos.",
-            variant: "destructive"
-          });
-          
-          // Fallback: redirect in same window
-          window.location.href = lygosUrl;
-        } else {
-          toast({
-            title: "Fenêtre de paiement ouverte",
-            description: "Complétez votre paiement dans la nouvelle fenêtre Lygos.",
-          });
-          
-          // Monitor if the window gets closed
-          const checkClosed = setInterval(() => {
-            if (paymentWindow.closed) {
-              clearInterval(checkClosed);
-              console.log('Payment window was closed');
-              toast({
-                title: "Fenêtre fermée",
-                description: "La fenêtre de paiement a été fermée. Actualisez la page pour vérifier le statut.",
-              });
-            }
-          }, 1000);
-          
-          // Clean up after 5 minutes
-          setTimeout(() => {
-            clearInterval(checkClosed);
-          }, 300000);
-        }
+        // Use direct navigation instead of popup for better UX
+        window.location.href = lygosUrl;
       } else {
         console.error('FAILED: No Lygos payment URL available');
         toast({

@@ -29,23 +29,44 @@ serve(async (req) => {
     const status = payload.status?.toLowerCase();
     const amount = payload.amount;
     const currency = payload.currency;
+    const externalReference = payload.external_reference;
     
-    if (!paymentId) {
-      console.error('No payment ID in webhook payload');
-      throw new Error('Payment ID manquant dans le webhook');
+    if (!paymentId && !externalReference) {
+      console.error('No payment ID or external reference in webhook payload');
+      throw new Error('Payment ID ou référence externe manquant dans le webhook');
     }
 
-    console.log('Processing payment:', { paymentId, status, amount, currency });
+    console.log('Processing payment:', { paymentId, status, amount, currency, externalReference });
 
-    // Find the transaction by Lygos payment ID
-    const { data: transaction, error: transactionError } = await supabase
-      .from('payment_transactions')
-      .select('*')
-      .eq('lygos_payment_id', paymentId)
-      .single();
+    // Find the transaction by Lygos payment ID or external reference
+    let transaction;
+    let transactionError;
+    
+    if (paymentId) {
+      const result = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .eq('lygos_payment_id', paymentId)
+        .single();
+      
+      transaction = result.data;
+      transactionError = result.error;
+    }
+    
+    // If not found by payment ID, try external reference
+    if (!transaction && externalReference) {
+      const result = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .eq('external_reference', externalReference)
+        .single();
+      
+      transaction = result.data;
+      transactionError = result.error;
+    }
 
     if (transactionError || !transaction) {
-      console.error('Transaction not found for payment ID:', paymentId, transactionError);
+      console.error('Transaction not found for payment ID/reference:', { paymentId, externalReference }, transactionError);
       
       // Log the webhook for debugging but don't fail
       await supabase
@@ -55,6 +76,7 @@ serve(async (req) => {
           event_type: 'lygos_webhook_orphaned',
           event_data: {
             lygos_payment_id: paymentId,
+            external_reference: externalReference,
             payload: payload,
             error: 'Transaction not found',
             timestamp: new Date().toISOString()
@@ -65,7 +87,8 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: 'Transaction not found',
-          payment_id: paymentId 
+          payment_id: paymentId,
+          external_reference: externalReference
         }),
         { 
           status: 404,
@@ -84,18 +107,21 @@ serve(async (req) => {
       case 'completed':
       case 'success':
       case 'paid':
+      case 'successful':
         newStatus = 'completed';
         completedAt = new Date().toISOString();
         break;
       case 'failed':
       case 'cancelled':
       case 'canceled':
+      case 'rejected':
         newStatus = 'failed';
         break;
       case 'expired':
         newStatus = 'expired';
         break;
       case 'pending':
+      case 'processing':
         newStatus = 'pending';
         break;
       default:
@@ -153,6 +179,7 @@ serve(async (req) => {
         event_type: 'lygos_webhook_processed',
         event_data: {
           lygos_payment_id: paymentId,
+          external_reference: externalReference,
           old_status: transaction.status,
           new_status: newStatus,
           lygos_status: status,

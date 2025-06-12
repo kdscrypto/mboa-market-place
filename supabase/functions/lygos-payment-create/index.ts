@@ -14,6 +14,10 @@ interface LygosPaymentRequest {
   customer_name: string;
   customer_email: string;
   customer_phone?: string;
+  return_url: string;
+  cancel_url: string;
+  webhook_url: string;
+  external_reference: string;
 }
 
 interface LygosPaymentResponse {
@@ -65,39 +69,38 @@ serve(async (req) => {
       throw new Error('Transaction non trouvée')
     }
 
-    // Get Lygos configuration
+    // Get Lygos API key
     const lygosApiKey = Deno.env.get('LYGOS_API_KEY')
     if (!lygosApiKey) {
       console.error('Lygos API key not configured')
       throw new Error('Configuration Lygos manquante')
     }
 
-    // Prepare Lygos payment request
-    const lygosRequest: LygosPaymentRequest = {
+    // Prepare Lygos payment request according to official docs
+    const lygosRequest = {
       amount: transaction.amount,
-      currency: transaction.currency,
+      currency: transaction.currency || 'XAF',
       description: `Annonce premium - Mboa Market`,
       customer_name: transaction.payment_data?.customer_name || user.email || '',
       customer_email: transaction.payment_data?.customer_email || user.email || '',
-      customer_phone: transaction.payment_data?.customer_phone || ''
+      customer_phone: transaction.payment_data?.customer_phone || '',
+      return_url: `${Deno.env.get('SUPABASE_URL')?.replace('/v1', '')}/payment-return?transaction=${transactionId}`,
+      cancel_url: `${Deno.env.get('SUPABASE_URL')?.replace('/v1', '')}/payment-cancel?transaction=${transactionId}`,
+      webhook_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/lygos-webhook`,
+      external_reference: transaction.external_reference
     }
 
-    console.log('Sending request to Lygos:', lygosRequest)
+    console.log('Sending request to Lygos API:', lygosRequest)
 
-    // Call Lygos API to create payment
-    const lygosResponse = await fetch('https://api.lygosapp.com/v1/payments', {
+    // Call Lygos API using correct endpoint and authentication
+    const lygosResponse = await fetch('https://api.lygosapp.com/v1/gateway', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${lygosApiKey}`,
+        'api-key': lygosApiKey, // Correct authentication header
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        ...lygosRequest,
-        return_url: `${Deno.env.get('SUPABASE_URL')?.replace('/v1', '')}/payment-return?transaction=${transactionId}`,
-        cancel_url: `${Deno.env.get('SUPABASE_URL')?.replace('/v1', '')}/payment-cancel?transaction=${transactionId}`,
-        external_reference: transaction.external_reference
-      })
+      body: JSON.stringify(lygosRequest)
     })
 
     if (!lygosResponse.ok) {
@@ -109,15 +112,24 @@ serve(async (req) => {
     const lygosData = await lygosResponse.json()
     console.log('Lygos response:', lygosData)
 
-    // Update transaction with Lygos payment ID and checkout URL
+    // Extract payment details from response
+    const paymentId = lygosData.payment_id || lygosData.id
+    const checkoutUrl = lygosData.link || lygosData.checkout_url || lygosData.payment_url
+
+    if (!checkoutUrl) {
+      console.error('No checkout URL in Lygos response:', lygosData)
+      throw new Error('URL de paiement manquante dans la réponse Lygos')
+    }
+
+    // Update transaction with Lygos payment details
     const { error: updateError } = await supabase
       .from('payment_transactions')
       .update({
-        lygos_payment_id: lygosData.payment_id || lygosData.id,
+        lygos_payment_id: paymentId,
         payment_data: {
           ...transaction.payment_data,
           lygos_response: lygosData,
-          checkout_url: lygosData.checkout_url || lygosData.payment_url
+          checkout_url: checkoutUrl
         },
         updated_at: new Date().toISOString()
       })
@@ -135,16 +147,17 @@ serve(async (req) => {
         transaction_id: transactionId,
         event_type: 'lygos_payment_created',
         event_data: {
-          lygos_payment_id: lygosData.payment_id || lygosData.id,
-          checkout_url: lygosData.checkout_url || lygosData.payment_url,
+          lygos_payment_id: paymentId,
+          checkout_url: checkoutUrl,
+          api_endpoint: 'https://api.lygosapp.com/v1/gateway',
           timestamp: new Date().toISOString()
         }
       })
 
     const response: LygosPaymentResponse = {
       success: true,
-      payment_id: lygosData.payment_id || lygosData.id,
-      checkout_url: lygosData.checkout_url || lygosData.payment_url
+      payment_id: paymentId,
+      checkout_url: checkoutUrl
     }
 
     console.log('Lygos payment created successfully:', response)
