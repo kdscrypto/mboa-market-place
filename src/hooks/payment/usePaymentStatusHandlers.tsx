@@ -61,7 +61,11 @@ export const usePaymentStatusHandlers = () => {
     transaction: PaymentTransaction | null
   ) => {
     if (paymentStatus === 'success') {
-      navigate('/dashboard');
+      toast({
+        title: "Paiement confirmé",
+        description: "Votre paiement a été traité avec succès. Redirection vers le tableau de bord...",
+      });
+      setTimeout(() => navigate('/dashboard'), 2000);
     } else if (paymentStatus === 'pending') {
       if (!transaction) {
         toast({
@@ -126,11 +130,13 @@ export const usePaymentStatusHandlers = () => {
         // Redirect to the payment page directly (no popup)
         toast({
           title: "Redirection vers Lygos",
-          description: "Vous allez être redirigé vers la page de paiement Lygos.",
+          description: "Vous allez être redirigé vers la page de paiement Lygos...",
         });
         
         // Use direct navigation instead of popup for better UX
-        window.location.href = lygosUrl;
+        setTimeout(() => {
+          window.location.href = lygosUrl;
+        }, 1500);
       } else {
         console.error('FAILED: No Lygos payment URL available');
         toast({
@@ -139,6 +145,18 @@ export const usePaymentStatusHandlers = () => {
           variant: "destructive"
         });
       }
+    } else if (paymentStatus === 'failed') {
+      toast({
+        title: "Paiement échoué",
+        description: "Votre paiement n'a pas pu être traité. Vous pouvez réessayer ou contacter le support.",
+        variant: "destructive"
+      });
+    } else if (paymentStatus === 'expired') {
+      toast({
+        title: "Session expirée",
+        description: "Votre session de paiement a expiré. Veuillez recommencer.",
+        variant: "destructive"
+      });
     } else {
       navigate('/publier-annonce');
     }

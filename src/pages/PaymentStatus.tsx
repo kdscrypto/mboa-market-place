@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { usePaymentStatusEffects } from "@/hooks/payment/usePaymentStatusEffects
 const PaymentStatus = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const transactionId = searchParams.get('transaction');
   const paymentId = searchParams.get('payment_id');
@@ -95,19 +97,62 @@ const PaymentStatus = () => {
     handlePaymentAction(paymentStatus, transaction);
   };
 
+  const handleRetry = () => {
+    // Refresh the page to restart the payment process
+    window.location.reload();
+  };
+
+  const handleGoBack = () => {
+    navigate('/publier-annonce');
+  };
+
+  const handleContactSupport = () => {
+    toast({
+      title: "Support",
+      description: "Veuillez contacter notre équipe support à support@mboa-market.com",
+    });
+  };
+
+  // Extract error information
+  const getErrorInfo = () => {
+    if (trackingError) {
+      return {
+        error: trackingError,
+        errorCode: 'tracking_error'
+      };
+    }
+    
+    if (transaction?.payment_data?.error) {
+      return {
+        error: transaction.payment_data.error,
+        errorCode: transaction.payment_data.error_code
+      };
+    }
+    
+    return {};
+  };
+
+  const { error, errorCode } = getErrorInfo();
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       
       <main className="flex-grow flex items-center justify-center bg-mboa-gray py-12">
-        <div className="w-full max-w-md mx-auto">
+        <div className="w-full max-w-4xl mx-auto px-4">
           <PaymentStatusContent
             paymentStatus={paymentStatus}
             onPaymentAction={handlePaymentActionWrapper}
             lygosPaymentUrl={lygosPaymentUrl}
+            transaction={transaction}
+            error={error}
+            errorCode={errorCode}
+            onRetry={handleRetry}
+            onGoBack={handleGoBack}
+            onContactSupport={handleContactSupport}
           />
           
-          <div className="mt-4">
+          <div className="mt-6">
             <PaymentStatusInfo
               transactionId={transactionId}
               transaction={transaction}
@@ -118,13 +163,15 @@ const PaymentStatus = () => {
             />
           </div>
           
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/')}
-            className="w-full mt-4"
-          >
-            Retourner à l'accueil
-          </Button>
+          <div className="flex justify-center mt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/')}
+              className="px-8"
+            >
+              Retourner à l'accueil
+            </Button>
+          </div>
         </div>
       </main>
       
