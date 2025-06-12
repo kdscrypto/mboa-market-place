@@ -147,6 +147,7 @@ export class LygosRecoveryManager {
           status: 'pending',
           payment_provider: 'lygos',
           external_reference: `retry_${Date.now()}_${transaction.external_reference}`,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           payment_data: {
             ...transaction.payment_data,
             retry_of: transaction.id,
@@ -213,6 +214,14 @@ export class LygosRecoveryManager {
 
   private async logRecoveryAttempt(transactionId: string, reason: string, result: RecoveryResult): Promise<void> {
     try {
+      // Convert result to plain object to ensure JSON compatibility
+      const resultData = {
+        success: result.success,
+        message: result.message,
+        newTransactionId: result.newTransactionId,
+        metadata: result.metadata
+      };
+
       await supabase
         .from('payment_audit_logs')
         .insert({
@@ -220,7 +229,7 @@ export class LygosRecoveryManager {
           event_type: 'lygos_recovery_attempt',
           event_data: {
             reason,
-            result,
+            result: resultData,
             timestamp: new Date().toISOString()
           }
         });
