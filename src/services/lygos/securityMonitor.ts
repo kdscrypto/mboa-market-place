@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import type { RateLimitResult } from './types';
 
 export interface SecurityEvent {
   type: 'suspicious_activity' | 'rate_limit_exceeded' | 'fraud_detection' | 'unusual_pattern';
@@ -226,11 +227,7 @@ export class LygosSecurityMonitor {
     }
   }
 
-  async checkRateLimit(userId: string, action: string = 'payment_creation'): Promise<{
-    allowed: boolean;
-    remaining: number;
-    resetTime: Date;
-  }> {
+  async checkRateLimit(userId: string, action: string = 'payment_creation'): Promise<RateLimitResult> {
     try {
       const result = await supabase.rpc('check_rate_limit', {
         p_identifier: userId,
@@ -246,10 +243,22 @@ export class LygosSecurityMonitor {
       }
 
       const data = result.data;
+      
+      // Type guard pour vérifier que data est un objet
+      if (typeof data !== 'object' || data === null) {
+        console.error('Invalid rate limit response:', data);
+        return { allowed: true, remaining: 10, resetTime: new Date() };
+      }
+
+      const rateLimitData = data as any;
+
       return {
-        allowed: data.allowed,
-        remaining: data.max_requests - data.current_count,
-        resetTime: new Date(data.window_start)
+        allowed: rateLimitData.allowed || false,
+        remaining: (rateLimitData.max_requests || 10) - (rateLimitData.current_count || 0),
+        resetTime: new Date(rateLimitData.window_start || Date.now()),
+        max_requests: rateLimitData.max_requests,
+        current_count: rateLimitData.current_count,
+        window_start: rateLimitData.window_start
       };
 
     } catch (error) {

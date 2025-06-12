@@ -1,78 +1,46 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { getLygosConfig } from '../lygosConfigService';
-import { getPaymentDataProperty } from './urlGenerator';
-import type { LygosPaymentResponse } from './types';
+import type { LygosVerificationResponse } from './types';
 
-export const verifyLygosPayment = async (paymentId: string): Promise<LygosPaymentResponse> => {
+export const verifyLygosPayment = async (paymentId: string): Promise<LygosVerificationResponse> => {
+  console.log('=== Verifying Lygos Payment ===');
+  console.log('Payment ID:', paymentId);
+
   try {
-    console.log('Verifying Lygos payment - real verification, no simulation...');
-    
-    const { data: transaction, error: transactionError } = await supabase
-      .from('payment_transactions')
-      .select('*')
-      .eq('lygos_payment_id', paymentId)
-      .single();
+    const { data, error } = await supabase.functions.invoke('lygos-verify', {
+      body: { paymentId }
+    });
 
-    if (transactionError || !transaction) {
-      throw new Error('Transaction non trouvée');
+    console.log('Lygos verification response:', { data, error });
+
+    if (error) {
+      console.error('Supabase function error:', error);
+      throw new Error(`Verification error: ${error.message}`);
     }
 
-    const config = await getLygosConfig();
-    if (!config) {
-      throw new Error('Configuration Lygos non trouvée');
+    if (!data) {
+      throw new Error('No response data from Lygos verification');
     }
 
-    const paymentUrl = getPaymentDataProperty(transaction.payment_data, 'payment_url') || `https://payment.lygos.cm/pay/${paymentId}`;
+    if (!data.success) {
+      throw new Error(data.error || 'Lygos verification failed');
+    }
 
-    const realResponse = {
-      id: paymentId,
-      status: transaction.lygos_status || transaction.status,
-      amount: transaction.amount,
-      currency: transaction.currency,
-      payment_url: paymentUrl,
-      created_at: transaction.created_at,
-      expires_at: transaction.expires_at
-    };
-
-    await supabase
-      .from('payment_audit_logs')
-      .insert({
-        transaction_id: transaction.id,
-        event_type: 'payment_verification_performed',
-        event_data: {
-          lygos_payment_id: paymentId,
-          verified_status: realResponse.status,
-          real_verification: true,
-          no_simulation: true,
-          timestamp: new Date().toISOString()
-        }
-      });
-
-    return {
+    const response: LygosVerificationResponse = {
       success: true,
-      paymentData: realResponse,
-      transactionId: transaction.id
+      paymentData: data.paymentData,
+      transactionId: data.transactionId
     };
+
+    console.log('Verification successful:', response);
+    return response;
 
   } catch (error) {
     console.error('Error verifying Lygos payment:', error);
     
-    await supabase
-      .from('payment_audit_logs')
-      .insert({
-        transaction_id: 'unknown',
-        event_type: 'payment_verification_failed',
-        event_data: {
-          lygos_payment_id: paymentId,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
-        }
-      });
-
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Erreur inconnue'
+      error: error instanceof Error ? error.message : 'Unknown error verifying Lygos payment'
     };
   }
 };
