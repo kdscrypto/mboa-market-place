@@ -1,29 +1,21 @@
 
 import React from 'react';
-
-interface PaymentTransaction {
-  id: string;
-  status: string;
-  lygos_status?: string;
-  amount: number;
-  currency: string;
-  lygos_payment_id?: string;
-  payment_data?: any;
-}
-
-interface TimeRemaining {
-  minutes: number;
-  seconds: number;
-  expired: boolean;
-}
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Clock, AlertTriangle, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface PaymentStatusInfoProps {
-  transactionId: string | null;
-  transaction: PaymentTransaction | null;
-  timeRemaining: TimeRemaining | null;
+  transactionId?: string | null;
+  transaction?: any;
+  timeRemaining?: {
+    minutes: number;
+    seconds: number;
+    expired: boolean;
+  } | null;
   paymentStatus: string;
-  trackingError: string | null;
-  lygosPaymentUrl: string | null;
+  trackingError?: string;
+  lygosPaymentUrl?: string | null;
 }
 
 const PaymentStatusInfo: React.FC<PaymentStatusInfoProps> = ({
@@ -34,59 +26,159 @@ const PaymentStatusInfo: React.FC<PaymentStatusInfoProps> = ({
   trackingError,
   lygosPaymentUrl
 }) => {
+  const formatTimeRemaining = () => {
+    if (!timeRemaining || timeRemaining.expired) {
+      return 'Expiré';
+    }
+    
+    const { minutes, seconds } = timeRemaining;
+    return `${minutes}m ${seconds}s`;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success':
+        return 'text-green-600';
+      case 'failed':
+      case 'error':
+        return 'text-red-600';
+      case 'expired':
+        return 'text-orange-600';
+      case 'pending':
+      default:
+        return 'text-blue-600';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'failed':
+      case 'error':
+        return <XCircle className="h-4 w-4" />;
+      case 'expired':
+        return <AlertTriangle className="h-4 w-4" />;
+      case 'pending':
+      default:
+        return <Clock className="h-4 w-4" />;
+    }
+  };
+
   return (
-    <>
-      {transactionId && (
-        <p className="text-sm text-gray-500 mb-4">
-          Transaction ID: {transactionId}
-        </p>
-      )}
-
-      {/* Show real transaction details */}
-      {transaction && (
-        <div className="bg-gray-50 border rounded-lg p-3 mb-4 text-sm">
-          <p><strong>Statut réel:</strong> {transaction.status}</p>
-          {transaction.lygos_status && (
-            <p><strong>Statut Lygos:</strong> {transaction.lygos_status}</p>
-          )}
-          <p><strong>Montant:</strong> {transaction.amount} {transaction.currency}</p>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <span className={getStatusColor(paymentStatus)}>
+            {getStatusIcon(paymentStatus)}
+          </span>
+          Informations de paiement
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Statut du paiement */}
+        <div className="flex items-center justify-between">
+          <span className="font-medium">Statut:</span>
+          <Badge variant={paymentStatus === 'success' ? 'default' : 'secondary'}>
+            {paymentStatus === 'success' ? 'Réussi' :
+             paymentStatus === 'failed' ? 'Échoué' :
+             paymentStatus === 'expired' ? 'Expiré' :
+             paymentStatus === 'pending' ? 'En attente' : 'Inconnu'}
+          </Badge>
         </div>
-      )}
 
-      {/* Show time remaining for pending payments */}
-      {paymentStatus === 'pending' && timeRemaining && !timeRemaining.expired && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-          <p className="text-sm text-yellow-700">
-            Temps restant: {timeRemaining.minutes}m {timeRemaining.seconds}s
-          </p>
-          <p className="text-xs text-yellow-600 mt-1">
-            Le statut restera "pending" jusqu'à confirmation de Lygos
-          </p>
-        </div>
-      )}
+        {/* ID de transaction */}
+        {transactionId && (
+          <div className="flex items-center justify-between">
+            <span className="font-medium">Transaction:</span>
+            <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+              {transactionId.slice(0, 8)}...
+            </span>
+          </div>
+        )}
 
-      {/* Show error if tracking failed */}
-      {trackingError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-          <p className="text-sm text-red-700">
-            Erreur de suivi: {trackingError}
-          </p>
-        </div>
-      )}
+        {/* Temps restant */}
+        {timeRemaining && paymentStatus === 'pending' && (
+          <div className="flex items-center justify-between">
+            <span className="font-medium">Temps restant:</span>
+            <span className={`font-mono text-sm ${timeRemaining.expired ? 'text-red-600' : 'text-blue-600'}`}>
+              {formatTimeRemaining()}
+            </span>
+          </div>
+        )}
 
-      {/* Enhanced debug information */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs">
-          <p><strong>Debug détaillé:</strong></p>
-          <p>URL Lygos: {lygosPaymentUrl || 'Non disponible'}</p>
-          <p>Payment Data: {transaction?.payment_data ? 'Disponible' : 'Manquant'}</p>
-          {transaction?.payment_data && (
-            <p>Payment Data Keys: {Object.keys(transaction.payment_data).join(', ')}</p>
-          )}
-          <p>Lygos Payment ID: {transaction?.lygos_payment_id || 'Non disponible'}</p>
-        </div>
-      )}
-    </>
+        {/* Détails de la transaction */}
+        {transaction && (
+          <>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Montant:</span>
+              <span className="font-semibold">
+                {transaction.amount} {transaction.currency}
+              </span>
+            </div>
+
+            {transaction.external_reference && (
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Référence:</span>
+                <span className="font-mono text-sm">
+                  {transaction.external_reference.slice(0, 12)}...
+                </span>
+              </div>
+            )}
+
+            {transaction.lygos_payment_id && (
+              <div className="flex items-center justify-between">
+                <span className="font-medium">ID Lygos:</span>
+                <span className="font-mono text-sm">
+                  {transaction.lygos_payment_id.slice(0, 12)}...
+                </span>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* URL de paiement Lygos */}
+        {lygosPaymentUrl && paymentStatus === 'pending' && (
+          <div className="pt-2 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => window.open(lygosPaymentUrl, '_blank')}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Ouvrir le paiement Lygos
+            </Button>
+          </div>
+        )}
+
+        {/* Erreur de suivi */}
+        {trackingError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-red-800">
+              <XCircle className="h-4 w-4" />
+              <span className="font-medium">Erreur de suivi</span>
+            </div>
+            <p className="text-red-700 text-sm mt-1">{trackingError}</p>
+          </div>
+        )}
+
+        {/* Debug information en développement */}
+        {process.env.NODE_ENV === 'development' && transaction && (
+          <details className="text-xs">
+            <summary className="cursor-pointer text-gray-500">Debug Info</summary>
+            <pre className="mt-2 bg-gray-100 p-2 rounded text-xs overflow-auto">
+              {JSON.stringify({
+                paymentStatus,
+                timeRemaining,
+                lygosPaymentUrl: lygosPaymentUrl ? 'present' : 'absent',
+                payment_data_keys: transaction.payment_data ? Object.keys(transaction.payment_data) : 'none'
+              }, null, 2)}
+            </pre>
+          </details>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

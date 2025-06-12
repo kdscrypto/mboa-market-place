@@ -1,8 +1,5 @@
 
 import React, { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { createLygosPayment } from '@/services/lygosService';
-import type { LygosPaymentRequest } from '@/services/lygosService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,27 +7,27 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   RefreshCw, 
   AlertTriangle, 
-  Clock,
-  ExternalLink,
-  CheckCircle
+  Clock, 
+  XCircle,
+  CheckCircle,
+  TrendingUp
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { lygosRecoveryManager } from '@/services/lygos/recoveryManager';
 
 interface FailedTransaction {
   id: string;
   amount: number;
   currency: string;
-  description: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  failed_at: string;
-  retry_count: number;
-  last_error: string;
+  created_at: string;
+  failure_reason?: string;
+  retry_count?: number;
+  last_retry_at?: string;
 }
 
 interface PaymentRetryManagerProps {
   failedTransactions: FailedTransaction[];
-  onRetrySuccess?: (transactionId: string) => void;
+  onRetrySuccess?: (newTransactionId: string) => void;
   onRefresh?: () => void;
 }
 
@@ -42,45 +39,53 @@ const PaymentRetryManager: React.FC<PaymentRetryManagerProps> = ({
   const [retryingTransactions, setRetryingTransactions] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  const retryPayment = async (transaction: FailedTransaction) => {
-    setRetryingTransactions(prev => new Set(prev).add(transaction.id));
-    
-    try {
-      const paymentRequest: LygosPaymentRequest = {
-        amount: transaction.amount,
-        currency: transaction.currency,
-        description: `[RETRY] ${transaction.description}`,
-        customer: {
-          name: transaction.customer_name,
-          email: transaction.customer_email,
-          phone: transaction.customer_phone
-        },
-        metadata: {
-          original_transaction_id: transaction.id,
-          retry_attempt: transaction.retry_count + 1
-        }
-      };
+  const handleRetry = async (transaction: FailedTransaction) => {
+    if (retryingTransactions.has(transaction.id)) return;
 
-      const response = await createLygosPayment(paymentRequest);
+    setRetryingTransactions(prev => new Set(prev).add(transaction.id));
+
+    try {
+      // Vérifier si une nouvelle tentative est possible
+      const canRetry = await lygosRecoveryManager.canAttemptRecovery(transaction.id);
       
-      if (response.success && response.paymentData?.payment_url) {
+      if (!canRetry) {
         toast({
-          title: "Nouvelle tentative créée",
-          description: "Un nouveau paiement a été créé. Vous allez être redirigé.",
+          title: "Nouvelle tentative impossible",
+          description: "Nombre maximum de tentatives atteint pour cette transaction",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Déterminer la raison de l'échec pour choisir la stratégie de récupération
+      const reason = transaction.failure_reason || 'payment_failed';
+      
+      const result = await lygosRecoveryManager.attemptRecovery(transaction.id, reason);
+
+      if (result.success) {
+        toast({
+          title: "Nouvelle tentative réussie",
+          description: result.message,
         });
 
-        // Ouvrir l'URL de paiement
-        window.open(response.paymentData.payment_url, '_blank');
-        
-        onRetrySuccess?.(response.transactionId || '');
+        if (result.newTransactionId && onRetrySuccess) {
+          onRetrySuccess(result.newTransactionId);
+        } else if (onRefresh) {
+          onRefresh();
+        }
       } else {
-        throw new Error(response.error || 'Erreur lors de la nouvelle tentative');
+        toast({
+          title: "Échec de la nouvelle tentative",
+          description: result.message,
+          variant: "destructive"
+        });
       }
+
     } catch (error) {
-      console.error('Error retrying payment:', error);
+      console.error('Erreur lors de la nouvelle tentative:', error);
       toast({
-        title: "Erreur de nouvelle tentative",
-        description: error instanceof Error ? error.message : 'Erreur inconnue',
+        title: "Erreur système",
+        description: "Une erreur s'est produite lors de la nouvelle tentative",
         variant: "destructive"
       });
     } finally {
@@ -92,23 +97,50 @@ const PaymentRetryManager: React.FC<PaymentRetryManagerProps> = ({
     }
   };
 
-  const getRetryCountBadge = (retryCount: number) => {
-    if (retryCount === 0) {
-      return <Badge variant="outline">Première tentative</Badge>;
-    } else if (retryCount < 3) {
-      return <Badge variant="secondary">{retryCount} tentative(s)</Badge>;
-    } else {
-      return <Badge variant="destructive">{retryCount} tentatives</Badge>;
+  const getRetryCountBadge = (count?: number) => {
+    if (!count || count === 0) return null;
+    
+    const variant = count >= 3 ? 'destructive' : count >= 2 ? 'secondary' : 'outline';
+    return (
+      <Badge variant={variant} className="text-xs">
+        {count} tentative{count > 1 ? 's' : ''}
+      </Badge>
+    );
+  };
+
+  const getFailureReasonIcon = (reason?: string) => {
+    switch (reason) {
+      case 'network_error':
+        return <RefreshCw className="h-4 w-4 text-blue-600" />;
+      case 'timeout':
+        return <Clock className="h-4 w-4 text-orange-600" />;
+      case 'payment_failed':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      default:
+        return <AlertTriangle className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  if (failedTransactions.length === 0) {
+  const getFailureReasonText = (reason?: string) => {
+    switch (reason) {
+      case 'network_error':
+        return 'Erreur réseau';
+      case 'timeout':
+        return 'Timeout';
+      case 'payment_failed':
+        return 'Paiement échoué';
+      default:
+        return 'Erreur inconnue';
+    }
+  };
+
+  if (!failedTransactions || failedTransactions.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="text-lg flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            Gestionnaire de Nouvelles Tentatives
+            Gestion des nouvelles tentatives
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -126,96 +158,89 @@ const PaymentRetryManager: React.FC<PaymentRetryManagerProps> = ({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <RefreshCw className="h-5 w-5" />
-            Gestionnaire de Nouvelles Tentatives - Phase 5
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="destructive">{failedTransactions.length} échec(s)</Badge>
-            <Button onClick={onRefresh} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Actualiser
-            </Button>
-          </div>
-        </div>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-blue-600" />
+          Gestion des nouvelles tentatives
+          <Badge variant="secondary">{failedTransactions.length}</Badge>
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="space-y-4">
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {failedTransactions.length} transaction{failedTransactions.length > 1 ? 's' : ''} échouée{failedTransactions.length > 1 ? 's' : ''} 
+            {failedTransactions.length > 1 ? ' nécessitent' : ' nécessite'} une attention.
+          </AlertDescription>
+        </Alert>
+
+        <div className="space-y-3">
           {failedTransactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="border rounded-lg p-4"
+              className="border rounded-lg p-4 space-y-3"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-medium">{transaction.description}</h3>
-                    {getRetryCountBadge(transaction.retry_count)}
-                  </div>
-                  
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <p>
-                      <span className="font-medium">Montant:</span> {transaction.amount} {transaction.currency}
-                    </p>
-                    <p>
-                      <span className="font-medium">Client:</span> {transaction.customer_name} ({transaction.customer_email})
-                    </p>
-                    <p>
-                      <span className="font-medium">Échec le:</span> {new Date(transaction.failed_at).toLocaleString()}
-                    </p>
-                    <p>
-                      <span className="font-medium">Dernière erreur:</span> 
-                      <span className="text-red-600 ml-1">{transaction.last_error}</span>
-                    </p>
-                  </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {getFailureReasonIcon(transaction.failure_reason)}
+                  <span className="font-medium">
+                    {transaction.amount} {transaction.currency}
+                  </span>
+                  {getRetryCountBadge(transaction.retry_count)}
                 </div>
+                <div className="text-sm text-gray-500">
+                  {new Date(transaction.created_at).toLocaleDateString()}
+                </div>
+              </div>
 
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">
+                  Raison: {getFailureReasonText(transaction.failure_reason)}
+                </span>
+                {transaction.last_retry_at && (
+                  <span className="text-gray-500">
+                    Dernière tentative: {new Date(transaction.last_retry_at).toLocaleString()}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex justify-end">
                 <Button
-                  onClick={() => retryPayment(transaction)}
-                  disabled={retryingTransactions.has(transaction.id)}
+                  variant="outline"
                   size="sm"
-                  className="bg-mboa-orange hover:bg-mboa-orange/90"
+                  onClick={() => handleRetry(transaction)}
+                  disabled={retryingTransactions.has(transaction.id)}
+                  className="flex items-center gap-2"
                 >
                   {retryingTransactions.has(transaction.id) ? (
                     <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Nouvelle tentative...
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Tentative en cours...
                     </>
                   ) : (
                     <>
-                      <RefreshCw className="h-4 w-4 mr-2" />
+                      <RefreshCw className="h-4 w-4" />
                       Nouvelle tentative
                     </>
                   )}
                 </Button>
               </div>
-
-              {transaction.retry_count >= 3 && (
-                <Alert className="mt-3">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    Cette transaction a échoué plusieurs fois. Vérifiez les informations de paiement 
-                    ou contactez le support.
-                  </AlertDescription>
-                </Alert>
-              )}
             </div>
           ))}
         </div>
 
-        {/* Conseils d'utilisation */}
-        <Alert className="mt-6">
-          <Clock className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Conseils pour les nouvelles tentatives :</strong>
-            <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
-              <li>Vérifiez que les informations client sont correctes</li>
-              <li>Assurez-vous que le montant est dans les limites autorisées</li>
-              <li>Contactez le support si une transaction échoue plus de 3 fois</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
+        {onRefresh && (
+          <div className="pt-2 border-t">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRefresh}
+              className="w-full"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Actualiser la liste
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

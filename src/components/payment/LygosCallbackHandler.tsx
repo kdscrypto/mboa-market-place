@@ -1,146 +1,210 @@
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useLygosCallback } from '@/hooks/useLygosCallback';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, XCircle, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import { verifyLygosPayment } from '@/services/lygos/paymentVerifier';
+import { updateLygosTransactionStatus } from '@/services/lygos/transactionManager';
 
 const LygosCallbackHandler: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { callbackData, isProcessing, retry } = useLygosCallback();
+  const { toast } = useToast();
+  const [status, setStatus] = useState<'processing' | 'success' | 'failed' | 'error'>('processing');
+  const [details, setDetails] = useState<{
+    paymentId?: string;
+    transactionId?: string;
+    amount?: number;
+    reference?: string;
+  }>({});
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      try {
+        const paymentId = searchParams.get('payment_id');
+        const transactionId = searchParams.get('transaction_id');
+        const lygosStatus = searchParams.get('status');
+        
+        console.log('=== Lygos Callback Handler ===', {
+          paymentId,
+          transactionId,
+          lygosStatus,
+          allParams: Object.fromEntries(searchParams.entries())
+        });
+
+        if (!paymentId) {
+          throw new Error('Payment ID manquant dans le callback');
+        }
+
+        setDetails({
+          paymentId,
+          transactionId: transactionId || undefined
+        });
+
+        // Vérifier le paiement avec Lygos
+        const verification = await verifyLygosPayment(paymentId);
+        
+        if (!verification.success) {
+          throw new Error(verification.error || 'Vérification du paiement échouée');
+        }
+
+        const paymentData = verification.paymentData;
+        if (!paymentData) {
+          throw new Error('Données de paiement manquantes');
+        }
+
+        setDetails(prev => ({
+          ...prev,
+          amount: paymentData.amount,
+          reference: paymentData.id
+        }));
+
+        // Mettre à jour le statut de la transaction
+        if (transactionId) {
+          const updateSuccess = await updateLygosTransactionStatus(
+            paymentId,
+            paymentData.status,
+            paymentData
+          );
+
+          if (!updateSuccess) {
+            console.warn('Échec de la mise à jour du statut de transaction');
+          }
+        }
+
+        // Déterminer le statut final
+        const finalStatus = paymentData.status?.toLowerCase();
+        if (finalStatus === 'completed' || finalStatus === 'success') {
+          setStatus('success');
+          toast({
+            title: "Paiement réussi",
+            description: "Votre paiement a été traité avec succès",
+          });
+        } else if (finalStatus === 'failed' || finalStatus === 'cancelled') {
+          setStatus('failed');
+          toast({
+            title: "Paiement échoué",
+            description: "Le paiement n'a pas pu être traité",
+            variant: "destructive"
+          });
+        } else {
+          throw new Error(`Statut de paiement inattendu: ${paymentData.status}`);
+        }
+
+      } catch (error) {
+        console.error('Erreur lors du traitement du callback:', error);
+        setStatus('error');
+        toast({
+          title: "Erreur de callback",
+          description: error instanceof Error ? error.message : "Erreur inconnue",
+          variant: "destructive"
+        });
+      }
+    };
+
+    handleCallback();
+  }, [searchParams, toast]);
+
+  const handleContinue = () => {
+    if (status === 'success') {
+      navigate('/dashboard');
+    } else {
+      navigate('/publier-annonce');
+    }
+  };
 
   const getStatusIcon = () => {
-    switch (callbackData.status) {
+    switch (status) {
+      case 'processing':
+        return <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />;
       case 'success':
         return <CheckCircle className="h-12 w-12 text-green-600" />;
       case 'failed':
         return <XCircle className="h-12 w-12 text-red-600" />;
-      case 'expired':
+      case 'error':
         return <AlertTriangle className="h-12 w-12 text-orange-600" />;
-      case 'error':
-        return <XCircle className="h-12 w-12 text-red-600" />;
-      case 'loading':
-      default:
-        return <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />;
     }
   };
 
-  const getStatusTitle = () => {
-    switch (callbackData.status) {
+  const getStatusMessage = () => {
+    switch (status) {
+      case 'processing':
+        return {
+          title: 'Traitement en cours...',
+          description: 'Nous vérifions votre paiement avec Lygos.'
+        };
       case 'success':
-        return 'Paiement réussi !';
+        return {
+          title: 'Paiement réussi !',
+          description: 'Votre paiement a été traité avec succès.'
+        };
       case 'failed':
-        return 'Paiement échoué';
-      case 'expired':
-        return 'Paiement expiré';
+        return {
+          title: 'Paiement échoué',
+          description: 'Le paiement n\'a pas pu être traité.'
+        };
       case 'error':
-        return 'Erreur de traitement';
-      case 'loading':
-      default:
-        return 'Traitement du paiement...';
+        return {
+          title: 'Erreur de traitement',
+          description: 'Une erreur s\'est produite lors du traitement.'
+        };
     }
   };
 
-  const getStatusDescription = () => {
-    if (callbackData.message) {
-      return callbackData.message;
-    }
-
-    switch (callbackData.status) {
-      case 'success':
-        return 'Votre paiement a été traité avec succès. Votre annonce premium est maintenant active.';
-      case 'failed':
-        return 'Le paiement a échoué. Aucun montant n\'a été débité. Vous pouvez réessayer.';
-      case 'expired':
-        return 'Le délai de paiement a expiré. Vous pouvez créer un nouveau paiement.';
-      case 'error':
-        return 'Une erreur s\'est produite lors du traitement de votre paiement.';
-      case 'loading':
-      default:
-        return 'Nous traitons votre paiement. Veuillez patienter...';
-    }
-  };
-
-  const getActionButtons = () => {
-    switch (callbackData.status) {
-      case 'success':
-        return (
-          <div className="flex gap-2">
-            <Button
-              onClick={() => navigate('/mes-annonces')}
-              className="bg-mboa-orange hover:bg-mboa-orange/90"
-            >
-              Voir mes annonces
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/')}
-            >
-              Retour à l'accueil
-            </Button>
-          </div>
-        );
-      case 'failed':
-      case 'expired':
-      case 'error':
-        return (
-          <div className="flex gap-2">
-            <Button
-              onClick={retry}
-              disabled={isProcessing}
-              variant="outline"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Réessayer
-            </Button>
-            <Button
-              onClick={() => navigate('/publier-annonce')}
-              className="bg-mboa-orange hover:bg-mboa-orange/90"
-            >
-              Créer une nouvelle annonce
-            </Button>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
+  const statusMessage = getStatusMessage();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-mboa-gray p-4">
-      <Card className="max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="flex flex-col items-center gap-4">
+          <div className="flex justify-center mb-4">
             {getStatusIcon()}
-            {getStatusTitle()}
-          </CardTitle>
+          </div>
+          <CardTitle className="text-xl">{statusMessage.title}</CardTitle>
         </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <p className="text-gray-600">
-            {getStatusDescription()}
+        <CardContent className="space-y-4">
+          <p className="text-center text-gray-600">
+            {statusMessage.description}
           </p>
 
-          {callbackData.adId && (
-            <Alert>
-              <AlertDescription>
-                ID de l'annonce: {callbackData.adId}
-              </AlertDescription>
-            </Alert>
+          {details.paymentId && (
+            <div className="bg-gray-50 p-3 rounded-lg space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="font-medium">ID Paiement:</span>
+                <span className="font-mono text-xs">
+                  {details.paymentId.slice(0, 12)}...
+                </span>
+              </div>
+              {details.amount && (
+                <div className="flex justify-between">
+                  <span className="font-medium">Montant:</span>
+                  <span>{details.amount} XAF</span>
+                </div>
+              )}
+              {details.reference && (
+                <div className="flex justify-between">
+                  <span className="font-medium">Référence:</span>
+                  <span className="font-mono text-xs">
+                    {details.reference.slice(0, 12)}...
+                  </span>
+                </div>
+              )}
+            </div>
           )}
 
-          {callbackData.transactionId && (
-            <Alert>
-              <AlertDescription>
-                ID de transaction: {callbackData.transactionId}
-              </AlertDescription>
-            </Alert>
+          {status !== 'processing' && (
+            <div className="pt-4">
+              <Button
+                onClick={handleContinue}
+                className="w-full"
+                variant={status === 'success' ? 'default' : 'outline'}
+              >
+                {status === 'success' ? 'Voir mes annonces' : 'Retourner aux annonces'}
+              </Button>
+            </div>
           )}
-
-          <div className="pt-4">
-            {getActionButtons()}
-          </div>
         </CardContent>
       </Card>
     </div>

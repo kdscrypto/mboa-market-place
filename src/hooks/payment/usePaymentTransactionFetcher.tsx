@@ -25,16 +25,21 @@ interface PaymentTransaction {
 
 export const usePaymentTransactionFetcher = () => {
   const [transaction, setTransaction] = useState<PaymentTransaction | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchTransaction = useCallback(async (transactionId: string) => {
-    if (!transactionId) return;
+    if (!transactionId) {
+      setError('ID de transaction manquant');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log('=== Fetching Transaction ===', transactionId);
+
       const { data, error: fetchError } = await supabase
         .from('payment_transactions')
         .select('*')
@@ -42,14 +47,22 @@ export const usePaymentTransactionFetcher = () => {
         .single();
 
       if (fetchError) {
-        throw new Error(fetchError.message);
+        console.error('Erreur lors de la récupération de la transaction:', fetchError);
+        throw new Error(`Erreur base de données: ${fetchError.message}`);
       }
 
-      setTransaction(data);
+      if (!data) {
+        throw new Error('Transaction non trouvée');
+      }
+
+      console.log('Transaction récupérée:', data);
+      setTransaction(data as PaymentTransaction);
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('Erreur dans fetchTransaction:', errorMessage);
       setError(errorMessage);
-      console.error('Error fetching transaction:', err);
+      setTransaction(null);
     } finally {
       setIsLoading(false);
     }
@@ -57,9 +70,9 @@ export const usePaymentTransactionFetcher = () => {
 
   return {
     transaction,
+    setTransaction,
     isLoading,
     error,
-    fetchTransaction,
-    setTransaction
+    fetchTransaction
   };
 };

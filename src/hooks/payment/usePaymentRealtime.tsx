@@ -1,24 +1,24 @@
 
 import { useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentTransaction {
   id: string;
   status: string;
+  [key: string]: any;
 }
 
 export const usePaymentRealtime = (
-  transactionId: string | undefined,
-  onTransactionUpdate: (transaction: PaymentTransaction) => void
+  transactionId?: string,
+  onUpdate?: (transaction: PaymentTransaction) => void
 ) => {
-  const { toast } = useToast();
-
   useEffect(() => {
-    if (!transactionId) return;
+    if (!transactionId || !onUpdate) return;
+
+    console.log('=== Setting up realtime updates ===', transactionId);
 
     const channel = supabase
-      .channel('payment-updates')
+      .channel('payment-transaction-changes')
       .on(
         'postgres_changes',
         {
@@ -28,43 +28,19 @@ export const usePaymentRealtime = (
           filter: `id=eq.${transactionId}`
         },
         (payload) => {
-          console.log('Transaction updated:', payload);
-          onTransactionUpdate(payload.new as PaymentTransaction);
-          
-          // Notifier l'utilisateur des changements de statut
-          if (payload.old?.status !== payload.new?.status) {
-            const newStatus = payload.new?.status;
-            let message = '';
-            let variant: 'default' | 'destructive' = 'default';
-            
-            switch (newStatus) {
-              case 'completed':
-                message = 'Votre paiement a été confirmé avec succès !';
-                break;
-              case 'failed':
-                message = 'Votre paiement a échoué. Veuillez réessayer.';
-                variant = 'destructive';
-                break;
-              case 'expired':
-                message = 'Votre paiement a expiré. Veuillez créer une nouvelle transaction.';
-                variant = 'destructive';
-                break;
-            }
-            
-            if (message) {
-              toast({
-                title: 'Statut du paiement mis à jour',
-                description: message,
-                variant
-              });
-            }
+          console.log('=== Realtime Update Received ===', payload);
+          if (payload.new) {
+            onUpdate(payload.new as PaymentTransaction);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Statut du canal realtime:', status);
+      });
 
     return () => {
+      console.log('=== Cleaning up realtime subscription ===');
       supabase.removeChannel(channel);
     };
-  }, [transactionId, toast, onTransactionUpdate]);
+  }, [transactionId, onUpdate]);
 };
