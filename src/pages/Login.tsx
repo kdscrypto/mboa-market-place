@@ -17,15 +17,6 @@ const Login = () => {
       
       <main className="flex-grow flex items-center justify-center py-12 theme-bg-surface">
         <div className="mboa-container max-w-md">
-          <div className="mb-4 p-4 surface-elevated border theme-border rounded-md">
-            <p className="text-sm text-mboa-orange">
-              {fromPage === "/publier-annonce" 
-                ? "Connectez-vous ou créez un compte pour publier votre annonce gratuitement."
-                : "Connectez-vous à votre compte Mboa Market."
-              }
-            </p>
-          </div>
-          
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid grid-cols-2 mb-4">
               <TabsTrigger value="login">Connexion</TabsTrigger>
