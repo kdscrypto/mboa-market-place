@@ -8,6 +8,13 @@ interface AdDetailInfoProps {
 }
 
 const AdDetailInfo: React.FC<AdDetailInfoProps> = ({ ad }) => {
+  console.log("AdDetailInfo - Ad data:", {
+    id: ad.id,
+    title: ad.title,
+    category: ad.category,
+    categoryType: typeof ad.category
+  });
+
   return (
     <>
       <div className="flex justify-between items-start mb-4">

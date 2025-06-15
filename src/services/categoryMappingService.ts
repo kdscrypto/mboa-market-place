@@ -40,9 +40,14 @@ export const getCategorySlug = (dbValue: string): string => {
  * Obtient le nom d'affichage d'une catégorie à partir de sa valeur en base
  */
 export const getCategoryDisplayName = (dbValue: string): string => {
+  console.log("getCategoryDisplayName called with:", dbValue);
   const numericId = parseInt(dbValue);
+  console.log("Parsed numeric ID:", numericId);
   const category = categories.find(cat => cat.id === numericId);
-  return category ? category.name : `Catégorie ${dbValue}`;
+  console.log("Found category:", category);
+  const displayName = category ? category.name : `Catégorie ${dbValue}`;
+  console.log("Final display name:", displayName);
+  return displayName;
 };
 
 /**
