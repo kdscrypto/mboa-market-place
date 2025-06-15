@@ -97,7 +97,7 @@ const AdminOverview = () => {
                 </div>
               </div>
               <Button asChild className="bg-red-600 hover:bg-red-700">
-                <Link to="/security-dashboard">Consulter</Link>
+                <Link to="/security">Consulter</Link>
               </Button>
             </div>
           </CardContent>
@@ -207,7 +207,7 @@ const AdminOverview = () => {
               Surveillance de la sécurité et tests de stress
             </p>
             <Button asChild className="w-full" variant="outline">
-              <Link to="/security-dashboard">Tableau de Bord</Link>
+              <Link to="/security">Tableau de Bord</Link>
             </Button>
           </CardContent>
         </Card>
