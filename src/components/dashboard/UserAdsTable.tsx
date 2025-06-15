@@ -9,6 +9,7 @@ import { Eye, Edit, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { getCategoryDisplayName } from "@/services/categoryMappingService";
 
 interface UserAd {
   id: string;
@@ -141,7 +142,7 @@ const UserAdsTable = () => {
                     </div>
                     
                     <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                      <span>Catégorie: {ad.category}</span>
+                      <span>Catégorie: {getCategoryDisplayName(ad.category)}</span>
                       <span>Prix: {formatPrice(ad.price)}</span>
                       <span>
                         Créée {formatDistanceToNow(new Date(ad.created_at), { 

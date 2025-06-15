@@ -6,6 +6,7 @@ import { formatPrice } from "./AdPlansData";
 import { AdFormData } from "./AdFormTypes";
 import { regions, categories } from "./LocationData";
 import { adPlans } from "./AdPlansData";
+import { getCategoryDisplayName } from "@/services/categoryMappingService";
 
 interface AdPreviewDialogProps {
   open: boolean;
@@ -94,7 +95,7 @@ const AdPreviewDialog = ({
             <div className="text-sm text-mboa-orange">
               {formData.category ? (
                 <p>
-                  {categories.find(c => c.id.toString() === formData.category)?.name}
+                  {getCategoryDisplayName(formData.category)}
                 </p>
               ) : (
                 <p>Catégorie non spécifiée</p>

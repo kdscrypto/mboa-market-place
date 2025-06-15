@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Ad } from "@/types/adTypes";
+import { getCategoryDisplayName } from "@/services/categoryMappingService";
 
 interface AdDetailInfoProps {
   ad: Ad;
@@ -25,7 +26,7 @@ const AdDetailInfo: React.FC<AdDetailInfoProps> = ({ ad }) => {
       </div>
       <div className="space-y-2 mb-6">
         <p className="text-sm theme-text-secondary">
-          <span className="font-semibold theme-text-primary">Catégorie:</span> {ad.category}
+          <span className="font-semibold theme-text-primary">Catégorie:</span> {getCategoryDisplayName(ad.category)}
         </p>
         <p className="text-sm theme-text-secondary">
           <span className="font-semibold theme-text-primary">Lieu:</span> {ad.city}, {ad.region}

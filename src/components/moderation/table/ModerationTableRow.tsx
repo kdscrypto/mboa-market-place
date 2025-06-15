@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Ad } from "@/types/adTypes";
 import AdStatusBadge from "../AdStatusBadge";
 import AdActionButtons from "../AdActionButtons";
+import { getCategoryDisplayName } from "@/services/categoryMappingService";
 
 interface ModerationTableRowProps {
   ad: Ad;
@@ -71,7 +72,7 @@ const ModerationTableRow: React.FC<ModerationTableRowProps> = ({
       <TableCell>
         <div className="max-w-[200px] truncate">{ad.title}</div>
       </TableCell>
-      <TableCell>{ad.category}</TableCell>
+      <TableCell>{getCategoryDisplayName(ad.category)}</TableCell>
       <TableCell>{ad.price.toLocaleString('fr-FR')} XAF</TableCell>
       <TableCell>{ad.city}</TableCell>
       <TableCell>
