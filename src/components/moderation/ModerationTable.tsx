@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { Ad } from "@/types/adTypes";
 import AdPreviewDialog from "./AdPreviewDialog";
@@ -8,6 +8,8 @@ import ModerationTableHeader from "./table/ModerationTableHeader";
 import ModerationTableRow from "./table/ModerationTableRow";
 import BulkActionsBar from "./table/BulkActionsBar";
 import EmptyTableState from "./table/EmptyTableState";
+import { useModerationTableSelection } from "@/hooks/useModerationTableSelection";
+import { useModerationTableActions } from "@/hooks/useModerationTableActions";
 
 interface ModerationTableProps {
   ads: Ad[];
@@ -34,13 +36,39 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
   selectedAds = [],
   onSelectedAdsChange
 }) => {
-  const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
-  const [rejectAdId, setRejectAdId] = useState<string | null>(null);
-  const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [localSelectedAds, setLocalSelectedAds] = useState<string[]>([]);
-  
-  // Use external selectedAds if provided, otherwise use local state
-  const currentSelectedAds = onSelectedAdsChange ? selectedAds : localSelectedAds;
+  // Selection logic
+  const {
+    currentSelectedAds,
+    handleSelectAll,
+    handleSelectAd,
+    isAllSelected,
+    isSomeSelected
+  } = useModerationTableSelection({
+    ads,
+    selectedAds,
+    onSelectedAdsChange
+  });
+
+  // Actions logic
+  const {
+    selectedAd,
+    setSelectedAd,
+    rejectAdId,
+    showRejectDialog,
+    handleRejectClick,
+    handleRejectConfirm,
+    handleApproveClick,
+    handleBulkApprove,
+    handleBulkDelete,
+    closeRejectDialog
+  } = useModerationTableActions({
+    onApprove,
+    onReject,
+    onDelete,
+    onBulkApprove,
+    onBulkDelete,
+    onSelectedAdsChange
+  });
   
   // Add debug logging
   useEffect(() => {
@@ -49,92 +77,6 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
       isLoading
     });
   }, [ads, status, isLoading]);
-
-  // Reset selected ads when ads change
-  useEffect(() => {
-    if (onSelectedAdsChange) {
-      onSelectedAdsChange([]);
-    } else {
-      setLocalSelectedAds([]);
-    }
-  }, [ads, onSelectedAdsChange]);
-  
-  const handleRejectClick = (adId: string) => {
-    console.log("Opening reject dialog for ad:", adId);
-    setRejectAdId(adId);
-    setShowRejectDialog(true);
-  };
-  
-  const handleRejectConfirm = (adId: string, message: string) => {
-    console.log("Confirming rejection for ad:", adId, "with message:", message);
-    if (onReject) {
-      onReject(adId, message);
-    }
-    setShowRejectDialog(false);
-    setRejectAdId(null);
-  };
-
-  const handleApproveClick = (adId: string) => {
-    console.log("ModerationTable: handleApproveClick called for ad", adId);
-    if (onApprove) {
-      onApprove(adId);
-    }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    const newSelection = checked ? ads.map(ad => ad.id) : [];
-    if (onSelectedAdsChange) {
-      onSelectedAdsChange(newSelection);
-    } else {
-      setLocalSelectedAds(newSelection);
-    }
-  };
-
-  const handleSelectAd = (adId: string, checked: boolean) => {
-    if (onSelectedAdsChange) {
-      const newSelection = checked 
-        ? [...currentSelectedAds, adId]
-        : currentSelectedAds.filter(id => id !== adId);
-      onSelectedAdsChange(newSelection);
-    } else {
-      if (checked) {
-        setLocalSelectedAds(prev => [...prev, adId]);
-      } else {
-        setLocalSelectedAds(prev => prev.filter(id => id !== adId));
-      }
-    }
-  };
-
-  const handleBulkApprove = () => {
-    if (currentSelectedAds.length > 0 && onBulkApprove) {
-      const confirmed = window.confirm(`Êtes-vous sûr de vouloir approuver ${currentSelectedAds.length} annonce(s) ?`);
-      if (confirmed) {
-        onBulkApprove(currentSelectedAds);
-        if (onSelectedAdsChange) {
-          onSelectedAdsChange([]);
-        } else {
-          setLocalSelectedAds([]);
-        }
-      }
-    }
-  };
-
-  const handleBulkDelete = () => {
-    if (currentSelectedAds.length > 0 && onBulkDelete) {
-      const confirmed = window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement ${currentSelectedAds.length} annonce(s) ? Cette action est irréversible.`);
-      if (confirmed) {
-        onBulkDelete(currentSelectedAds);
-        if (onSelectedAdsChange) {
-          onSelectedAdsChange([]);
-        } else {
-          setLocalSelectedAds([]);
-        }
-      }
-    }
-  };
-
-  const isAllSelected = ads.length > 0 && currentSelectedAds.length === ads.length;
-  const isSomeSelected = currentSelectedAds.length > 0 && currentSelectedAds.length < ads.length;
   
   if (isLoading || !ads || ads.length === 0) {
     return <EmptyTableState status={status} isLoading={isLoading} />;
@@ -151,8 +93,8 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
           isAllSelected={isAllSelected}
           isSomeSelected={isSomeSelected}
           onSelectAll={handleSelectAll}
-          onBulkApprove={status === "pending" ? handleBulkApprove : undefined}
-          onBulkDelete={(status === "rejected" || status === "approved") ? handleBulkDelete : undefined}
+          onBulkApprove={status === "pending" ? () => handleBulkApprove(currentSelectedAds) : undefined}
+          onBulkDelete={(status === "rejected" || status === "approved") ? () => handleBulkDelete(currentSelectedAds) : undefined}
         />
       )}
 
@@ -195,11 +137,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
         <RejectAdDialog
           adId={rejectAdId}
           open={showRejectDialog}
-          onClose={() => {
-            console.log("Closing reject dialog");
-            setShowRejectDialog(false);
-            setRejectAdId(null);
-          }}
+          onClose={closeRejectDialog}
           onReject={handleRejectConfirm}
         />
       )}
