@@ -4,7 +4,7 @@ import { useAdsList } from "@/hooks/useAdsList";
 import { useAdActions } from "@/hooks/useAdActions";
 import { useAdRealtime } from "@/hooks/useAdRealtime";
 
-// Change this re-export to use 'export type' syntax
+// Re-export the Ad type for convenience
 export type { Ad } from "@/types/adTypes";
 
 /**
