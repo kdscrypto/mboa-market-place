@@ -92,7 +92,7 @@ const AdActionButtons: React.FC<AdActionButtonsProps> = ({
         </>
       )}
       
-      {status === "rejected" && onDelete && (
+      {(status === "rejected" || status === "approved") && onDelete && (
         <Button 
           variant="outline" 
           size="sm" 

@@ -137,6 +137,10 @@ const ModerationTabs: React.FC<ModerationTabsProps> = ({
             ads={filteredApprovedAds || []} 
             status="approved" 
             isLoading={isLoading}
+            onDelete={onDelete}
+            onBulkDelete={onBulkDelete}
+            selectedAds={selectedAds}
+            onSelectedAdsChange={setSelectedAds}
           />
         </TabsContent>
         

@@ -140,7 +140,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
     return <EmptyTableState status={status} isLoading={isLoading} />;
   }
 
-  const showBulkActions = (status === "pending" && !!onBulkApprove) || (status === "rejected" && !!onBulkDelete);
+  const showBulkActions = (status === "pending" && !!onBulkApprove) || ((status === "rejected" || status === "approved") && !!onBulkDelete);
   
   return (
     <>
@@ -152,7 +152,7 @@ const ModerationTable: React.FC<ModerationTableProps> = ({
           isSomeSelected={isSomeSelected}
           onSelectAll={handleSelectAll}
           onBulkApprove={status === "pending" ? handleBulkApprove : undefined}
-          onBulkDelete={status === "rejected" ? handleBulkDelete : undefined}
+          onBulkDelete={(status === "rejected" || status === "approved") ? handleBulkDelete : undefined}
         />
       )}
 
