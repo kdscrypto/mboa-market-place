@@ -12,7 +12,10 @@ import {
   HandHelping,
   CalendarDays,
   Hammer,
-  GraduationCap
+  GraduationCap,
+  Monitor,
+  Headphones,
+  Package
 } from "lucide-react";
 
 export interface Category {
@@ -114,6 +117,27 @@ export const categories: Category[] = [
     slug: "formations",
     icon: GraduationCap,
     coverImage: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1200&auto=format&fit=crop",
+  },
+  { 
+    id: 14, 
+    name: "Informatique", 
+    slug: "informatique",
+    icon: Monitor,
+    coverImage: "https://images.unsplash.com/photo-1547658719-da2b51169166?q=80&w=1200&auto=format&fit=crop",
+  },
+  { 
+    id: 15, 
+    name: "Gadgets high-tech", 
+    slug: "gadgets-high-tech",
+    icon: Headphones,
+    coverImage: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop",
+  },
+  { 
+    id: 16, 
+    name: "Divers", 
+    slug: "divers",
+    icon: Package,
+    coverImage: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=1200&auto=format&fit=crop",
   },
 ];
 
