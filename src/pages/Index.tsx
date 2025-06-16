@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -19,6 +18,10 @@ import CriticalCSS from "@/components/performance/CriticalCSS";
 import ResourcePreloader from "@/components/performance/ResourcePreloader";
 import BundleAnalyzer from "@/components/performance/BundleAnalyzer";
 import { usePerformanceMetrics } from "@/hooks/usePerformanceMetrics";
+import PerformanceBudgetMonitor from "@/components/performance/PerformanceBudgetMonitor";
+import ResourceHintsManager from "@/components/performance/ResourceHintsManager";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
+import { usePerformanceAnalysis } from "@/hooks/usePerformanceAnalysis";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -42,6 +45,28 @@ const Index = () => {
     {
       href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
       as: 'style' as const
+    }
+  ];
+
+  // Phase 3: Advanced performance features
+  const { isRegistered, isUpdateAvailable, updateServiceWorker } = useServiceWorker();
+  const { analyzePerformance, result: analysisResult } = usePerformanceAnalysis();
+
+  // Resource hints for better performance
+  const resourceHints = [
+    {
+      href: 'https://fonts.googleapis.com',
+      rel: 'preconnect' as const,
+      crossorigin: true
+    },
+    {
+      href: 'https://fonts.gstatic.com',
+      rel: 'preconnect' as const,
+      crossorigin: true
+    },
+    {
+      href: '/placeholder.svg',
+      rel: 'prefetch' as const
     }
   ];
 
@@ -84,7 +109,16 @@ const Index = () => {
     };
 
     loadApprovedAds();
-  }, [navigate]);
+
+    // Phase 3: Run performance analysis after page load
+    const performanceTimer = setTimeout(() => {
+      analyzePerformance();
+    }, 3000);
+
+    return () => {
+      clearTimeout(performanceTimer);
+    };
+  }, [navigate, analyzePerformance]);
 
   const handleSearch = (filters: any) => {
     console.log("Search filters:", filters);
@@ -106,7 +140,22 @@ const Index = () => {
   return (
     <CriticalCSS>
       <ResourcePreloader resources={criticalResources} />
+      <ResourceHintsManager hints={resourceHints} />
+      
       <div className="min-h-screen">
+        {/* Service Worker Update Notification */}
+        {isUpdateAvailable && (
+          <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white p-2 text-center z-50">
+            <span className="text-sm">A new version is available. </span>
+            <button 
+              onClick={updateServiceWorker}
+              className="underline text-sm font-medium"
+            >
+              Update now
+            </button>
+          </div>
+        )}
+
         <Header />
         <main>
           <HeroSection />
@@ -149,6 +198,7 @@ const Index = () => {
         </main>
         <Footer />
         <BundleAnalyzer />
+        <PerformanceBudgetMonitor />
       </div>
     </CriticalCSS>
   );
