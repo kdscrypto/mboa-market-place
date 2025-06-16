@@ -152,6 +152,63 @@ export type Database = {
           },
         ]
       }
+      affiliate_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      affiliate_points: {
+        Row: {
+          created_at: string | null
+          id: string
+          level_1_referrals: number
+          level_2_referrals: number
+          points: number
+          total_earned: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          level_1_referrals?: number
+          level_2_referrals?: number
+          points?: number
+          total_earned?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          level_1_referrals?: number
+          level_2_referrals?: number
+          points?: number
+          total_earned?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       auth_rate_limits: {
         Row: {
           action_type: string
@@ -756,6 +813,33 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          affiliate_code: string
+          created_at: string | null
+          id: string
+          level: number
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          affiliate_code: string
+          created_at?: string | null
+          id?: string
+          level?: number
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          affiliate_code?: string
+          created_at?: string | null
+          id?: string
+          level?: number
+          referred_id?: string
+          referrer_id?: string
+        }
+        Relationships: []
+      }
       system_messages: {
         Row: {
           content: string
@@ -893,8 +977,16 @@ export type Database = {
         }
         Returns: Json
       }
+      generate_affiliate_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_active_lygos_config: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_affiliate_stats: {
+        Args: { user_uuid: string }
         Returns: Json
       }
       get_monetbil_migration_stats: {
@@ -913,6 +1005,10 @@ export type Database = {
         Args: { conversation_uuid: string }
         Returns: undefined
       }
+      process_referral: {
+        Args: { referred_user_id: string; affiliate_code_param: string }
+        Returns: undefined
+      }
       release_transaction_lock: {
         Args: { transaction_uuid: string; lock_identifier: string }
         Returns: boolean
@@ -925,6 +1021,10 @@ export type Database = {
           p_completed_at?: string
         }
         Returns: boolean
+      }
+      validate_affiliate_code: {
+        Args: { code_param: string }
+        Returns: Json
       }
       validate_image_extension: {
         Args: { filename: string }

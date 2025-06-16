@@ -15,6 +15,7 @@ import ConfirmPasswordField from "../components/ConfirmPasswordField";
 import EnhancedUsernameField from "../components/EnhancedUsernameField";
 import EnhancedPhoneField from "../components/EnhancedPhoneField";
 import TermsCheckbox from "../components/TermsCheckbox";
+import AffiliateCodeField from "../components/AffiliateCodeField";
 import SecurityAlerts from "../components/SecurityAlerts";
 import FormProgressIndicator from "../components/FormProgressIndicator";
 import RealTimeValidation from "../components/RealTimeValidation";
@@ -46,7 +47,8 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
       confirmPassword: "",
       username: "",
       phone: "",
-      acceptTerms: false
+      acceptTerms: false,
+      affiliateCode: ""
     }
   });
 
@@ -187,6 +189,7 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
               autoComplete="new-password"
             />
             <ConfirmPasswordField form={form} />
+            <AffiliateCodeField form={form} />
             <TermsCheckbox form={form} onShowTerms={onShowTerms} />
           </div>
         </CardContent>

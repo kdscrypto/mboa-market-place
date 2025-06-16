@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LoginFormValues, RegisterFormValues } from "../validation/authSchemas";
+import { processReferral } from "@/services/affiliateService";
 
 export const useLoginForm = (redirectPath: string = "/mes-annonces") => {
   const { toast } = useToast();
@@ -85,6 +86,23 @@ export const useRegisterForm = (redirectPath: string = "/mes-annonces") => {
           duration: 3000
         });
         return;
+      }
+
+      // Process referral if affiliate code was provided
+      if (values.affiliateCode && values.affiliateCode.trim() && authData.user) {
+        try {
+          const referralSuccess = await processReferral(authData.user.id, values.affiliateCode.trim());
+          if (referralSuccess) {
+            toast({
+              title: "Parrainage enregistré !",
+              description: "Votre parrain a été crédité de points pour votre inscription.",
+              duration: 5000
+            });
+          }
+        } catch (referralError) {
+          console.error("Error processing referral:", referralError);
+          // Don't show error to user as registration was successful
+        }
       }
 
       toast({

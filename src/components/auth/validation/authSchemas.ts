@@ -1,79 +1,63 @@
 
 import { z } from "zod";
-import { validatePasswordStrength } from "@/services/inputValidationService";
-import { validateEmailAdvanced } from "@/services/emailValidationService";
-import { validateUsername, validatePhone } from "@/services/inputValidationService";
-
-// Enhanced email validation
-const emailSchema = z.string()
-  .min(1, "L'email est requis")
-  .email("Format d'email invalide")
-  .refine((email) => {
-    const validation = validateEmailAdvanced(email);
-    return validation.isValid;
-  }, {
-    message: "Adresse email non valide ou non autorisée"
-  });
-
-// Enhanced password validation
-const passwordSchema = z.string()
-  .min(1, "Le mot de passe est requis")
-  .refine((password) => {
-    const validation = validatePasswordStrength(password);
-    return validation.isValid && validation.score >= 60;
-  }, {
-    message: "Le mot de passe ne respecte pas les critères de sécurité requis (score minimum: 60/100)"
-  });
-
-// Enhanced username validation
-const usernameSchema = z.string()
-  .min(1, "Le nom d'utilisateur est requis")
-  .refine((username) => {
-    const validation = validateUsername(username);
-    return validation.isValid;
-  }, {
-    message: "Nom d'utilisateur non valide"
-  });
-
-// Enhanced phone validation
-const phoneSchema = z.string()
-  .min(1, "Le numéro de téléphone est requis")
-  .refine((phone) => {
-    const validation = validatePhone(phone);
-    return validation.isValid;
-  }, {
-    message: "Format de numéro camerounais invalide"
-  });
 
 export const loginSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1, "Le mot de passe est requis")
+  email: z.string()
+    .min(1, "L'email est requis")
+    .email("Format d'email invalide")
+    .max(100, "L'email ne peut pas dépasser 100 caractères"),
+  password: z.string()
+    .min(1, "Le mot de passe est requis")
+    .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+    .max(100, "Le mot de passe ne peut pas dépasser 100 caractères")
 });
 
 export const registerSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-  confirmPassword: z.string().min(1, "La confirmation est requise"),
-  username: usernameSchema,
-  phone: phoneSchema,
-  acceptTerms: z
-    .boolean()
-    .refine((val) => val === true, "Vous devez accepter les conditions d'utilisation")
+  email: z.string()
+    .min(1, "L'email est requis")
+    .email("Format d'email invalide")
+    .max(100, "L'email ne peut pas dépasser 100 caractères"),
+  password: z.string()
+    .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+    .max(100, "Le mot de passe ne peut pas dépasser 100 caractères")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre"),
+  confirmPassword: z.string(),
+  username: z.string()
+    .min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères")
+    .max(30, "Le nom d'utilisateur ne peut pas dépasser 30 caractères")
+    .regex(/^[a-zA-Z0-9_-]+$/, "Le nom d'utilisateur ne peut contenir que des lettres, chiffres, tirets et underscores"),
+  phone: z.string()
+    .regex(/^[0-9+\-\s()]+$/, "Format de téléphone invalide")
+    .min(8, "Le numéro de téléphone doit contenir au moins 8 chiffres")
+    .max(15, "Le numéro de téléphone ne peut pas dépasser 15 caractères")
+    .optional()
+    .or(z.literal("")),
+  acceptTerms: z.boolean()
+    .refine(val => val === true, "Vous devez accepter les conditions d'utilisation"),
+  affiliateCode: z.string()
+    .optional()
+    .or(z.literal(""))
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
-  path: ["confirmPassword"]
+  path: ["confirmPassword"],
 });
 
 export const forgotPasswordSchema = z.object({
-  email: emailSchema
+  email: z.string()
+    .min(1, "L'email est requis")
+    .email("Format d'email invalide")
+    .max(100, "L'email ne peut pas dépasser 100 caractères")
 });
 
 export const resetPasswordSchema = z.object({
-  password: passwordSchema,
-  confirmPassword: z.string().min(1, "La confirmation est requise")
+  password: z.string()
+    .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+    .max(100, "Le mot de passe ne peut pas dépasser 100 caractères")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre"),
+  confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
-  path: ["confirmPassword"]
+  path: ["confirmPassword"],
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;

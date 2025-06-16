@@ -5,7 +5,8 @@ import UserAdsTable from "./UserAdsTable";
 import UserMessagesTab from "./UserMessagesTab";
 import PaymentTransactionsTab from "./PaymentTransactionsTab";
 import UserProfileForm from "./UserProfileForm";
-import { User, MessageCircle, FileText, CreditCard } from "lucide-react";
+import AffiliateTab from "./AffiliateTab";
+import { User, MessageCircle, FileText, CreditCard, Users } from "lucide-react";
 
 interface UserDashboardTabsProps {
   user: any;
@@ -14,7 +15,7 @@ interface UserDashboardTabsProps {
 const UserDashboardTabs = ({ user }: UserDashboardTabsProps) => {
   return (
     <Tabs defaultValue="ads" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
+      <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 mb-6">
         <TabsTrigger value="ads" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
           <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
           <span className="hidden xs:inline">Mes annonces</span>
@@ -23,6 +24,11 @@ const UserDashboardTabs = ({ user }: UserDashboardTabsProps) => {
         <TabsTrigger value="messages" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
           <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
           Messages
+        </TabsTrigger>
+        <TabsTrigger value="affiliate" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+          <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden xs:inline">Parrainage</span>
+          <span className="xs:hidden">Points</span>
         </TabsTrigger>
         <TabsTrigger value="payments" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
           <CreditCard className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -41,6 +47,10 @@ const UserDashboardTabs = ({ user }: UserDashboardTabsProps) => {
 
       <TabsContent value="messages" className="mt-0">
         <UserMessagesTab />
+      </TabsContent>
+
+      <TabsContent value="affiliate" className="mt-0">
+        <AffiliateTab userId={user?.id} />
       </TabsContent>
 
       <TabsContent value="payments" className="mt-0">
