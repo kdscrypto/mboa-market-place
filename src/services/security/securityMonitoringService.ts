@@ -1,84 +1,49 @@
 
+import { supabase } from '@/integrations/supabase/client';
+import { getEnhancedClientIP, generateEnhancedDeviceFingerprint } from './authSecurityService';
+
 export const logSecurityEvent = async (
   eventType: string,
   severity: 'low' | 'medium' | 'high' | 'critical',
-  data: Record<string, any>
+  eventData: Record<string, any>,
+  identifier?: string,
+  identifierType?: 'user' | 'ip' | 'device'
 ): Promise<void> => {
   try {
-    const event = {
-      event_type: eventType,
-      severity,
-      event_data: data,
+    const clientIP = identifier && identifierType === 'ip' ? identifier : await getEnhancedClientIP();
+    const deviceFingerprint = generateEnhancedDeviceFingerprint();
+    
+    // Enhanced event data
+    const enhancedEventData = {
+      ...eventData,
+      client_ip: clientIP,
       timestamp: new Date().toISOString(),
       user_agent: navigator.userAgent,
-      client_ip: await getClientIP()
+      device_fingerprint: deviceFingerprint,
+      security_version: '2.0'
     };
 
-    console.log('Security Event:', event);
-    
-    // In a real implementation, this would send to your logging service
-    // For now, we'll just log to console
+    await supabase
+      .from('auth_security_events')
+      .insert({
+        event_type: eventType,
+        severity,
+        identifier: identifier || clientIP,
+        identifier_type: identifierType || 'ip',
+        event_data: enhancedEventData,
+        risk_score: severity === 'critical' ? 100 : severity === 'high' ? 75 : severity === 'medium' ? 50 : 25,
+        auto_blocked: severity === 'critical'
+      });
+
   } catch (error) {
-    console.error('Failed to log security event:', error);
+    console.error('Error logging security event:', error);
   }
 };
 
-export const checkFormSubmissionTiming = (
-  startTime: number,
-  submissionTime: number
-): { isSuspicious: boolean; reason?: string } => {
-  const timeTaken = submissionTime - startTime;
-  
-  // Too fast (likely bot)
-  if (timeTaken < 2000) {
-    return {
-      isSuspicious: true,
-      reason: 'Form submitted too quickly (possible bot)'
-    };
-  }
-  
-  // Too slow (might indicate automation or unusual behavior)
-  if (timeTaken > 30 * 60 * 1000) { // 30 minutes
-    return {
-      isSuspicious: true,
-      reason: 'Form submission took unusually long'
-    };
-  }
-  
-  return { isSuspicious: false };
-};
-
-export const getClientIP = async (): Promise<string> => {
+export const cleanupSecurityEvents = async (): Promise<void> => {
   try {
-    // In a real implementation, this would get the actual client IP
-    // For demo purposes, we'll return a placeholder
-    return 'client-ip-placeholder';
+    await supabase.rpc('cleanup_security_logs');
   } catch (error) {
-    console.error('Failed to get client IP:', error);
-    return 'unknown';
+    console.error('Error cleaning up security events:', error);
   }
-};
-
-export const generateSecurityRecommendations = (
-  passwordScore: number,
-  attemptCount: number
-): string[] => {
-  const recommendations: string[] = [];
-  
-  if (passwordScore < 50) {
-    recommendations.push('Utilisez un mot de passe plus complexe avec des majuscules, minuscules, chiffres et caractères spéciaux');
-  }
-  
-  if (attemptCount > 3) {
-    recommendations.push('Trop de tentatives de connexion. Vérifiez vos identifiants ou réinitialisez votre mot de passe');
-  }
-  
-  if (passwordScore < 30) {
-    recommendations.push('Évitez les mots de passe communs comme "password" ou "123456"');
-  }
-  
-  recommendations.push('Activez l\'authentification à deux facteurs pour plus de sécurité');
-  recommendations.push('Utilisez un gestionnaire de mots de passe pour générer des mots de passe sécurisés');
-  
-  return recommendations;
 };

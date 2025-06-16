@@ -1,19 +1,38 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
+import { detectSuspiciousLoginPatterns, logLoginAttempt, getEnhancedClientIP } from './authSecurityService';
 
-export interface SecurityAnalysis {
+export interface SuspiciousActivityResult {
   risk_score: number;
-  severity: string;
   auto_block: boolean;
+  severity: string;
   event_type: string;
 }
 
 export const detectSuspiciousActivity = async (
   identifier: string,
-  identifierType: 'ip' | 'user' | 'email',
+  identifierType: 'user' | 'ip',
   eventData: Record<string, any>
-): Promise<SecurityAnalysis | null> => {
+): Promise<SuspiciousActivityResult | null> => {
   try {
+    // Use enhanced detection for login-related activities
+    if (eventData.action_type === 'login_attempt' && identifierType === 'user') {
+      const analysis = await detectSuspiciousLoginPatterns(
+        identifier,
+        eventData.client_ip || await getEnhancedClientIP()
+      );
+      
+      if (analysis) {
+        return {
+          risk_score: analysis.risk_score,
+          auto_block: analysis.recommended_action === 'block_temporary',
+          severity: analysis.threat_level,
+          event_type: 'enhanced_login_analysis'
+        };
+      }
+    }
+
+    // Fallback to original detection for other activities
     const { data, error } = await supabase.rpc('detect_suspicious_auth_activity', {
       p_identifier: identifier,
       p_identifier_type: identifierType,
@@ -21,23 +40,24 @@ export const detectSuspiciousActivity = async (
     });
 
     if (error) {
-      console.error('Security analysis error:', error);
+      console.error('Suspicious activity detection error:', error);
       return null;
     }
 
-    if (data && typeof data === 'object') {
+    if (data && typeof data === 'object' && data !== null && !Array.isArray(data)) {
       const result = data as any;
       return {
-        risk_score: Number(result.risk_score) || 0,
-        severity: String(result.severity) || 'low',
-        auto_block: Boolean(result.auto_block),
-        event_type: String(result.event_type) || 'unknown'
+        risk_score: Number(result?.risk_score ?? 0),
+        auto_block: Boolean(result?.auto_block ?? false),
+        severity: String(result?.severity ?? 'low'),
+        event_type: String(result?.event_type ?? 'unknown')
       };
     }
 
     return null;
+
   } catch (error) {
-    console.error('Security analysis exception:', error);
+    console.error('Suspicious activity detection error:', error);
     return null;
   }
 };
