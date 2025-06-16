@@ -36,6 +36,8 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
       if (searchTerm.length < 2 && searchTerm.length > 0) return [];
       
       try {
+        console.log('Searching users with term:', searchTerm, 'page:', currentPage);
+        
         const { data, error } = await supabase.rpc('search_users_paginated', {
           search_term: searchTerm || '',
           page_size: pageSize,
@@ -44,8 +46,10 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
         
         if (error) {
           console.error('Error searching users:', error);
-          throw error;
+          throw new Error(`Erreur de recherche: ${error.message}`);
         }
+        
+        console.log('Search results:', data);
         
         return (data || []).map((user: any): UserSearchResult => ({
           id: user.id,
@@ -60,7 +64,11 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
         throw error;
       }
     },
-    enabled: searchTerm.length === 0 || searchTerm.length >= 2
+    enabled: searchTerm.length === 0 || searchTerm.length >= 2,
+    retry: (failureCount, error) => {
+      console.log('Query retry attempt:', failureCount, error);
+      return failureCount < 2;
+    }
   });
 
   const handleSearch = () => {
@@ -123,9 +131,12 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-red-600">
               <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">
-                Erreur lors de la recherche. Veuillez réessayer.
-              </span>
+              <div className="text-sm">
+                <div className="font-medium">Erreur lors de la recherche</div>
+                <div className="text-xs mt-1 opacity-80">
+                  {error instanceof Error ? error.message : 'Erreur inconnue'}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -136,7 +147,7 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium">
-                Résultats de recherche: {searchResults.length} utilisateur(s) trouvé(s)
+                Résultats de recherche: {totalCount} utilisateur(s) trouvé(s)
               </h4>
               {totalPages > 1 && (
                 <div className="flex items-center gap-2">
