@@ -55,18 +55,6 @@ const RoleManagementSection: React.FC<RoleManagementSectionProps> = ({
             disabled={isLoading}
           />
         </div>
-
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 className="font-medium text-blue-900 mb-2">
-            ✨ Nouvelles fonctionnalités Phase 4
-          </h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Architecture modulaire et maintenable</li>
-            <li>• Composants focalisés et réutilisables</li>
-            <li>• Séparation claire des responsabilités</li>
-            <li>• Code plus facile à tester et maintenir</li>
-          </ul>
-        </div>
       </CardContent>
     </Card>
   );

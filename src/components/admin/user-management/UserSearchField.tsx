@@ -36,7 +36,6 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
       if (searchTerm.length < 2 && searchTerm.length > 0) return [];
       
       try {
-        // Use the search_users_paginated function
         const { data, error } = await supabase.rpc('search_users_paginated', {
           search_term: searchTerm || '',
           page_size: pageSize,
@@ -48,7 +47,6 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
           throw error;
         }
         
-        // Transform the data to match our interface
         return (data || []).map((user: any): UserSearchResult => ({
           id: user.id,
           email: user.email || 'Email non disponible',
@@ -221,18 +219,6 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
           </CardContent>
         </Card>
       )}
-
-      <div className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
-        <h4 className="font-medium text-emerald-900 mb-2">
-          🔍 Phase 5 - Recherche Améliorée
-        </h4>
-        <ul className="text-sm text-emerald-800 space-y-1">
-          <li>• Utilisation d'une fonction SQL optimisée</li>
-          <li>• Gestion d'erreurs robuste avec fallback</li>
-          <li>• Interface de recherche optimisée</li>
-          <li>• Pagination améliorée et responsive</li>
-        </ul>
-      </div>
     </div>
   );
 };

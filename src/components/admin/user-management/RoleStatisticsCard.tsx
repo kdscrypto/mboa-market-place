@@ -23,7 +23,6 @@ const RoleStatisticsCard: React.FC = () => {
         throw error;
       }
       
-      // Ensure data is an array
       const statsArray = Array.isArray(data) ? data : [];
       const total = statsArray.reduce((sum: number, stat: any) => sum + (stat.count || 0), 0);
       
@@ -149,18 +148,6 @@ const RoleStatisticsCard: React.FC = () => {
               </div>
             );
           })}
-        </div>
-
-        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
-          <h4 className="font-medium text-purple-900 mb-2">
-            📊 Phase 5 - Analytics Avancés
-          </h4>
-          <ul className="text-sm text-purple-800 space-y-1">
-            <li>• Distribution des rôles en temps réel</li>
-            <li>• Visualisation graphique des pourcentages</li>
-            <li>• Statistiques détaillées par rôle</li>
-            <li>• Mise à jour automatique des données</li>
-          </ul>
         </div>
       </CardContent>
     </Card>
