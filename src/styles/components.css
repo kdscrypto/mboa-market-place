@@ -202,4 +202,62 @@
   .dark .border-green-200 {
     border-color: rgba(34, 197, 94, 0.3) !important;
   }
+
+  /* VIP Experiences and Metrics Cards Dark Mode Support */
+  .dark .from-purple-50 {
+    --tw-gradient-from: rgba(147, 51, 234, 0.15) !important;
+  }
+
+  .dark .to-pink-50 {
+    --tw-gradient-to: rgba(236, 72, 153, 0.15) !important;
+  }
+
+  .dark .from-orange-50 {
+    --tw-gradient-from: rgba(249, 115, 22, 0.15) !important;
+  }
+
+  .dark .to-red-50 {
+    --tw-gradient-to: rgba(239, 68, 68, 0.15) !important;
+  }
+
+  .dark .from-gray-50 {
+    --tw-gradient-from: rgba(107, 114, 128, 0.15) !important;
+  }
+
+  .dark .to-slate-50 {
+    --tw-gradient-to: rgba(71, 85, 105, 0.15) !important;
+  }
+
+  .dark .to-cyan-50 {
+    --tw-gradient-to: rgba(6, 182, 212, 0.15) !important;
+  }
+
+  .dark .from-yellow-50 {
+    --tw-gradient-from: rgba(245, 158, 11, 0.15) !important;
+  }
+
+  .dark .to-amber-50 {
+    --tw-gradient-to: rgba(245, 158, 11, 0.15) !important;
+  }
+
+  .dark .from-green-50 {
+    --tw-gradient-from: rgba(34, 197, 94, 0.15) !important;
+  }
+
+  .dark .to-emerald-50 {
+    --tw-gradient-to: rgba(16, 185, 129, 0.15) !important;
+  }
+
+  .dark .to-indigo-50 {
+    --tw-gradient-to: rgba(99, 102, 241, 0.15) !important;
+  }
+
+  /* Availability badge colors for VIP services */
+  .dark .bg-green-100 {
+    background-color: rgba(34, 197, 94, 0.2) !important;
+  }
+
+  .dark .text-green-800 {
+    color: rgb(134, 239, 172) !important;
+  }
 }

@@ -1,112 +1,83 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Crown, Users, Heart, Zap, Shield, Target } from "lucide-react";
-import { MasterMetrics } from "../utils/masterDataGenerator";
+import { Progress } from "@/components/ui/progress";
+import { TrendingUp, Users, Target, Zap, Award, BarChart3 } from "lucide-react";
+import { MasterMetric } from "../utils/masterDataGenerator";
 
 interface MasterMetricsCardsProps {
-  metrics: MasterMetrics;
+  metrics: MasterMetric[];
 }
 
-const getMetricColor = (score: number) => {
-  if (score >= 90) return 'text-green-600';
-  if (score >= 75) return 'text-blue-600';
-  if (score >= 60) return 'text-yellow-600';
-  return 'text-red-600';
+const getMetricIcon = (type: string) => {
+  switch (type) {
+    case 'performance': return <TrendingUp className="h-4 w-4" />;
+    case 'network': return <Users className="h-4 w-4" />;
+    case 'efficiency': return <Target className="h-4 w-4" />;
+    case 'innovation': return <Zap className="h-4 w-4" />;
+    case 'achievement': return <Award className="h-4 w-4" />;
+    default: return <BarChart3 className="h-4 w-4" />;
+  }
+};
+
+const getMetricColor = (type: string) => {
+  switch (type) {
+    case 'performance': return 'text-orange-600 dark:text-orange-400';
+    case 'network': return 'text-gray-600 dark:text-gray-400';
+    case 'efficiency': return 'text-blue-600 dark:text-blue-400';
+    case 'innovation': return 'text-yellow-600 dark:text-yellow-400';
+    case 'achievement': return 'text-green-600 dark:text-green-400';
+    default: return 'text-purple-600 dark:text-purple-400';
+  }
+};
+
+const getCardBackground = (type: string) => {
+  switch (type) {
+    case 'performance': return 'bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20';
+    case 'network': return 'bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900/20 dark:to-slate-900/20';
+    case 'efficiency': return 'bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20';
+    case 'innovation': return 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20';
+    case 'achievement': return 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20';
+    default: return 'bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20';
+  }
 };
 
 const MasterMetricsCards: React.FC<MasterMetricsCardsProps> = ({ metrics }) => {
   return (
-    <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-      <Card className="bg-gradient-to-r from-purple-50 to-pink-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Crown className="h-4 w-4" />
-            Score Elite
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${getMetricColor(metrics.elite_score)}`}>
-            {metrics.elite_score}%
-          </div>
-          <p className="text-xs text-muted-foreground">Master Level</p>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-r from-blue-50 to-cyan-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Influence
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${getMetricColor(metrics.network_influence)}`}>
-            {metrics.network_influence}%
-          </div>
-          <p className="text-xs text-muted-foreground">Réseau</p>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-r from-green-50 to-teal-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Heart className="h-4 w-4" />
-            Contribution
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${getMetricColor(metrics.community_contribution)}`}>
-            {metrics.community_contribution}%
-          </div>
-          <p className="text-xs text-muted-foreground">Communauté</p>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-r from-orange-50 to-red-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            Innovation
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${getMetricColor(metrics.innovation_index)}`}>
-            {metrics.innovation_index}%
-          </div>
-          <p className="text-xs text-muted-foreground">Index</p>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-r from-yellow-50 to-orange-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Leadership
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${getMetricColor(metrics.leadership_rating)}`}>
-            {metrics.leadership_rating}%
-          </div>
-          <p className="text-xs text-muted-foreground">Rating</p>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-r from-indigo-50 to-purple-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Consistance
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={`text-2xl font-bold ${getMetricColor(metrics.consistency_score)}`}>
-            {metrics.consistency_score}%
-          </div>
-          <p className="text-xs text-muted-foreground">Score</p>
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {metrics.map((metric) => (
+        <Card key={metric.id} className={`${getCardBackground(metric.type)} border border-theme-border`}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-theme-text">
+              {metric.title}
+            </CardTitle>
+            <div className={getMetricColor(metric.type)}>
+              {getMetricIcon(metric.type)}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-theme-text">
+              {metric.value}{metric.unit}
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-theme-text-secondary">
+                {metric.description}
+              </p>
+              <div className={`text-xs font-medium ${
+                metric.trend === 'up' ? 'text-green-600 dark:text-green-400' : 
+                metric.trend === 'down' ? 'text-red-600 dark:text-red-400' : 
+                'text-gray-600 dark:text-gray-400'
+              }`}>
+                {metric.change}
+              </div>
+            </div>
+            <Progress 
+              value={metric.progress} 
+              className="mt-3 h-2"
+            />
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };
