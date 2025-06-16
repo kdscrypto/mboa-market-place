@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ThreatDetectionResult {
@@ -42,7 +41,9 @@ export const detectAdvancedThreats = async (
       throw error;
     }
 
-    return data as ThreatDetectionResult;
+    // Assurer que les données retournées correspondent au type attendu
+    const result = data as unknown as ThreatDetectionResult;
+    return result;
   } catch (error) {
     console.error('Failed to detect advanced threats:', error);
     throw error;
@@ -62,7 +63,16 @@ export const getActiveSecurityAlerts = async (
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    
+    // Type assertion pour assurer la compatibilité
+    const typedAlerts = (data || []).map(alert => ({
+      ...alert,
+      severity: alert.severity as 'low' | 'medium' | 'high' | 'critical',
+      source_type: alert.source_type as 'ip' | 'user' | 'device' | 'session',
+      status: alert.status as 'active' | 'investigating' | 'resolved' | 'false_positive'
+    }));
+    
+    return typedAlerts;
   } catch (error) {
     console.error('Failed to fetch security alerts:', error);
     return [];

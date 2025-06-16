@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,7 @@ interface RealTimeAlert {
   source_identifier: string;
   risk_score: number;
   created_at: string;
+  status: string;
 }
 
 const RealTimeSecurityAlerts: React.FC = () => {
@@ -90,7 +90,12 @@ const RealTimeSecurityAlerts: React.FC = () => {
         .limit(5);
 
       if (!error && data) {
-        setActiveAlerts(data);
+        // Type assertion pour assurer la compatibilité
+        const typedAlerts = data.map(alert => ({
+          ...alert,
+          severity: alert.severity as 'low' | 'medium' | 'high' | 'critical'
+        }));
+        setActiveAlerts(typedAlerts);
       }
     };
 
