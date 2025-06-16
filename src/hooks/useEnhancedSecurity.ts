@@ -8,7 +8,6 @@ import {
   logPasswordSecurityEvent,
   validateInputSecurity,
   logInputValidation,
-  createUserSession,
   getEnhancedClientIP,
   generateEnhancedDeviceFingerprint,
   hashInputValue,
@@ -16,6 +15,10 @@ import {
   type SuspiciousLoginAnalysis,
   type InputValidationResult
 } from '@/services/security/authSecurityService';
+import {
+  createSecureUserSession,
+  type UserSessionData
+} from '@/services/security/sessionSecurityService';
 
 export const useEnhancedSecurity = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -140,13 +143,13 @@ export const useEnhancedSecurity = () => {
   }, [toast]);
 
   const logPasswordEvent = useCallback(async (
-    userId: string,
     eventType: string,
+    userId: string | null,
     securityScore?: number,
     metadata?: Record<string, any>
   ): Promise<void> => {
     try {
-      await logPasswordSecurityEvent(userId, eventType, securityScore, metadata);
+      await logPasswordSecurityEvent(eventType, userId, securityScore || 0, metadata);
     } catch (error) {
       console.error('Password event logging error:', error);
     }
@@ -161,18 +164,21 @@ export const useEnhancedSecurity = () => {
       const deviceFingerprint = generateEnhancedDeviceFingerprint();
       const sessionTokenHash = await hashInputValue(sessionToken);
       
-      const sessionId = await createUserSession(
+      const sessionData: UserSessionData = {
         userId,
-        sessionTokenHash,
+        sessionToken: sessionTokenHash,
         deviceFingerprint,
         expiresAt
-      );
+      };
+      
+      const result = await createSecureUserSession(sessionData);
 
-      if (sessionId) {
-        console.log('Secure session created:', sessionId);
+      if (result.success && result.sessionId) {
+        console.log('Secure session created:', result.sessionId);
+        return result.sessionId;
       }
 
-      return sessionId;
+      return null;
     } catch (error) {
       console.error('Secure session creation error:', error);
       return null;
