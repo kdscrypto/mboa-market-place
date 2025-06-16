@@ -47,7 +47,15 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
         throw error;
       }
       
-      return data || [];
+      // Transform the data to match our interface with proper role typing
+      return (data || []).map((user: any): UserSearchResult => ({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role as UserRole,
+        created_at: user.created_at,
+        total_count: user.total_count
+      }));
     },
     enabled: searchTerm.length === 0 || searchTerm.length >= 2
   });

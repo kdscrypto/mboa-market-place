@@ -15,12 +15,14 @@ import RoleChangeHistory from './RoleChangeHistory';
 // Define the allowed role types
 type UserRole = 'user' | 'admin' | 'moderator';
 
+// Updated UserData interface to match UserSearchResult
 interface UserData {
   id: string;
   email: string;
   username?: string;
   role: UserRole;
   created_at: string;
+  total_count: number;
 }
 
 const EnhancedUserRoleManager: React.FC = () => {
