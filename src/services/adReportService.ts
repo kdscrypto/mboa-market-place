@@ -23,16 +23,16 @@ export const createAdReport = async (
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
-      return { success: false, error: "Utilisateur non authentifié" };
-    }
+    // Permettre les signalements même pour les utilisateurs non connectés
+    // En utilisant un identifiant anonyme dans ce cas
+    const reportedBy = user?.id || 'anonymous';
 
     // Use direct table access with type assertion to bypass TypeScript errors
     const { error } = await (supabase as any)
       .from('ad_reports')
       .insert({
         ad_id: adId,
-        reported_by: user.id,
+        reported_by: reportedBy,
         reason,
         description: description?.trim() || null
       });

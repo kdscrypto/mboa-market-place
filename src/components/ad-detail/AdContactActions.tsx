@@ -33,7 +33,7 @@ const AdContactActions: React.FC<AdContactActionsProps> = ({
       
       {isLoggedIn ? (
         <>
-          {/* Boutons de contact */}
+          {/* Boutons de contact - seulement si connecté */}
           <button className="w-full bg-mboa-green hover:bg-mboa-green/90 text-white py-3 rounded-md transition-colors">
             Appeler {ad.phone}
           </button>
@@ -47,16 +47,6 @@ const AdContactActions: React.FC<AdContactActionsProps> = ({
             >
               WhatsApp
             </a>
-          )}
-          
-          {/* Bouton de contact via messagerie interne - toujours affiché sauf pour l'auteur */}
-          {!isCurrentUserAuthor && (
-            <ContactSellerButton ad={ad} />
-          )}
-          
-          {/* Bouton de signalement - seulement si pas l'auteur */}
-          {!isCurrentUserAuthor && (
-            <ReportAdDialog adId={adId} adTitle={ad.title} />
           )}
         </>
       ) : (
@@ -72,10 +62,17 @@ const AdContactActions: React.FC<AdContactActionsProps> = ({
               Se connecter / S'inscrire
             </Button>
           </div>
-          
-          {/* Bouton de signalement - même pour les non-connectés */}
-          <ReportAdDialog adId={adId} adTitle={ad.title} />
         </div>
+      )}
+      
+      {/* Bouton de contact via messagerie interne - TOUJOURS affiché sauf pour l'auteur */}
+      {!isCurrentUserAuthor && (
+        <ContactSellerButton ad={ad} />
+      )}
+      
+      {/* Bouton de signalement - TOUJOURS affiché (même pour les non-connectés et sauf pour l'auteur) */}
+      {!isCurrentUserAuthor && (
+        <ReportAdDialog adId={adId} adTitle={ad.title} />
       )}
     </div>
   );
