@@ -16,23 +16,58 @@ import { detectSuspiciousActivity, type SuspiciousActivityResult } from './secur
 import { logSecurityEvent, cleanupSecurityEvents } from './security/securityMonitoringService';
 import { validatePasswordStrength, generateSecurityRecommendations, type PasswordValidationResult } from './security/passwordValidationService';
 import { checkFormSubmissionTiming, type FormTimingResult } from './security/formSecurityService';
+import { 
+  createSecureUserSession, 
+  validateSessionSecurity, 
+  invalidateUserSession,
+  type UserSessionData,
+  type SessionSecurityResult
+} from './security/sessionSecurityService';
+import {
+  performInputSecurityCheck,
+  validateFormInputsSecurity,
+  hasSecurityIssues,
+  type InputSecurityCheck,
+  type InputSecurityResult
+} from './security/inputSecurityService';
 
 // Re-export enhanced security functions for backward compatibility
 export {
+  // Authentication & Login Security
   logLoginAttempt,
   detectSuspiciousLoginPatterns,
+  
+  // Input Validation
   validateInputSecurity,
   logInputValidation,
-  getEnhancedClientIP as getClientIP,
-  generateEnhancedDeviceFingerprint as generateDeviceFingerprint,
-  hashInputValue,
+  performInputSecurityCheck,
+  validateFormInputsSecurity,
+  hasSecurityIssues,
+  
+  // Rate Limiting & Suspicious Activity
   checkAuthRateLimit,
   detectSuspiciousActivity,
+  
+  // Monitoring & Events
   logSecurityEvent,
+  cleanupSecurityEvents,
+  
+  // Password Security
   validatePasswordStrength,
   generateSecurityRecommendations,
+  
+  // Form Security
   checkFormSubmissionTiming,
-  cleanupSecurityEvents
+  
+  // Session Security
+  createSecureUserSession,
+  validateSessionSecurity,
+  invalidateUserSession,
+  
+  // Utility Functions
+  getEnhancedClientIP as getClientIP,
+  generateEnhancedDeviceFingerprint as generateDeviceFingerprint,
+  hashInputValue
 };
 
 // Export types
@@ -43,5 +78,9 @@ export type {
   RateLimitResult,
   SuspiciousActivityResult,
   PasswordValidationResult,
-  FormTimingResult
+  FormTimingResult,
+  UserSessionData,
+  SessionSecurityResult,
+  InputSecurityCheck,
+  InputSecurityResult
 };

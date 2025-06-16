@@ -74,27 +74,6 @@ export const detectSuspiciousLoginPatterns = async (
   }
 };
 
-// Log password security events
-export const logPasswordSecurityEvent = async (
-  userId: string,
-  eventType: string,
-  securityScore: number = 0,
-  metadata: Record<string, any> = {}
-): Promise<void> => {
-  try {
-    await supabase.rpc('log_password_security_event', {
-      p_user_id: userId,
-      p_event_type: eventType,
-      p_security_score: securityScore,
-      p_ip_address: null,
-      p_user_agent: navigator.userAgent,
-      p_metadata: metadata
-    });
-  } catch (error) {
-    console.error('Error logging password security event:', error);
-  }
-};
-
 // Validate input security
 export const validateInputSecurity = async (
   inputValue: string,
@@ -140,35 +119,6 @@ export const logInputValidation = async (
     });
   } catch (error) {
     console.error('Error logging input validation:', error);
-  }
-};
-
-// Create user session
-export const createUserSession = async (
-  userId: string,
-  sessionTokenHash: string,
-  deviceFingerprint?: string,
-  expiresAt?: Date
-): Promise<string | null> => {
-  try {
-    const { data, error } = await supabase.rpc('create_user_session', {
-      p_user_id: userId,
-      p_session_token_hash: sessionTokenHash,
-      p_ip_address: null,
-      p_user_agent: navigator.userAgent,
-      p_device_fingerprint: deviceFingerprint || null,
-      p_expires_at: expiresAt?.toISOString() || null
-    });
-
-    if (error) {
-      console.error('Error creating user session:', error);
-      return null;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Exception creating user session:', error);
-    return null;
   }
 };
 
