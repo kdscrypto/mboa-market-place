@@ -15,6 +15,10 @@ import { categories } from "@/data/categoriesData";
 import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
 import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
+import CriticalCSS from "@/components/performance/CriticalCSS";
+import ResourcePreloader from "@/components/performance/ResourcePreloader";
+import BundleAnalyzer from "@/components/performance/BundleAnalyzer";
+import { usePerformanceMetrics } from "@/hooks/usePerformanceMetrics";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -24,9 +28,22 @@ const Index = () => {
   
   // Performance monitoring
   usePerformanceMonitor('Index');
+  usePerformanceMetrics('HomePage');
   
   // Featured categories - select first 12 categories to display
   const featuredCategories = categories.slice(0, 12);
+
+  // Critical resources to preload
+  const criticalResources = [
+    {
+      href: '/placeholder.svg',
+      as: 'image' as const
+    },
+    {
+      href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+      as: 'style' as const
+    }
+  ];
 
   useEffect(() => {
     // Check if this is a password recovery redirect from Supabase
@@ -87,49 +104,53 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-      <main>
-        <HeroSection />
-        <SearchSection onSearch={handleSearch} />
-        
-        {/* Layout avec sidebar pour la deuxième publicité */}
-        <div className="mboa-container">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Contenu principal */}
-            <div className="flex-1">
-              <CategoriesSection categories={featuredCategories} />
-              
-              {/* Première bannière publicitaire Google Ad */}
-              <div className="mb-6">
-                <GoogleAdBanner
-                  adSlot="9876543210"
-                  style={{ width: "100%", height: "120px" }}
+    <CriticalCSS>
+      <ResourcePreloader resources={criticalResources} />
+      <div className="min-h-screen">
+        <Header />
+        <main>
+          <HeroSection />
+          <SearchSection onSearch={handleSearch} />
+          
+          {/* Layout avec sidebar pour la deuxième publicité */}
+          <div className="mboa-container">
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Contenu principal */}
+              <div className="flex-1">
+                <CategoriesSection categories={featuredCategories} />
+                
+                {/* Première bannière publicitaire Google Ad */}
+                <div className="mb-6">
+                  <GoogleAdBanner
+                    adSlot="9876543210"
+                    style={{ width: "100%", height: "120px" }}
+                  />
+                </div>
+                
+                <AdsSection 
+                  recentAds={recentAds} 
+                  isLoading={isLoading} 
+                  error={error} 
                 />
               </div>
               
-              <AdsSection 
-                recentAds={recentAds} 
-                isLoading={isLoading} 
-                error={error} 
-              />
-            </div>
-            
-            {/* Sidebar avec deuxième publicité - visible sur les grands écrans */}
-            <div className="hidden lg:block lg:w-80">
-              <GoogleAdSidebar
-                adSlot="1234567890"
-                style={{ width: "300px", height: "600px" }}
-              />
+              {/* Sidebar avec deuxième publicité - visible sur les grands écrans */}
+              <div className="hidden lg:block lg:w-80">
+                <GoogleAdSidebar
+                  adSlot="1234567890"
+                  style={{ width: "300px", height: "600px" }}
+                />
+              </div>
             </div>
           </div>
-        </div>
-        
-        <FeaturesSections />
-        <CTASection />
-      </main>
-      <Footer />
-    </div>
+          
+          <FeaturesSections />
+          <CTASection />
+        </main>
+        <Footer />
+        <BundleAnalyzer />
+      </div>
+    </CriticalCSS>
   );
 };
 

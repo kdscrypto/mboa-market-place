@@ -1,6 +1,7 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useEnhancedLazyLoading } from '@/hooks/useEnhancedLazyLoading';
 
 interface OptimizedImageProps {
   src: string;
@@ -27,34 +28,14 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [isInView, setIsInView] = useState(priority);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
+  
+  const { elementRef, isIntersecting } = useEnhancedLazyLoading({
+    threshold: 0.1,
+    rootMargin: '50px',
+    triggerOnce: true
+  });
 
-  // Intersection Observer for lazy loading
-  useEffect(() => {
-    if (priority || isInView) return;
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsInView(true);
-            observerRef.current?.disconnect();
-          }
-        });
-      },
-      { rootMargin: '50px' }
-    );
-
-    if (imgRef.current) {
-      observerRef.current.observe(imgRef.current);
-    }
-
-    return () => {
-      observerRef.current?.disconnect();
-    };
-  }, [priority, isInView]);
+  const shouldLoad = priority || isIntersecting;
 
   const handleLoad = () => {
     setIsLoaded(true);
@@ -75,8 +56,10 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       // Add width and height parameters for optimization
       if (width) url.searchParams.set('width', width.toString());
       if (height) url.searchParams.set('height', height.toString());
-      // Add cache control
-      url.searchParams.set('t', Date.now().toString().slice(-6));
+      // Add quality optimization
+      url.searchParams.set('quality', '80');
+      // Add modern format support
+      url.searchParams.set('format', 'webp');
       return url.toString();
     }
     
@@ -84,11 +67,15 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   };
 
   return (
-    <div ref={imgRef} className={cn("relative overflow-hidden", className)}>
-      {/* Loading placeholder */}
+    <div 
+      ref={elementRef} 
+      className={cn("relative overflow-hidden", className)}
+      style={{ width: width ? `${width}px` : '100%', height: height ? `${height}px` : 'auto' }}
+    >
+      {/* Loading placeholder with skeleton animation */}
       {!isLoaded && !hasError && (
         <div 
-          className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center"
+          className="absolute inset-0 bg-gray-200 skeleton flex items-center justify-center"
           style={{ width, height }}
         >
           <div className="w-8 h-8 bg-gray-300 rounded" />
@@ -96,7 +83,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       )}
       
       {/* Actual image */}
-      {(isInView || priority) && (
+      {shouldLoad && (
         <img
           src={getOptimizedSrc(src)}
           alt={alt}

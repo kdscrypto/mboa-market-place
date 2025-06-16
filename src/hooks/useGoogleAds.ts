@@ -20,8 +20,8 @@ export const useGoogleAds = (adSlot: string, adFormat?: string, fullWidthRespons
       if (typeof window !== 'undefined') {
         window.adsbygoogle = window.adsbygoogle || [];
         
-        // Delay ad loading slightly to improve page performance
-        timeoutRef.current = setTimeout(() => {
+        // Use requestIdleCallback for better performance
+        const loadAdCallback = () => {
           try {
             // Push the ad configuration
             window.adsbygoogle.push({});
@@ -31,7 +31,14 @@ export const useGoogleAds = (adSlot: string, adFormat?: string, fullWidthRespons
           } catch (error) {
             console.error('Error pushing to adsbygoogle:', error);
           }
-        }, 100); // Small delay to let critical content load first
+        };
+
+        // Use requestIdleCallback if available, otherwise setTimeout
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(loadAdCallback, { timeout: 2000 });
+        } else {
+          timeoutRef.current = setTimeout(loadAdCallback, 100);
+        }
       }
     } catch (error) {
       console.error('Error loading Google Ad:', error);
@@ -39,8 +46,15 @@ export const useGoogleAds = (adSlot: string, adFormat?: string, fullWidthRespons
   }, [adSlot]);
 
   useEffect(() => {
-    // Load ad after a short delay to prioritize critical content
-    const loadTimer = setTimeout(loadAd, 200);
+    // Load ad after critical content is rendered
+    const loadTimer = setTimeout(() => {
+      // Only load if page is idle or after 500ms
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(loadAd, { timeout: 1000 });
+      } else {
+        loadAd();
+      }
+    }, 500);
 
     return () => {
       clearTimeout(loadTimer);
