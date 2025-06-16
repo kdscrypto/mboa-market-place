@@ -13,6 +13,7 @@ import { fetchApprovedAds, checkRLSHealth } from "@/services/homeService";
 import { Ad } from "@/types/adTypes";
 import { categories } from "@/data/categoriesData";
 import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
+import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -87,21 +88,39 @@ const Index = () => {
       <main>
         <HeroSection />
         <SearchSection onSearch={handleSearch} />
-        <CategoriesSection categories={featuredCategories} />
         
-        {/* Strategic Google Ad Banner Placement */}
-        <div className="mboa-container mb-8">
-          <GoogleAdBanner
-            adSlot="9876543210"
-            style={{ width: "100%", height: "200px" }}
-          />
+        {/* Layout avec sidebar pour la deuxième publicité */}
+        <div className="mboa-container">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Contenu principal */}
+            <div className="flex-1">
+              <CategoriesSection categories={featuredCategories} />
+              
+              {/* Première bannière publicitaire Google Ad */}
+              <div className="mb-6">
+                <GoogleAdBanner
+                  adSlot="9876543210"
+                  style={{ width: "100%", height: "120px" }}
+                />
+              </div>
+              
+              <AdsSection 
+                recentAds={recentAds} 
+                isLoading={isLoading} 
+                error={error} 
+              />
+            </div>
+            
+            {/* Sidebar avec deuxième publicité - visible sur les grands écrans */}
+            <div className="hidden lg:block lg:w-80">
+              <GoogleAdSidebar
+                adSlot="1234567890"
+                style={{ width: "300px", height: "600px" }}
+              />
+            </div>
+          </div>
         </div>
         
-        <AdsSection 
-          recentAds={recentAds} 
-          isLoading={isLoading} 
-          error={error} 
-        />
         <FeaturesSections />
         <CTASection />
       </main>
