@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -339,7 +338,7 @@ const AffiliateMLInsights: React.FC<AffiliateMLInsightsProps> = ({
                     {Object.entries(insight.data_points).map(([key, value]) => (
                       <div key={key} className="flex justify-between">
                         <span className="text-gray-600 capitalize">{key.replace('_', ' ')}:</span>
-                        <span className="font-medium">{typeof value === 'boolean' ? (value ? 'Oui' : 'Non') : value}</span>
+                        <span className="font-medium">{typeof value === 'boolean' ? (value ? 'Oui' : 'Non') : String(value)}</span>
                       </div>
                     ))}
                   </div>
