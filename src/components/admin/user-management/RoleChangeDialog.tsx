@@ -12,11 +12,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, User, Shield, UserMinus } from 'lucide-react';
 
+// Define the allowed role types
+type UserRole = 'user' | 'admin' | 'moderator';
+
 interface UserData {
   id: string;
   email: string;
   username?: string;
-  role: string;
+  role: UserRole;
 }
 
 interface RoleChangeDialogProps {
@@ -24,7 +27,7 @@ interface RoleChangeDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   user: UserData | null;
-  newRole: string;
+  newRole: UserRole;
   isLoading: boolean;
 }
 
@@ -38,7 +41,7 @@ const RoleChangeDialog: React.FC<RoleChangeDialogProps> = ({
 }) => {
   if (!user) return null;
 
-  const getRoleIcon = (role: string) => {
+  const getRoleIcon = (role: UserRole) => {
     switch (role) {
       case 'admin': return <Shield className="h-4 w-4 text-red-600" />;
       case 'moderator': return <User className="h-4 w-4 text-blue-600" />;
@@ -47,7 +50,7 @@ const RoleChangeDialog: React.FC<RoleChangeDialogProps> = ({
     }
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800';
       case 'moderator': return 'bg-blue-100 text-blue-800';

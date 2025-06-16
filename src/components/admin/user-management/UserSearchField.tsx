@@ -8,11 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// Define the allowed role types
+type UserRole = 'user' | 'admin' | 'moderator';
+
 interface UserSearchResult {
   id: string;
   email: string;
   username?: string;
-  role: string;
+  role: UserRole;
   created_at: string;
 }
 
@@ -44,7 +47,7 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
             id: userProfile.id,
             email: authUser.user?.email || 'Email non disponible',
             username: authUser.user?.user_metadata?.username,
-            role: userProfile.role,
+            role: userProfile.role as UserRole,
             created_at: userProfile.created_at
           }];
         }
@@ -62,7 +65,7 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
         id: profile.id,
         email: 'recherche@example.com', // Placeholder
         username: 'utilisateur',
-        role: profile.role,
+        role: profile.role as UserRole,
         created_at: profile.created_at
       })) || [];
     },
@@ -73,7 +76,7 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
     setIsSearching(true);
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800';
       case 'moderator': return 'bg-blue-100 text-blue-800';

@@ -10,11 +10,14 @@ import { Shield, UserPlus, UserMinus, History } from 'lucide-react';
 import UserSearchField from './UserSearchField';
 import RoleChangeDialog from './RoleChangeDialog';
 
+// Define the allowed role types
+type UserRole = 'user' | 'admin' | 'moderator';
+
 interface UserData {
   id: string;
   email: string;
   username?: string;
-  role: string;
+  role: UserRole;
   created_at: string;
 }
 
@@ -23,11 +26,11 @@ const EnhancedUserRoleManager: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingRole, setPendingRole] = useState<string>('');
+  const [pendingRole, setPendingRole] = useState<UserRole>('user');
 
   // Mutation pour changer le rôle d'un utilisateur
   const changeRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
       const { error } = await supabase
         .from('user_profiles')
         .update({ role: newRole })
@@ -62,7 +65,7 @@ const EnhancedUserRoleManager: React.FC = () => {
     }
   });
 
-  const handleRoleChange = (newRole: string) => {
+  const handleRoleChange = (newRole: UserRole) => {
     if (!selectedUser) return;
     
     setPendingRole(newRole);
@@ -78,7 +81,7 @@ const EnhancedUserRoleManager: React.FC = () => {
     });
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800';
       case 'moderator': return 'bg-blue-100 text-blue-800';
