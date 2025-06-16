@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import {
   logLoginAttempt,
@@ -46,24 +45,31 @@ export const checkAuthRateLimit = async (
       return { allowed: true };
     }
 
-    // Log suspicious activity if rate limit is hit
-    if (data && !data.allowed) {
-      await logLoginAttempt({
-        email: identifier,
-        success: false,
-        failureReason: 'rate_limit_exceeded',
-        ipAddress: identifierType === 'ip' ? identifier : await getEnhancedClientIP()
-      });
+    // Safely handle the RPC response with proper type checking
+    if (data && typeof data === 'object' && data !== null && !Array.isArray(data)) {
+      const result = data as any;
+      const isAllowed = Boolean(result.allowed ?? true);
+      
+      // Log suspicious activity if rate limit is hit
+      if (!isAllowed) {
+        await logLoginAttempt({
+          email: identifier,
+          success: false,
+          failureReason: 'rate_limit_exceeded',
+          ipAddress: identifierType === 'ip' ? identifier : await getEnhancedClientIP()
+        });
+      }
+
+      return {
+        allowed: isAllowed,
+        blocked_until: result.blocked_until ? String(result.blocked_until) : undefined,
+        reason: result.reason ? String(result.reason) : undefined,
+        current_count: result.current_count ? Number(result.current_count) : undefined,
+        max_requests: result.max_requests ? Number(result.max_requests) : undefined
+      };
     }
 
-    const result = data as any;
-    return {
-      allowed: Boolean(result?.allowed ?? true),
-      blocked_until: result?.blocked_until ? String(result.blocked_until) : undefined,
-      reason: result?.reason ? String(result.reason) : undefined,
-      current_count: result?.current_count ? Number(result.current_count) : undefined,
-      max_requests: result?.max_requests ? Number(result.max_requests) : undefined
-    };
+    return { allowed: true };
 
   } catch (error) {
     console.error('Rate limit check error:', error);
@@ -107,13 +113,17 @@ export const detectSuspiciousActivity = async (
       return null;
     }
 
-    const result = data as any;
-    return {
-      risk_score: Number(result?.risk_score ?? 0),
-      auto_block: Boolean(result?.auto_block ?? false),
-      severity: String(result?.severity ?? 'low'),
-      event_type: String(result?.event_type ?? 'unknown')
-    };
+    if (data && typeof data === 'object' && data !== null && !Array.isArray(data)) {
+      const result = data as any;
+      return {
+        risk_score: Number(result?.risk_score ?? 0),
+        auto_block: Boolean(result?.auto_block ?? false),
+        severity: String(result?.severity ?? 'low'),
+        event_type: String(result?.event_type ?? 'unknown')
+      };
+    }
+
+    return null;
 
   } catch (error) {
     console.error('Suspicious activity detection error:', error);
