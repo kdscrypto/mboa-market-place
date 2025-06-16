@@ -1271,6 +1271,10 @@ export type Database = {
         }
         Returns: Json
       }
+      check_rls_health: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       check_user_permissions: {
         Args: { required_role?: string }
         Returns: boolean
