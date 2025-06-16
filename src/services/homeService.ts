@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import { toast } from "@/components/ui/use-toast";
@@ -148,11 +147,8 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
 // Function to check RLS health (for debugging)
 export const checkRLSHealth = async (): Promise<any> => {
   try {
-    // Use a direct SQL query instead of RPC call to avoid TypeScript errors
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('count', { count: 'exact' })
-      .limit(1);
+    // Use the new RLS health check function
+    const { data, error } = await supabase.rpc('check_rls_health');
     
     if (error) {
       console.error("Error checking RLS health:", error);
@@ -163,11 +159,7 @@ export const checkRLSHealth = async (): Promise<any> => {
       };
     }
     
-    return {
-      rls_status: 'healthy',
-      tables_accessible: true,
-      last_check: new Date().toISOString()
-    };
+    return data;
   } catch (error) {
     console.error("Failed to check RLS health:", error);
     return {
