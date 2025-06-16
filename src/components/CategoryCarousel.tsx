@@ -28,7 +28,7 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            WebkitScrollbar: { display: 'none' }
+            WebkitOverflowScrolling: 'touch'
           }}
         >
           {categories.map((category) => (

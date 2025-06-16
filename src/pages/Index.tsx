@@ -16,9 +16,13 @@ import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
 import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 import PerformanceOptimizationManager from "@/components/performance/PerformanceOptimizationManager";
 import CriticalCSS from "@/components/performance/CriticalCSS";
+import MobilePerformanceOptimizer from "@/components/mobile/MobilePerformanceOptimizer";
+import MobileContextualUI from "@/components/mobile/MobileContextualUI";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -78,59 +82,71 @@ const Index = () => {
     navigate(`/recherche?${searchParams.toString()}`);
   };
 
-  return (
-    <CriticalCSS>
-      <div className="min-h-screen">
-        {/* Phase 4 Performance Optimizations */}
-        <PerformanceOptimizationManager 
-          enableBudgetMonitoring={true}
-          enableServiceWorker={true}
-          enableResourceHints={true}
-          enableFontOptimization={true}
-        />
+  const content = (
+    <div className="min-h-screen">
+      {/* Phase 4 Performance Optimizations */}
+      <PerformanceOptimizationManager 
+        enableBudgetMonitoring={true}
+        enableServiceWorker={true}
+        enableResourceHints={true}
+        enableFontOptimization={true}
+      />
+      
+      <Header />
+      <main>
+        <HeroSection />
+        <SearchSection onSearch={handleSearch} />
         
-        <Header />
-        <main>
-          <HeroSection />
-          <SearchSection onSearch={handleSearch} />
-          
-          {/* Layout avec sidebar pour la deuxième publicité */}
-          <div className="mboa-container">
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Contenu principal */}
-              <div className="flex-1">
-                <CategoriesSection categories={featuredCategories} />
-                
-                {/* Première bannière publicitaire Google Ad */}
-                <div className="mb-6">
-                  <GoogleAdBanner
-                    adSlot="9876543210"
-                    style={{ width: "100%", height: "120px" }}
-                  />
-                </div>
-                
-                <AdsSection 
-                  recentAds={recentAds} 
-                  isLoading={isLoading} 
-                  error={error} 
+        {/* Layout avec sidebar pour la deuxième publicité */}
+        <div className="mboa-container">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Contenu principal */}
+            <div className="flex-1">
+              <CategoriesSection categories={featuredCategories} />
+              
+              {/* Première bannière publicitaire Google Ad */}
+              <div className="mb-6">
+                <GoogleAdBanner
+                  adSlot="9876543210"
+                  style={{ width: "100%", height: "120px" }}
                 />
               </div>
               
-              {/* Sidebar avec deuxième publicité - visible sur les grands écrans */}
-              <div className="hidden lg:block lg:w-80">
-                <GoogleAdSidebar
-                  adSlot="1234567890"
-                  style={{ width: "300px", height: "600px" }}
-                />
-              </div>
+              <AdsSection 
+                recentAds={recentAds} 
+                isLoading={isLoading} 
+                error={error} 
+              />
+            </div>
+            
+            {/* Sidebar avec deuxième publicité - visible sur les grands écrans */}
+            <div className="hidden lg:block lg:w-80">
+              <GoogleAdSidebar
+                adSlot="1234567890"
+                style={{ width: "300px", height: "600px" }}
+              />
             </div>
           </div>
-          
-          <FeaturesSections />
-          <CTASection />
-        </main>
-        <Footer />
-      </div>
+        </div>
+        
+        <FeaturesSections />
+        <CTASection />
+      </main>
+      <Footer />
+    </div>
+  );
+
+  return (
+    <CriticalCSS>
+      {isMobile ? (
+        <MobilePerformanceOptimizer>
+          <MobileContextualUI>
+            {content}
+          </MobileContextualUI>
+        </MobilePerformanceOptimizer>
+      ) : (
+        content
+      )}
     </CriticalCSS>
   );
 };

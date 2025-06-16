@@ -25,19 +25,14 @@ const MobileNavigationBar: React.FC = () => {
     },
   });
 
+  // Simplified unread count query - just return 0 for now since unread_count column doesn't exist
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-messages', user?.id],
     queryFn: async () => {
       if (!user?.id) return 0;
       
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('unread_count')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error) return 0;
-      return data?.unread_count || 0;
+      // For now, return 0 until we implement proper message counting
+      return 0;
     },
     enabled: !!user?.id,
     refetchInterval: 30000, // Refetch every 30 seconds
