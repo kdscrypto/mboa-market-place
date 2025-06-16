@@ -1,0 +1,155 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Page d'accueil -->
+  <url>
+    <loc>https://mboa-market.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <!-- Pages principales -->
+  <url>
+    <loc>https://mboa-market.com/categories</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/publier-annonce</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/recherche</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/annonces-premium</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <!-- Pages d'authentification -->
+  <url>
+    <loc>https://mboa-market.com/connexion</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <!-- Pages de catégories principales -->
+  <url>
+    <loc>https://mboa-market.com/categorie/automobiles</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/categorie/immobilier</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/categorie/emploi</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/categorie/services</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/categorie/electronique</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/categorie/mode-beaute</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/categorie/maison-jardin</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/categorie/loisirs-sports</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/categorie/education</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/categorie/animaux</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <!-- Pages informatives -->
+  <url>
+    <loc>https://mboa-market.com/a-propos</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/aide</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/conseils-vendeurs</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://mboa-market.com/conditions-utilisation</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <lastmod>2025-06-16</lastmod>
+  </url>
+</urlset>

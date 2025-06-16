@@ -1,14 +1,73 @@
-User-agent: Googlebot
-Allow: /
 
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# Robots.txt pour Mboa Market
+# Site web : https://mboa-market.com
 
 User-agent: *
 Allow: /
+
+# Pages à exclure du crawl
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /messages
+Disallow: /payment/
+Disallow: /auth/callback
+Disallow: /reset-password
+Disallow: /mot-de-passe-oublie
+Disallow: /payment-status
+Disallow: /verification
+Disallow: /security
+Disallow: /lygos/
+
+# Permettre l'accès aux pages importantes
+Allow: /
+Allow: /categories
+Allow: /categorie/
+Allow: /annonce/
+Allow: /recherche
+Allow: /publier-annonce
+Allow: /connexion
+Allow: /annonces-premium
+Allow: /a-propos
+Allow: /contact
+Allow: /aide
+Allow: /conseils-vendeurs
+Allow: /conditions-utilisation
+
+# Robots spécifiques - accès complet pour les principaux moteurs de recherche
+User-agent: Googlebot
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /messages
+Disallow: /payment/
+Disallow: /auth/callback
+Disallow: /reset-password
+Disallow: /verification
+Disallow: /security
+
+User-agent: Bingbot
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /messages
+Disallow: /payment/
+Disallow: /auth/callback
+Disallow: /reset-password
+Disallow: /verification
+Disallow: /security
+
+User-agent: facebookexternalhit
+Allow: /
+Allow: /annonce/
+Allow: /categorie/
+
+User-agent: Twitterbot
+Allow: /
+Allow: /annonce/
+Allow: /categorie/
+
+# Localisation du sitemap
+Sitemap: https://mboa-market.com/sitemap.xml
+
+# Délai entre les requêtes (en secondes)
+Crawl-delay: 1
