@@ -1,4 +1,3 @@
-
 import { AffiliateStats } from "@/services/affiliateService";
 
 export interface MasterMetric {
@@ -24,6 +23,16 @@ export interface EliteGoal {
   priority: 'high' | 'medium' | 'low';
   deadline: string;
   reward: string;
+}
+
+export interface PerformanceInsight {
+  id: string;
+  title: string;
+  insight: string;
+  action_required: boolean;
+  impact_level: 'critical' | 'high' | 'medium' | 'low';
+  category: string;
+  data_source: string;
 }
 
 export const generateMasterMetrics = (stats: AffiliateStats): MasterMetric[] => {
@@ -215,8 +224,8 @@ export const generateMasterTools = (stats: AffiliateStats) => {
 };
 
 // Simplified insights based on real performance
-export const generatePerformanceInsights = (stats: AffiliateStats) => {
-  const insights = [];
+export const generatePerformanceInsights = (stats: AffiliateStats): PerformanceInsight[] => {
+  const insights: PerformanceInsight[] = [];
   const totalReferrals = stats.level_1_referrals + stats.level_2_referrals;
   
   if (stats.level_1_referrals === 0) {
