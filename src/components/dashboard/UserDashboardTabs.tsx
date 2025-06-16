@@ -5,7 +5,7 @@ import UserAdsTable from "./UserAdsTable";
 import UserMessagesTab from "./UserMessagesTab";
 import PaymentTransactionsTab from "./PaymentTransactionsTab";
 import UserProfileForm from "./UserProfileForm";
-import AffiliateTab from "./AffiliateTab";
+import AffiliateTabPhase3 from "./AffiliateTabPhase3";
 import { User, MessageCircle, FileText, CreditCard, Users } from "lucide-react";
 
 interface UserDashboardTabsProps {
@@ -50,7 +50,7 @@ const UserDashboardTabs = ({ user }: UserDashboardTabsProps) => {
       </TabsContent>
 
       <TabsContent value="affiliate" className="mt-0">
-        <AffiliateTab userId={user?.id} />
+        <AffiliateTabPhase3 userId={user?.id} />
       </TabsContent>
 
       <TabsContent value="payments" className="mt-0">
