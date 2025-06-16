@@ -7,7 +7,7 @@ import EliteGoalsSection from "./components/EliteGoalsSection";
 import MasterToolsSection from "./components/MasterToolsSection";
 import PerformanceInsightsSection from "./components/PerformanceInsightsSection";
 import {
-  MasterMetrics,
+  MasterMetric,
   EliteGoal,
   MasterTool,
   PerformanceInsight,
@@ -28,7 +28,7 @@ const AffiliateMasterDashboard: React.FC<AffiliateMasterDashboardProps> = ({
   eliteData, 
   userId 
 }) => {
-  const [masterMetrics, setMasterMetrics] = useState<MasterMetrics | null>(null);
+  const [masterMetrics, setMasterMetrics] = useState<MasterMetric[]>([]);
   const [eliteGoals, setEliteGoals] = useState<EliteGoal[]>([]);
   const [masterTools, setMasterTools] = useState<MasterTool[]>([]);
   const [performanceInsights, setPerformanceInsights] = useState<PerformanceInsight[]>([]);
@@ -64,7 +64,7 @@ const AffiliateMasterDashboard: React.FC<AffiliateMasterDashboardProps> = ({
     });
   };
 
-  if (!masterMetrics) {
+  if (!masterMetrics.length) {
     return <div>Loading...</div>;
   }
 

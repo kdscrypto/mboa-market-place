@@ -1,5 +1,16 @@
-
 import { AffiliateStats } from "@/services/affiliateService";
+
+export interface MasterMetric {
+  id: string;
+  title: string;
+  value: number;
+  unit: string;
+  description: string;
+  change: string;
+  trend: 'up' | 'down' | 'stable';
+  progress: number;
+  type: 'performance' | 'network' | 'efficiency' | 'innovation' | 'achievement' | 'consistency';
+}
 
 export interface MasterMetrics {
   elite_score: number;
@@ -44,8 +55,8 @@ export interface PerformanceInsight {
   data_source: string;
 }
 
-export const generateMasterMetrics = (stats: AffiliateStats): MasterMetrics => {
-  return {
+export const generateMasterMetrics = (stats: AffiliateStats): MasterMetric[] => {
+  const metricsData = {
     elite_score: Math.min(100, 65 + (stats.total_points / 20)),
     network_influence: Math.min(100, 70 + (stats.level_1_referrals * 2)),
     community_contribution: Math.floor(Math.random() * 30) + 70,
@@ -53,6 +64,75 @@ export const generateMasterMetrics = (stats: AffiliateStats): MasterMetrics => {
     leadership_rating: Math.min(100, 60 + (stats.total_points / 15)),
     consistency_score: Math.floor(Math.random() * 20) + 80
   };
+
+  return [
+    {
+      id: 'elite_score',
+      title: 'Score Elite Master',
+      value: metricsData.elite_score,
+      unit: '/100',
+      description: 'Performance globale elite',
+      change: '+12%',
+      trend: 'up' as const,
+      progress: metricsData.elite_score,
+      type: 'performance' as const
+    },
+    {
+      id: 'network_influence',
+      title: 'Influence Réseau',
+      value: metricsData.network_influence,
+      unit: '/100',
+      description: 'Impact sur la communauté',
+      change: '+8%',
+      trend: 'up' as const,
+      progress: metricsData.network_influence,
+      type: 'network' as const
+    },
+    {
+      id: 'community_contribution',
+      title: 'Contribution Communauté',
+      value: metricsData.community_contribution,
+      unit: '/100',
+      description: 'Engagement communautaire',
+      change: '+5%',
+      trend: 'up' as const,
+      progress: metricsData.community_contribution,
+      type: 'efficiency' as const
+    },
+    {
+      id: 'innovation_index',
+      title: 'Index Innovation',
+      value: metricsData.innovation_index,
+      unit: '/100',
+      description: 'Créativité et innovation',
+      change: '+15%',
+      trend: 'up' as const,
+      progress: metricsData.innovation_index,
+      type: 'innovation' as const
+    },
+    {
+      id: 'leadership_rating',
+      title: 'Rating Leadership',
+      value: metricsData.leadership_rating,
+      unit: '/100',
+      description: 'Capacités de leadership',
+      change: '+7%',
+      trend: 'up' as const,
+      progress: metricsData.leadership_rating,
+      type: 'achievement' as const
+    },
+    {
+      id: 'consistency_score',
+      title: 'Score Consistance',
+      value: metricsData.consistency_score,
+      unit: '/100',
+      description: 'Régularité des performances',
+      change: '+3%',
+      trend: 'up' as const,
+      progress: metricsData.consistency_score,
+      type: 'consistency' as const
+    }
+  ];
 };
 
 export const generateEliteGoals = (stats: AffiliateStats): EliteGoal[] => {
