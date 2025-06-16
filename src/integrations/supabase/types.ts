@@ -74,6 +74,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_reports: {
+        Row: {
+          ad_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          reason: string
+          reported_by: string | null
+          resolution_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reason: string
+          reported_by?: string | null
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          reason?: string
+          reported_by?: string | null
+          resolution_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_reports_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ads: {
         Row: {
           ad_type: string
@@ -1370,6 +1420,15 @@ export type Database = {
       get_active_lygos_config: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      get_ad_reports_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_reports: number
+          pending_reports: number
+          resolved_reports: number
+          top_reasons: Json
+        }[]
       }
       get_affiliate_stats: {
         Args: { user_uuid: string }

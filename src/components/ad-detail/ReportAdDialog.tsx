@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { createAdReport } from "@/services/adReportService";
 
 interface ReportAdDialogProps {
   adId: string;
@@ -40,35 +40,16 @@ const ReportAdDialog: React.FC<ReportAdDialogProps> = ({ adId, adTitle }) => {
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { success, error } = await createAdReport(adId, reason, description);
       
-      if (!user) {
-        toast.error("Vous devez être connecté pour signaler une annonce");
-        setLoading(false);
-        return;
+      if (success) {
+        toast.success("Signalement envoyé avec succès");
+        setReason("");
+        setDescription("");
+        setIsOpen(false);
+      } else {
+        toast.error(error || "Erreur lors du signalement");
       }
-
-      // Créer le signalement
-      const { error } = await supabase
-        .from('ad_reports')
-        .insert({
-          ad_id: adId,
-          reported_by: user.id,
-          reason,
-          description: description.trim() || null,
-          status: 'pending'
-        });
-
-      if (error) {
-        console.error("Erreur lors du signalement:", error);
-        toast.error("Erreur lors du signalement");
-        return;
-      }
-
-      toast.success("Signalement envoyé avec succès");
-      setReason("");
-      setDescription("");
-      setIsOpen(false);
     } catch (error) {
       console.error("Erreur lors du signalement:", error);
       toast.error("Erreur lors du signalement");
