@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Play, Pause } from "lucide-react";
 import { Ad } from "@/types/adTypes";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -14,6 +14,7 @@ import {
   CarouselPrevious,
   type CarouselApi
 } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 interface RecentAdsCarouselProps {
   ads: Ad[];
@@ -23,6 +24,14 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
   const [adsWithValidData, setAdsWithValidData] = useState<Ad[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [isAutoplayActive, setIsAutoplayActive] = useState(true);
+  const [autoplayPlugin] = useState(() => 
+    Autoplay({ 
+      delay: 3000, 
+      stopOnInteraction: false,
+      stopOnMouseEnter: true 
+    })
+  );
   
   // Filtrer les annonces pour s'assurer qu'elles ont toutes les données requises
   useEffect(() => {
@@ -57,6 +66,43 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
       carouselApi.off("select", onChange);
     };
   }, [carouselApi]);
+
+  // Contrôler l'autoplay
+  const toggleAutoplay = () => {
+    if (!autoplayPlugin) return;
+    
+    if (isAutoplayActive) {
+      autoplayPlugin.stop();
+      setIsAutoplayActive(false);
+    } else {
+      autoplayPlugin.play();
+      setIsAutoplayActive(true);
+    }
+  };
+
+  // Arrêter l'autoplay quand l'utilisateur interact avec le carousel
+  useEffect(() => {
+    if (!carouselApi || !autoplayPlugin) return;
+
+    const handleInteraction = () => {
+      autoplayPlugin.stop();
+      setIsAutoplayActive(false);
+      
+      // Redémarrer l'autoplay après 5 secondes d'inactivité
+      setTimeout(() => {
+        if (autoplayPlugin) {
+          autoplayPlugin.play();
+          setIsAutoplayActive(true);
+        }
+      }, 5000);
+    };
+
+    carouselApi.on("pointerDown", handleInteraction);
+    
+    return () => {
+      carouselApi.off("pointerDown", handleInteraction);
+    };
+  }, [carouselApi, autoplayPlugin]);
   
   // Si aucune annonce n'est disponible ou si ads est undefined, afficher un message
   if (!adsWithValidData || adsWithValidData.length === 0) {
@@ -78,11 +124,33 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Annonces récentes</h2>
         
-        <Button variant="ghost" asChild className="text-mboa-orange hover:text-mboa-orange/80">
-          <Link to="/recherche" className="flex items-center gap-1">
-            Voir toutes <ArrowRight size={16} />
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Contrôle autoplay */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleAutoplay}
+            className="flex items-center gap-1"
+          >
+            {isAutoplayActive ? (
+              <>
+                <Pause className="h-4 w-4" />
+                <span className="hidden sm:inline">Pause</span>
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4" />
+                <span className="hidden sm:inline">Play</span>
+              </>
+            )}
+          </Button>
+          
+          <Button variant="ghost" asChild className="text-mboa-orange hover:text-mboa-orange/80">
+            <Link to="/recherche" className="flex items-center gap-1">
+              Voir toutes <ArrowRight size={16} />
+            </Link>
+          </Button>
+        </div>
       </div>
       
       <Carousel
@@ -91,8 +159,19 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
           loop: adsWithValidData.length > 5,
           slidesToScroll: 1,
         }}
-        className="w-full relative"
+        plugins={[autoplayPlugin]}
+        className="w-full relative group"
         setApi={setCarouselApi}
+        onMouseEnter={() => {
+          if (autoplayPlugin) {
+            autoplayPlugin.stop();
+          }
+        }}
+        onMouseLeave={() => {
+          if (autoplayPlugin && isAutoplayActive) {
+            autoplayPlugin.play();
+          }
+        }}
       >
         <CarouselContent className="-ml-2 md:-ml-4">
           {adsWithValidData.map((ad) => (
@@ -103,8 +182,8 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
         </CarouselContent>
         {adsWithValidData.length > 5 && (
           <div className="hidden sm:block">
-            <CarouselPrevious className="-left-4 bg-white border-gray-200" />
-            <CarouselNext className="-right-4 bg-white border-gray-200" />
+            <CarouselPrevious className="-left-4 bg-white border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CarouselNext className="-right-4 bg-white border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         )}
       </Carousel>
@@ -115,15 +194,33 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
           {Array.from({ length: totalSlides }).map((_, index) => (
             <button
               key={index}
-              onClick={() => carouselApi?.scrollTo(index)}
-              className={`mx-1 w-2 h-2 rounded-full transition-colors ${
-                index === currentSlide ? "bg-mboa-orange" : "bg-gray-300"
+              onClick={() => {
+                carouselApi?.scrollTo(index);
+                // Pause autoplay temporairement lors du clic manuel
+                if (autoplayPlugin) {
+                  autoplayPlugin.stop();
+                  setIsAutoplayActive(false);
+                  setTimeout(() => {
+                    autoplayPlugin.play();
+                    setIsAutoplayActive(true);
+                  }, 3000);
+                }
+              }}
+              className={`mx-1 w-2 h-2 rounded-full transition-all duration-300 hover:scale-125 ${
+                index === currentSlide ? "bg-mboa-orange scale-110" : "bg-gray-300"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
         </div>
       )}
+
+      {/* Indicateur d'état autoplay */}
+      <div className="flex justify-center mt-2">
+        <div className={`h-1 w-16 rounded-full transition-colors duration-300 ${
+          isAutoplayActive ? "bg-mboa-orange" : "bg-gray-300"
+        }`} />
+      </div>
     </section>
   );
 };
