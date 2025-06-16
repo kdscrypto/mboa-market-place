@@ -36,62 +36,27 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
       if (searchTerm.length < 2 && searchTerm.length > 0) return [];
       
       try {
-        // Correction de la requête pour éviter l'ambiguïté de la colonne "id"
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select(`
-            id,
-            auth_users:id(email, raw_user_meta_data),
-            role,
-            created_at
-          `)
-          .or(`id.ilike.%${searchTerm}%,auth_users.email.ilike.%${searchTerm}%`)
-          .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1)
-          .order('created_at', { ascending: false });
+        // Use the search_users_paginated function
+        const { data, error } = await supabase.rpc('search_users_paginated', {
+          search_term: searchTerm || '',
+          page_size: pageSize,
+          page_offset: currentPage * pageSize
+        });
         
         if (error) {
           console.error('Error searching users:', error);
           throw error;
         }
         
-        // Si la requête ci-dessus ne fonctionne pas à cause du schéma, utilisons une approche alternative
-        const { data: usersData, error: usersError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1)
-          .order('created_at', { ascending: false });
-        
-        if (usersError) {
-          console.error('Error searching users (fallback):', usersError);
-          throw usersError;
-        }
-        
-        // Récupérer les données d'authentification séparément
-        const userIds = usersData?.map(u => u.id) || [];
-        const { data: authData } = await supabase.auth.admin.listUsers();
-        
-        const combinedData = usersData?.map(profile => {
-          const authUser = authData?.users?.find(u => u.id === profile.id);
-          return {
-            id: profile.id,
-            email: authUser?.email || 'Email non disponible',
-            username: authUser?.user_metadata?.username,
-            role: profile.role as UserRole,
-            created_at: profile.created_at,
-            total_count: usersData.length
-          };
-        }) || [];
-        
-        // Filtrer par terme de recherche si nécessaire
-        if (searchTerm.length >= 2) {
-          return combinedData.filter(user => 
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase()))
-          );
-        }
-        
-        return combinedData;
+        // Transform the data to match our interface
+        return (data || []).map((user: any): UserSearchResult => ({
+          id: user.id,
+          email: user.email || 'Email non disponible',
+          username: user.username,
+          role: user.role as UserRole,
+          created_at: user.created_at,
+          total_count: user.total_count || 0
+        }));
       } catch (error) {
         console.error('Search error:', error);
         throw error;
@@ -115,6 +80,15 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
       case 'admin': return 'bg-red-100 text-red-800';
       case 'moderator': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getRoleDisplayName = (role: UserRole) => {
+    switch (role) {
+      case 'admin': return 'Administrateur';
+      case 'moderator': return 'Modérateur';
+      case 'user': return 'Utilisateur';
+      default: return role;
     }
   };
 
@@ -222,7 +196,7 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
                       </div>
                     </div>
                     <Badge className={getRoleColor(user.role)}>
-                      {user.role}
+                      {getRoleDisplayName(user.role)}
                     </Badge>
                   </div>
                 </div>
@@ -253,7 +227,7 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
           🔍 Phase 5 - Recherche Améliorée
         </h4>
         <ul className="text-sm text-emerald-800 space-y-1">
-          <li>• Correction de l'erreur de requête SQL ambiguë</li>
+          <li>• Utilisation d'une fonction SQL optimisée</li>
           <li>• Gestion d'erreurs robuste avec fallback</li>
           <li>• Interface de recherche optimisée</li>
           <li>• Pagination améliorée et responsive</li>

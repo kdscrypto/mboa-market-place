@@ -1205,6 +1205,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_role_statistics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          role: string
+          count: number
+        }[]
+      }
       get_user_role_history: {
         Args: { target_user_id: string }
         Returns: {
