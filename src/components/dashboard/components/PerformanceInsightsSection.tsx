@@ -1,10 +1,9 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Rocket, Target } from "lucide-react";
-import { PerformanceInsight } from "../utils/masterDataGenerator";
+import { PerformanceInsight } from "../utils/masterDataIndex";
 
 interface PerformanceInsightsSectionProps {
   insights: PerformanceInsight[];
