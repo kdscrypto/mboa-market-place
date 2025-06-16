@@ -1,0 +1,132 @@
+
+/* Mobile-first responsive utilities */
+
+/* Touch-friendly interactions */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Improved tap highlights */
+* {
+  -webkit-tap-highlight-color: rgba(255, 107, 53, 0.2);
+}
+
+/* Mobile-optimized scrolling */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Safe area insets for mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-inset {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  
+  .safe-area-top {
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Mobile grid optimizations */
+@media (max-width: 640px) {
+  .mobile-grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  
+  .mobile-compact-spacing {
+    gap: 0.5rem;
+  }
+}
+
+/* Mobile typography scaling */
+@media (max-width: 640px) {
+  .mobile-text-scale {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .mobile-heading-scale {
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+  }
+}
+
+/* Mobile carousel optimizations */
+.mobile-carousel {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-carousel-item {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Mobile button optimizations */
+@media (max-width: 640px) {
+  .mobile-button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .mobile-button-sm {
+    min-height: 40px;
+    min-width: 40px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Mobile form optimizations */
+@media (max-width: 640px) {
+  .mobile-form-field {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .mobile-input {
+    min-height: 44px;
+    padding: 0.75rem;
+  }
+}
+
+/* Mobile navigation fixes */
+.mobile-nav-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+
+/* Mobile performance optimizations */
+.mobile-optimized {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Mobile accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-respect-motion {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Mobile viewport fixes */
+@media screen and (max-width: 640px) {
+  .mobile-full-width {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+  }
+}

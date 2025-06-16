@@ -1,5 +1,6 @@
-
 import React from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileAdCard from '@/components/mobile/MobileAdCard';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -20,21 +21,28 @@ interface AdCardProps {
   };
   imageUrl: string;
   createdAt: Date;
+  variant?: 'compact' | 'comfortable';
+  showFavorite?: boolean;
 }
 
-const AdCard: React.FC<AdCardProps> = ({
-  id,
-  title,
-  price,
-  currency = 'XAF',
-  location,
-  imageUrl,
-  createdAt
-}) => {
-  const timeAgo = formatDistanceToNow(createdAt, {
-    addSuffix: true,
-    locale: fr
-  });
+const AdCard: React.FC<AdCardProps> = (props) => {
+  const isMobile = useIsMobile();
+  
+  // Use mobile-optimized version on mobile devices
+  if (isMobile) {
+    return <MobileAdCard {...props} />;
+  }
+
+  // Keep existing desktop implementation
+  const {
+    id,
+    title,
+    price,
+    currency = 'XAF',
+    location,
+    imageUrl,
+    createdAt
+  } = props;
 
   // Format price with thousands separator
   const formattedPrice = new Intl.NumberFormat('fr-FR').format(price);
@@ -67,7 +75,10 @@ const AdCard: React.FC<AdCardProps> = ({
             <span className="truncate max-w-[90%]">{location.city}</span>
           </div>
           
-          <div className="text-xs text-gray-400 mt-1">{timeAgo}</div>
+          <div className="text-xs text-gray-400 mt-1">{formatDistanceToNow(createdAt, {
+            addSuffix: true,
+            locale: fr
+          })}</div>
         </CardContent>
       </Card>
     </Link>

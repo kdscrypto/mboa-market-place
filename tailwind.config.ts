@@ -19,6 +19,10 @@ export default {
 			}
 		},
 		extend: {
+			screens: {
+				'xs': '475px',
+				'3xl': '1600px',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -63,14 +67,12 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Modern Mboa Market colors
 				'mboa-orange': 'var(--color-primary-accent)',
 				'mboa-green': 'var(--color-green)', 
 				'mboa-blue': 'var(--color-blue)',
 				'mboa-gray': 'var(--color-surface-elevated)',
 				'mboa-dark': 'var(--color-text-primary)',
 				
-				// Theme-aware semantic colors
 				'theme-bg': 'var(--color-background)',
 				'theme-surface': 'var(--color-surface)',
 				'theme-surface-elevated': 'var(--color-surface-elevated)',
@@ -81,13 +83,11 @@ export default {
 				'theme-header-text': 'var(--color-header-text)',
 				'theme-header-border': 'var(--color-header-border)',
 				
-				// Extended semantic colors
 				'theme-success': 'var(--color-success)',
 				'theme-warning': 'var(--color-warning)',
 				'theme-error': 'var(--color-error)',
 				'theme-info': 'var(--color-info)',
 				
-				// Neutral scale
 				'theme-neutral': {
 					50: 'var(--color-neutral-50)',
 					100: 'var(--color-neutral-100)',
@@ -101,12 +101,10 @@ export default {
 					900: 'var(--color-neutral-900)',
 				},
 				
-				// Gradient colors
 				'gradient-start': 'var(--color-gradient-start)',
 				'gradient-end': 'var(--color-gradient-end)',
 				'gradient-accent': 'var(--color-gradient-accent)',
 				
-				// Modern color palette additions
 				'modern-orange': {
 					50: '#FFF5F2',
 					100: '#FFE8E0',
@@ -143,6 +141,12 @@ export default {
 					800: '#1E40AF',
 					900: '#1E3A8A',
 				},
+			},
+			spacing: {
+				'safe-top': 'env(safe-area-inset-top)',
+				'safe-bottom': 'env(safe-area-inset-bottom)',
+				'safe-left': 'env(safe-area-inset-left)',
+				'safe-right': 'env(safe-area-inset-right)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -233,5 +237,25 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+		require("tailwindcss-animate"),
+		function({ addUtilities }: any) {
+			const newUtilities = {
+				'.scrollbar-hide': {
+					'-ms-overflow-style': 'none',
+					'scrollbar-width': 'none',
+					'&::-webkit-scrollbar': {
+						display: 'none'
+					}
+				},
+				'.touch-callout-none': {
+					'-webkit-touch-callout': 'none'
+				},
+				'.touch-manipulation': {
+					'touch-action': 'manipulation'
+				}
+			}
+			addUtilities(newUtilities)
+		}
+	],
 } satisfies Config;
