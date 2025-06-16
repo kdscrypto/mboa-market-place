@@ -11,12 +11,12 @@ const AffiliatePhase6Header: React.FC = () => {
           <Crown className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
           Programme d'affiliation - Phase 6
         </h2>
-        <p className="text-theme-text-secondary">Elite Master - Gamification & Intelligence Collective</p>
+        <p className="text-theme-text-secondary">Affiliation Hub Master - Gamification & Intelligence Collective</p>
       </div>
       <div className="flex items-center gap-2">
         <Badge variant="default" className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 text-white border-0">
           <Diamond className="h-3 w-3 mr-1" />
-          Phase 6 - Elite Master
+          Phase 6 - Affiliation Hub Master
         </Badge>
       </div>
     </div>

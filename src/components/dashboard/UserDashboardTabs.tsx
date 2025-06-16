@@ -27,8 +27,8 @@ const UserDashboardTabs = ({ user }: UserDashboardTabsProps) => {
         </TabsTrigger>
         <TabsTrigger value="affiliate" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
           <Diamond className="h-3 w-3 sm:h-4 sm:w-4" />
-          <span className="hidden xs:inline">Phase 6</span>
-          <span className="xs:hidden">Elite</span>
+          <span className="hidden xs:inline">Affiliation Hub</span>
+          <span className="xs:hidden">Hub</span>
         </TabsTrigger>
         <TabsTrigger value="payments" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
           <CreditCard className="h-3 w-3 sm:h-4 sm:w-4" />

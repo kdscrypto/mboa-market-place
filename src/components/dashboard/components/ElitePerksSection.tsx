@@ -18,7 +18,7 @@ const ElitePerksSection: React.FC<ElitePerksSectionProps> = ({ elitePerks, stats
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Crown className="h-5 w-5" />
-          Avantages Elite
+          Avantages Affiliation Hub
         </CardTitle>
         <CardDescription>
           Privilèges exclusifs débloqués selon votre niveau

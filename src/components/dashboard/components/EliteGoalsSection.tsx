@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ const EliteGoalsSection: React.FC<EliteGoalsSectionProps> = ({ goals }) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-theme-text">
           <Trophy className="h-5 w-5" />
-          Objectifs Elite Master
+          Objectifs Affiliation Hub Master
         </CardTitle>
         <CardDescription className="text-theme-text-secondary">
           Défis de haut niveau pour les maîtres de l'affiliation
