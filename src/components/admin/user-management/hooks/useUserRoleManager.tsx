@@ -22,20 +22,65 @@ export const useUserRoleManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingRole, setPendingRole] = useState<UserRole>('user');
 
-  // Mutation pour changer le rôle d'un utilisateur
+  // Mutation pour changer le rôle d'un utilisateur avec logging
   const changeRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
-      const { error } = await supabase
+    mutationFn: async ({ userId, newRole, reason }: { 
+      userId: string; 
+      newRole: UserRole; 
+      reason?: string; 
+    }) => {
+      // Obtenir l'utilisateur actuel pour logging
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (!currentUser) {
+        throw new Error('Utilisateur non authentifié');
+      }
+
+      // Obtenir l'ancien rôle
+      const { data: oldUserData, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Mettre à jour le rôle
+      const { error: updateError } = await supabase
         .from('user_profiles')
         .update({ role: newRole })
         .eq('id', userId);
       
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Enregistrer le changement dans l'historique
+      const { error: logError } = await supabase
+        .from('user_role_changes')
+        .insert({
+          user_id: userId,
+          old_role: oldUserData.role,
+          new_role: newRole,
+          changed_by: currentUser.id,
+          reason: reason || `Changement de rôle de ${oldUserData.role} vers ${newRole}`,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            changed_by_email: currentUser.email
+          }
+        });
+
+      if (logError) {
+        console.warn('Erreur lors de l\'enregistrement du log:', logError);
+        // Ne pas faire échouer la mutation pour un problème de log
+      }
+
+      return { oldRole: oldUserData.role, newRole };
     },
-    onSuccess: (_, { newRole }) => {
+    onSuccess: ({ newRole }) => {
+      // Invalider les queries pour rafraîchir les données
       queryClient.invalidateQueries({ queryKey: ['moderators-list'] });
       queryClient.invalidateQueries({ queryKey: ['user-search-paginated'] });
       queryClient.invalidateQueries({ queryKey: ['user-role-history'] });
+      queryClient.invalidateQueries({ queryKey: ['role-statistics'] });
       
       toast({
         title: "Succès",
@@ -72,7 +117,8 @@ export const useUserRoleManager = () => {
     
     changeRoleMutation.mutate({
       userId: selectedUser.id,
-      newRole: pendingRole
+      newRole: pendingRole,
+      reason: `Changement de rôle effectué via l'interface d'administration`
     });
   };
 
