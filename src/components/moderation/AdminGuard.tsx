@@ -39,8 +39,8 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
         
         console.log("AdminGuard: User session found:", session.user.id);
         
-        // Utiliser la fonction is_admin_or_moderator pour vérifier les droits d'accès
-        const { data: hasAccess, error: adminCheckError } = await supabase.rpc('is_admin_or_moderator');
+        // Utiliser la fonction is_admin_or_mod pour vérifier les droits d'accès
+        const { data: hasAccess, error: adminCheckError } = await supabase.rpc('is_admin_or_mod');
         
         if (adminCheckError) {
           console.error("Error checking admin status:", adminCheckError);
