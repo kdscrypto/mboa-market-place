@@ -372,6 +372,81 @@ export type Database = {
           },
         ]
       }
+      input_validation_logs: {
+        Row: {
+          created_at: string
+          id: string
+          input_field: string
+          input_value_hash: string | null
+          ip_address: unknown | null
+          severity: string
+          threat_indicators: Json | null
+          user_agent: string | null
+          user_id: string | null
+          validation_result: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_field: string
+          input_value_hash?: string | null
+          ip_address?: unknown | null
+          severity?: string
+          threat_indicators?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+          validation_result: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_field?: string
+          input_value_hash?: string | null
+          ip_address?: unknown | null
+          severity?: string
+          threat_indicators?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+          validation_result?: string
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          failure_reason: string | null
+          geolocation: Json | null
+          id: string
+          ip_address: unknown | null
+          session_fingerprint: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          failure_reason?: string | null
+          geolocation?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          session_fingerprint?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          failure_reason?: string | null
+          geolocation?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          session_fingerprint?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       lygos_configurations: {
         Row: {
           api_key: string
@@ -528,6 +603,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      password_security_logs: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          old_password_hash: string | null
+          security_score: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          old_password_hash?: string | null
+          security_score?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          old_password_hash?: string | null
+          security_score?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       payment_audit_logs: {
         Row: {
@@ -896,6 +1007,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          created_at: string
+          device_fingerprint: string | null
+          expires_at: string | null
+          geolocation: Json | null
+          id: string
+          ip_address: unknown | null
+          is_active: boolean | null
+          last_activity: string | null
+          security_flags: Json | null
+          session_token_hash: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint?: string | null
+          expires_at?: string | null
+          geolocation?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          security_flags?: Json | null
+          session_token_hash: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string | null
+          expires_at?: string | null
+          geolocation?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          security_flags?: Json | null
+          session_token_hash?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -945,6 +1101,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      cleanup_security_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_lygos_transaction: {
         Args: {
           p_user_id: string
@@ -965,6 +1125,17 @@ export type Database = {
         }
         Returns: string
       }
+      create_user_session: {
+        Args: {
+          p_user_id: string
+          p_session_token_hash: string
+          p_ip_address?: unknown
+          p_user_agent?: string
+          p_device_fingerprint?: string
+          p_expires_at?: string
+        }
+        Returns: string
+      }
       detect_suspicious_activity: {
         Args: {
           p_identifier: string
@@ -979,6 +1150,10 @@ export type Database = {
           p_identifier_type: string
           p_event_data: Json
         }
+        Returns: Json
+      }
+      detect_suspicious_login_patterns: {
+        Args: { p_email: string; p_ip_address?: unknown }
         Returns: Json
       }
       generate_affiliate_code: {
@@ -1004,6 +1179,41 @@ export type Database = {
       is_admin_or_moderator: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      log_input_validation: {
+        Args: {
+          p_user_id: string
+          p_input_field: string
+          p_input_value_hash: string
+          p_validation_result: string
+          p_threat_indicators?: Json
+          p_severity?: string
+          p_ip_address?: unknown
+          p_user_agent?: string
+        }
+        Returns: string
+      }
+      log_login_attempt: {
+        Args: {
+          p_email: string
+          p_success: boolean
+          p_ip_address?: unknown
+          p_user_agent?: string
+          p_failure_reason?: string
+          p_session_fingerprint?: string
+        }
+        Returns: string
+      }
+      log_password_security_event: {
+        Args: {
+          p_user_id: string
+          p_event_type: string
+          p_security_score?: number
+          p_ip_address?: unknown
+          p_user_agent?: string
+          p_metadata?: Json
+        }
+        Returns: string
       }
       mark_messages_as_delivered: {
         Args: { conversation_uuid: string }
@@ -1033,6 +1243,10 @@ export type Database = {
       validate_image_extension: {
         Args: { filename: string }
         Returns: boolean
+      }
+      validate_input_security: {
+        Args: { p_input_value: string; p_input_type?: string }
+        Returns: Json
       }
     }
     Enums: {

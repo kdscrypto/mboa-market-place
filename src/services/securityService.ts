@@ -1,28 +1,29 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import {
+  logLoginAttempt,
+  detectSuspiciousLoginPatterns,
+  validateInputSecurity,
+  logInputValidation,
+  getEnhancedClientIP,
+  generateEnhancedDeviceFingerprint,
+  hashInputValue,
+  type LoginAttemptData,
+  type SuspiciousLoginAnalysis,
+  type InputValidationResult
+} from './security/authSecurityService';
 
-// Helper function to safely parse JSON response from RPC calls
-const parseRpcResponse = <T>(data: any, defaultValue: T): T => {
-  if (!data || typeof data !== 'object') {
-    return defaultValue;
-  }
-  return data as T;
+// Re-export enhanced security functions for backward compatibility
+export {
+  logLoginAttempt,
+  detectSuspiciousLoginPatterns,
+  validateInputSecurity,
+  logInputValidation,
+  getEnhancedClientIP as getClientIP,
+  generateEnhancedDeviceFingerprint as generateDeviceFingerprint,
+  hashInputValue
 };
 
-// Obtenir l'adresse IP du client
-export const getClientIP = async (): Promise<string> => {
-  try {
-    // En production, utiliser un service pour obtenir l'IP réelle
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = await response.json();
-    return data.ip || '127.0.0.1';
-  } catch (error) {
-    console.error('Error getting client IP:', error);
-    return '127.0.0.1';
-  }
-};
-
-// Vérifier les limites de taux pour l'authentification
+// Enhanced existing functions with new security features
 export const checkAuthRateLimit = async (
   identifier: string,
   identifierType: 'user' | 'ip',
@@ -41,23 +42,25 @@ export const checkAuthRateLimit = async (
 
     if (error) {
       console.error('Rate limit check error:', error);
-      return { allowed: true }; // En cas d'erreur, permettre l'action
+      return { allowed: true };
     }
 
-    const result = parseRpcResponse(data, { 
-      allowed: true,
-      blocked_until: undefined,
-      reason: undefined,
-      current_count: undefined,
-      max_requests: undefined
-    });
-    
+    // Log suspicious activity if rate limit is hit
+    if (data && !data.allowed) {
+      await logLoginAttempt({
+        email: identifier,
+        success: false,
+        failureReason: 'rate_limit_exceeded',
+        ipAddress: identifierType === 'ip' ? identifier : await getEnhancedClientIP()
+      });
+    }
+
     return {
-      allowed: Boolean(result.allowed ?? true),
-      blocked_until: result.blocked_until ? String(result.blocked_until) : undefined,
-      reason: result.reason ? String(result.reason) : undefined,
-      current_count: result.current_count ? Number(result.current_count) : undefined,
-      max_requests: result.max_requests ? Number(result.max_requests) : undefined
+      allowed: Boolean(data?.allowed ?? true),
+      blocked_until: data?.blocked_until ? String(data.blocked_until) : undefined,
+      reason: data?.reason ? String(data.reason) : undefined,
+      current_count: data?.current_count ? Number(data.current_count) : undefined,
+      max_requests: data?.max_requests ? Number(data.max_requests) : undefined
     };
 
   } catch (error) {
@@ -66,13 +69,31 @@ export const checkAuthRateLimit = async (
   }
 };
 
-// Détecter une activité suspecte
+// Enhanced suspicious activity detection
 export const detectSuspiciousActivity = async (
   identifier: string,
   identifierType: 'user' | 'ip',
   eventData: Record<string, any>
 ): Promise<{ risk_score: number; auto_block: boolean; severity: string; event_type: string } | null> => {
   try {
+    // Use enhanced detection for login-related activities
+    if (eventData.action_type === 'login_attempt' && identifierType === 'user') {
+      const analysis = await detectSuspiciousLoginPatterns(
+        identifier,
+        eventData.client_ip || await getEnhancedClientIP()
+      );
+      
+      if (analysis) {
+        return {
+          risk_score: analysis.risk_score,
+          auto_block: analysis.recommended_action === 'block_temporary',
+          severity: analysis.threat_level,
+          event_type: 'enhanced_login_analysis'
+        };
+      }
+    }
+
+    // Fallback to original detection for other activities
     const { data, error } = await supabase.rpc('detect_suspicious_auth_activity', {
       p_identifier: identifier,
       p_identifier_type: identifierType,
@@ -84,18 +105,11 @@ export const detectSuspiciousActivity = async (
       return null;
     }
 
-    const result = parseRpcResponse(data, { 
-      risk_score: 0, 
-      auto_block: false, 
-      severity: 'low', 
-      event_type: 'unknown' 
-    });
-
     return {
-      risk_score: Number(result.risk_score ?? 0),
-      auto_block: Boolean(result.auto_block ?? false),
-      severity: String(result.severity ?? 'low'),
-      event_type: String(result.event_type ?? 'unknown')
+      risk_score: Number(data?.risk_score ?? 0),
+      auto_block: Boolean(data?.auto_block ?? false),
+      severity: String(data?.severity ?? 'low'),
+      event_type: String(data?.event_type ?? 'unknown')
     };
 
   } catch (error) {
@@ -104,7 +118,7 @@ export const detectSuspiciousActivity = async (
   }
 };
 
-// Enregistrer un événement de sécurité
+// Enhanced security event logging
 export const logSecurityEvent = async (
   eventType: string,
   severity: 'low' | 'medium' | 'high' | 'critical',
@@ -113,8 +127,19 @@ export const logSecurityEvent = async (
   identifierType?: 'user' | 'ip' | 'device'
 ): Promise<void> => {
   try {
-    const clientIP = identifier && identifierType === 'ip' ? identifier : await getClientIP();
+    const clientIP = identifier && identifierType === 'ip' ? identifier : await getEnhancedClientIP();
+    const deviceFingerprint = generateEnhancedDeviceFingerprint();
     
+    // Enhanced event data
+    const enhancedEventData = {
+      ...eventData,
+      client_ip: clientIP,
+      timestamp: new Date().toISOString(),
+      user_agent: navigator.userAgent,
+      device_fingerprint: deviceFingerprint,
+      security_version: '2.0'
+    };
+
     await supabase
       .from('auth_security_events')
       .insert({
@@ -122,12 +147,7 @@ export const logSecurityEvent = async (
         severity,
         identifier: identifier || clientIP,
         identifier_type: identifierType || 'ip',
-        event_data: {
-          ...eventData,
-          client_ip: clientIP,
-          timestamp: new Date().toISOString(),
-          user_agent: navigator.userAgent
-        },
+        event_data: enhancedEventData,
         risk_score: severity === 'critical' ? 100 : severity === 'high' ? 75 : severity === 'medium' ? 50 : 25,
         auto_blocked: severity === 'critical'
       });
@@ -137,7 +157,6 @@ export const logSecurityEvent = async (
   }
 };
 
-// Vérifier le timing de soumission de formulaire (protection contre les bots)
 export const checkFormSubmissionTiming = (
   formStartTime: number,
   submissionTime: number
@@ -237,43 +256,8 @@ export const generateSecurityRecommendations = (
 
 export const cleanupSecurityEvents = async (): Promise<void> => {
   try {
-    // Supprimer les événements de plus de 90 jours
-    await supabase
-      .from('auth_security_events')
-      .delete()
-      .lt('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
-
-    // Supprimer les limites de taux expirées
-    await supabase
-      .from('auth_rate_limits')
-      .delete()
-      .lt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-
+    await supabase.rpc('cleanup_security_logs');
   } catch (error) {
     console.error('Error cleaning up security events:', error);
   }
-};
-
-export const generateDeviceFingerprint = (): string => {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  ctx?.fillText('Device fingerprint', 2, 2);
-  
-  const fingerprint = [
-    navigator.userAgent,
-    navigator.language,
-    screen.width + 'x' + screen.height,
-    new Date().getTimezoneOffset(),
-    canvas.toDataURL()
-  ].join('|');
-  
-  // Simple hash function
-  let hash = 0;
-  for (let i = 0; i < fingerprint.length; i++) {
-    const char = fingerprint.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  
-  return Math.abs(hash).toString(36);
 };

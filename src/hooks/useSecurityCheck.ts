@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useEnhancedSecurity } from './useEnhancedSecurity';
 import { 
   checkAuthRateLimit, 
   detectSuspiciousActivity, 
@@ -14,17 +15,36 @@ export const useSecurityCheck = () => {
   const [blockEndTime, setBlockEndTime] = useState<Date | null>(null);
   const [formStartTime] = useState(Date.now());
   const { toast } = useToast();
+  const { performLoginSecurityCheck, validateAndLogInput } = useEnhancedSecurity();
 
   const checkSecurity = async (
     actionType: 'login_attempt' | 'password_reset' | 'account_creation',
     userIdentifier?: string,
     additionalData?: Record<string, any>
   ) => {
-    const clientIP = getClientIP();
-    const currentTime = Date.now();
+    const clientIP = await getClientIP();
     
     try {
-      // Check form submission timing
+      // Enhanced security check for login attempts
+      if (actionType === 'login_attempt' && userIdentifier) {
+        const { allowed, analysis } = await performLoginSecurityCheck(
+          userIdentifier,
+          !additionalData?.failed,
+          additionalData?.error
+        );
+        
+        if (!allowed) {
+          setIsBlocked(true);
+          if (analysis?.recommended_action === 'block_temporary') {
+            setBlockEndTime(new Date(Date.now() + 15 * 60 * 1000)); // 15 minutes
+          }
+          return { allowed: false, reason: 'enhanced_security_block' };
+        }
+        
+        // Continue with additional checks if allowed
+      }
+
+      // Form submission timing check
       if (additionalData?.form_submission_time) {
         const timingCheck = checkFormSubmissionTiming(
           formStartTime, 
@@ -41,8 +61,8 @@ export const useSecurityCheck = () => {
         }
       }
 
-      // Check IP rate limiting
-      const ipRateLimit = await checkAuthRateLimit(await clientIP, 'ip', actionType);
+      // IP rate limiting
+      const ipRateLimit = await checkAuthRateLimit(clientIP, 'ip', actionType);
       
       if (!ipRateLimit.allowed) {
         const blockedUntil = ipRateLimit.blocked_until ? new Date(ipRateLimit.blocked_until) : null;
@@ -56,16 +76,10 @@ export const useSecurityCheck = () => {
           duration: 8000
         });
         
-        await logSecurityEvent('ip_rate_limit_exceeded', 'high', {
-          action_type: actionType,
-          client_ip: clientIP,
-          blocked_until: blockedUntil
-        });
-        
         return { allowed: false, reason: 'ip_rate_limit' };
       }
 
-      // Check user rate limiting if available
+      // User rate limiting if available
       if (userIdentifier) {
         const userRateLimit = await checkAuthRateLimit(userIdentifier, 'user', actionType);
         
@@ -81,24 +95,18 @@ export const useSecurityCheck = () => {
             duration: 8000
           });
           
-          await logSecurityEvent('user_rate_limit_exceeded', 'high', {
-            action_type: actionType,
-            user_identifier: userIdentifier,
-            blocked_until: blockedUntil
-          });
-          
           return { allowed: false, reason: 'user_rate_limit' };
         }
       }
 
-      // Analyze suspicious activity
+      // Enhanced suspicious activity analysis
       if (additionalData) {
         const suspiciousActivity = await detectSuspiciousActivity(
-          userIdentifier || await clientIP,
+          userIdentifier || clientIP,
           userIdentifier ? 'user' : 'ip',
           {
             action_type: actionType,
-            client_ip: await clientIP,
+            client_ip: clientIP,
             timestamp: new Date().toISOString(),
             ...additionalData
           }
@@ -110,7 +118,7 @@ export const useSecurityCheck = () => {
             risk_score: suspiciousActivity.risk_score,
             event_type: suspiciousActivity.event_type,
             user_identifier: userIdentifier,
-            client_ip: await clientIP
+            client_ip: clientIP
           });
         }
       }
@@ -123,16 +131,26 @@ export const useSecurityCheck = () => {
       await logSecurityEvent('security_check_error', 'medium', {
         action_type: actionType,
         error: error instanceof Error ? error.message : 'Unknown error',
-        client_ip: await clientIP
+        client_ip: clientIP
       });
       
-      // In case of error, allow the action but log the error
       return { allowed: true };
     }
   };
 
+  const validateInput = async (
+    inputValue: string,
+    inputField: string,
+    inputType: string = 'general',
+    userId?: string
+  ) => {
+    const { isValid } = await validateAndLogInput(inputValue, inputField, inputType, userId);
+    return isValid;
+  };
+
   return {
     checkSecurity,
+    validateInput,
     isBlocked,
     blockEndTime
   };

@@ -15,6 +15,7 @@ import SecurityAlerts from "../components/SecurityAlerts";
 import AccessibilityFeatures from "../components/AccessibilityFeatures";
 import RealTimeValidation from "../components/RealTimeValidation";
 import { useSecurityCheck } from "@/hooks/useSecurityCheck";
+import { useEnhancedSecurity } from "@/hooks/useEnhancedSecurity";
 import { generateSecurityRecommendations } from "@/services/securityService";
 
 interface LoginFormContentProps {
@@ -26,7 +27,8 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
   onSubmit, 
   isLoading 
 }) => {
-  const { checkSecurity, isBlocked, blockEndTime } = useSecurityCheck();
+  const { checkSecurity, validateInput, isBlocked, blockEndTime } = useSecurityCheck();
+  const { isAnalyzing } = useEnhancedSecurity();
   const [attemptCount, setAttemptCount] = useState(0);
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -44,6 +46,19 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
   const passwordValue = form.watch("password");
 
   const handleSecureSubmit = async (values: LoginFormValues) => {
+    // Validate inputs before processing
+    const emailValid = await validateInput(values.email, 'email', 'email');
+    const passwordValid = await validateInput(values.password, 'password', 'password');
+    
+    if (!emailValid || !passwordValid) {
+      toast({
+        title: "Entrée invalide",
+        description: "Des éléments suspects ont été détectés dans votre saisie.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const securityCheck = await checkSecurity('login_attempt', values.email, {
       attempt_count: attemptCount + 1,
       user_agent: navigator.userAgent,
@@ -82,11 +97,12 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSecureSubmit)}>
         <CardContent className="space-y-6">
-          {/* Form completion indicator */}
+          {/* Enhanced form completion indicator */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-700">
                 Completion: {formCompleteness}%
+                {isAnalyzing && <span className="ml-2 text-orange-600">(Analyse sécurisée...)</span>}
               </span>
               <Button
                 type="button"
@@ -100,7 +116,9 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div 
-                className="bg-mboa-orange h-1.5 rounded-full transition-all duration-300" 
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  isAnalyzing ? 'bg-orange-500 animate-pulse' : 'bg-mboa-orange'
+                }`}
                 style={{ width: `${formCompleteness}%` }}
               />
             </div>
@@ -121,7 +139,6 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
             recommendations={recommendations}
           />
 
-          {/* Real-time validation for email only on login */}
           <RealTimeValidation 
             form={form}
             fields={['email']}
@@ -142,12 +159,12 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
           <Button 
             type="submit" 
             className="w-full bg-mboa-orange hover:bg-mboa-orange/90"
-            disabled={isLoading || isBlocked}
+            disabled={isLoading || isBlocked || isAnalyzing}
           >
-            {isLoading ? (
+            {isLoading || isAnalyzing ? (
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Connexion en cours...
+                {isAnalyzing ? 'Vérification sécurisée...' : 'Connexion en cours...'}
               </div>
             ) : (
               "Se connecter"
