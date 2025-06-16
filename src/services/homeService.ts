@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import { toast } from "@/components/ui/use-toast";
@@ -6,10 +7,9 @@ import { isValidImageUrl } from "@/services/trendingService";
 // Function to retrieve approved ads with optimized RLS handling
 export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
   try {
-    console.log("Fetching approved ads for homepage");
+    console.log("Fetching approved ads for homepage with new RLS system");
     
-    // Use a more specific query that works with our RLS policies
-    // This query targets only approved ads and doesn't trigger user_profiles recursion
+    // Use optimized query that works with new RLS policies
     const { data: ads, error } = await supabase
       .from('ads')
       .select(`
@@ -36,7 +36,7 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
     if (error) {
       console.error("Error retrieving approved ads:", error);
       
-      // Don't show toast for RLS errors - they're not user-facing issues
+      // Show user-friendly error for non-RLS issues
       if (!error.message?.includes('policy') && !error.message?.includes('recursion')) {
         toast({
           title: "Erreur",
@@ -52,7 +52,7 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
       return [];
     }
     
-    console.log(`Found ${ads.length} approved ads`);
+    console.log(`Found ${ads.length} approved ads with new RLS system`);
     
     // For each ad, retrieve the main image with error handling
     const adsWithImages = await Promise.all(
@@ -126,7 +126,7 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
       })
     );
     
-    console.log(`Successfully loaded ${adsWithImages.length} approved ads with images`);
+    console.log(`Successfully loaded ${adsWithImages.length} approved ads with images using new RLS`);
     return adsWithImages;
   } catch (error) {
     console.error("Error fetching approved ads:", error);
@@ -144,11 +144,11 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
   }
 };
 
-// Function to check RLS health (for debugging)
+// Function to check RLS health with new diagnostic system
 export const checkRLSHealth = async (): Promise<any> => {
   try {
-    // Use the new RLS health check function
-    const { data, error } = await supabase.rpc('check_rls_health');
+    // Use the new comprehensive diagnostic function
+    const { data, error } = await supabase.rpc('diagnose_rls_system');
     
     if (error) {
       console.error("Error checking RLS health:", error);
@@ -159,6 +159,7 @@ export const checkRLSHealth = async (): Promise<any> => {
       };
     }
     
+    console.log("RLS Health Check Results:", data);
     return data;
   } catch (error) {
     console.error("Failed to check RLS health:", error);

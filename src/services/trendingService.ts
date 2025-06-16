@@ -21,9 +21,9 @@ export const isValidImageUrl = (url: string): boolean => {
 
 export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
   try {
-    console.log("Fetching featured ads (formerly premium)...");
+    console.log("Fetching featured ads with new RLS system...");
     
-    // Use optimized query that doesn't trigger RLS recursion
+    // Use optimized query that works with new RLS policies
     const { data: ads, error } = await supabase
       .from('ads')
       .select(`
@@ -53,7 +53,7 @@ export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
       return [];
     }
 
-    console.log(`Retrieved ${ads?.length || 0} featured ads`);
+    console.log(`Retrieved ${ads?.length || 0} featured ads with new RLS`);
     
     if (!ads || ads.length === 0) {
       return [];
@@ -109,7 +109,7 @@ export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
 // Function to fetch trending ads (mix of recent and popular ads)
 export const fetchTrendingAds = async (limit: number = 10): Promise<Ad[]> => {
   try {
-    console.log("Fetching trending ads...");
+    console.log("Fetching trending ads with new RLS system...");
     
     // Use optimized query for trending ads
     const { data: ads, error } = await supabase
@@ -140,7 +140,7 @@ export const fetchTrendingAds = async (limit: number = 10): Promise<Ad[]> => {
       return [];
     }
 
-    console.log(`Retrieved ${ads?.length || 0} trending ads`);
+    console.log(`Retrieved ${ads?.length || 0} trending ads with new RLS`);
     
     if (!ads || ads.length === 0) {
       return [];

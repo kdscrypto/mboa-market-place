@@ -9,7 +9,7 @@ import CategoriesSection from "@/components/home/CategoriesSection";
 import FeaturesSections from "@/components/home/FeaturesSections";
 import AdsSection from "@/components/home/AdsSection";
 import CTASection from "@/components/home/CTASection";
-import { fetchApprovedAds } from "@/services/homeService";
+import { fetchApprovedAds, checkRLSHealth } from "@/services/homeService";
 import { Ad } from "@/types/adTypes";
 import { categories } from "@/data/categoriesData";
 import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
@@ -43,7 +43,12 @@ const Index = () => {
       setIsLoading(true);
       setError(false);
       try {
-        console.log("Loading approved ads for homepage...");
+        console.log("Loading approved ads with new RLS system...");
+        
+        // Test RLS health first
+        const healthCheck = await checkRLSHealth();
+        console.log("RLS Health Status:", healthCheck);
+        
         const ads = await fetchApprovedAds(12);
         console.log("Recent ads loaded for homepage:", ads.length);
         setRecentAds(ads);

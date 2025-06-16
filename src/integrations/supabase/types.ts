@@ -1359,6 +1359,10 @@ export type Database = {
         Args: { p_email: string; p_ip_address?: unknown }
         Returns: Json
       }
+      diagnose_rls_system: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       generate_affiliate_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1394,11 +1398,15 @@ export type Database = {
           metadata: Json
         }[]
       }
+      get_user_role_safe: {
+        Args: { user_uuid?: string }
+        Returns: string
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
       }
-      is_admin_or_moderator: {
+      is_admin_or_mod: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
