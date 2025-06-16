@@ -5,11 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Search, Users, Zap } from 'lucide-react';
+import { Shield, Search, Users, Zap, History } from 'lucide-react';
 import UserSearchField from './UserSearchField';
 import RoleChangeDialog from './RoleChangeDialog';
 import UserInfoCard from './UserInfoCard';
 import RoleCard from './RoleCard';
+import RoleChangeHistory from './RoleChangeHistory';
 
 // Define the allowed role types
 type UserRole = 'user' | 'admin' | 'moderator';
@@ -41,7 +42,8 @@ const EnhancedUserRoleManager: React.FC = () => {
     },
     onSuccess: (_, { newRole }) => {
       queryClient.invalidateQueries({ queryKey: ['moderators-list'] });
-      queryClient.invalidateQueries({ queryKey: ['user-search'] });
+      queryClient.invalidateQueries({ queryKey: ['user-search-paginated'] });
+      queryClient.invalidateQueries({ queryKey: ['user-role-history'] });
       
       toast({
         title: "Succès",
@@ -88,15 +90,19 @@ const EnhancedUserRoleManager: React.FC = () => {
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold mb-2">Gestionnaire de Rôles</h2>
+            <h2 className="text-2xl font-bold mb-2">Gestionnaire de Rôles - Phase 3</h2>
             <p className="text-blue-100">
-              Gérez les permissions et rôles des utilisateurs de la plateforme
+              Gérez les permissions et rôles des utilisateurs avec historique complet
             </p>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-center">
               <Shield className="h-8 w-8 mx-auto mb-1" />
               <div className="text-sm font-medium">Sécurisé</div>
+            </div>
+            <div className="text-center">
+              <History className="h-8 w-8 mx-auto mb-1" />
+              <div className="text-sm font-medium">Traçabilité</div>
             </div>
             <div className="text-center">
               <Zap className="h-8 w-8 mx-auto mb-1" />
@@ -111,7 +117,7 @@ const EnhancedUserRoleManager: React.FC = () => {
         <CardHeader className="bg-gray-50 rounded-t-lg">
           <CardTitle className="flex items-center gap-2 text-gray-800">
             <Search className="h-5 w-5" />
-            Recherche d'Utilisateur
+            Recherche d'Utilisateur Avancée
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -124,14 +130,15 @@ const EnhancedUserRoleManager: React.FC = () => {
 
       {/* Section utilisateur sélectionné */}
       {selectedUser && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Informations utilisateur */}
-          <div className="lg:col-span-1">
+          <div className="space-y-6">
             <UserInfoCard user={selectedUser} />
+            <RoleChangeHistory user={selectedUser} />
           </div>
 
           {/* Gestion des rôles */}
-          <div className="lg:col-span-2">
+          <div>
             <Card className="border-0 shadow-lg">
               <CardHeader className="bg-gray-50 rounded-t-lg">
                 <CardTitle className="flex items-center gap-2 text-gray-800">
@@ -140,7 +147,7 @@ const EnhancedUserRoleManager: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <RoleCard
                     role="user"
                     isCurrentRole={selectedUser.role === 'user'}
@@ -163,12 +170,13 @@ const EnhancedUserRoleManager: React.FC = () => {
 
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <h4 className="font-medium text-blue-900 mb-2">
-                    ⚠️ Important à retenir
+                    ⚠️ Nouvelles fonctionnalités Phase 3
                   </h4>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Les changements de rôle sont permanents et prennent effet immédiatement</li>
-                    <li>• Les administrateurs ont accès à toutes les fonctionnalités</li>
-                    <li>• Les modérateurs peuvent gérer le contenu et assister les utilisateurs</li>
+                    <li>• Recherche paginée avec support UUID</li>
+                    <li>• Historique complet des changements de rôle</li>
+                    <li>• Journalisation automatique avec métadonnées</li>
+                    <li>• Interface utilisateur améliorée</li>
                   </ul>
                 </div>
               </CardContent>
@@ -176,39 +184,6 @@ const EnhancedUserRoleManager: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Section d'actions rapides (gardée pour compatibilité) */}
-      <Card className="border border-dashed border-gray-300 bg-gray-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-600">
-            <Zap className="h-4 w-4" />
-            Actions Rapides (Legacy)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 border rounded bg-blue-50">
-              <h5 className="font-medium mb-2">Action prédéfinie</h5>
-              <p className="text-sm text-gray-600 mb-3">
-                Utilisateur: f7c3b7ea-5711-4f70-beec-7e5fa89c3c0d
-              </p>
-              <Badge variant="outline" className="mb-2">
-                Action héritée
-              </Badge>
-            </div>
-
-            <div className="p-4 border rounded bg-orange-50">
-              <h5 className="font-medium mb-2">Action prédéfinie</h5>
-              <p className="text-sm text-gray-600 mb-3">
-                Utilisateur: 54793d5a-027b-427b-a253-cb7b858c7728
-              </p>
-              <Badge variant="outline" className="mb-2">
-                Action héritée
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Dialog de confirmation */}
       <RoleChangeDialog

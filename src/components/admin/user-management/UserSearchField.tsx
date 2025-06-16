@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, User, Mail, UserCheck } from 'lucide-react';
+import { Search, User, Mail, UserCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +17,7 @@ interface UserSearchResult {
   username?: string;
   role: UserRole;
   created_at: string;
+  total_count: number;
 }
 
 interface UserSearchFieldProps {
@@ -26,54 +27,39 @@ interface UserSearchFieldProps {
 
 const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selectedUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
+  const pageSize = 10;
 
-  const { data: searchResults, isLoading } = useQuery({
-    queryKey: ['user-search', searchTerm],
+  const { data: searchResults, isLoading, refetch } = useQuery({
+    queryKey: ['user-search-paginated', searchTerm, currentPage],
     queryFn: async () => {
-      if (searchTerm.length < 3) return [];
+      if (searchTerm.length < 2 && searchTerm.length > 0) return [];
       
-      // Recherche par ID UUID exact
-      if (searchTerm.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-        const { data: userProfile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', searchTerm)
-          .single();
-        
-        if (userProfile) {
-          const { data: authUser } = await supabase.auth.admin.getUserById(userProfile.id);
-          return [{
-            id: userProfile.id,
-            email: authUser.user?.email || 'Email non disponible',
-            username: authUser.user?.user_metadata?.username,
-            role: userProfile.role as UserRole,
-            created_at: userProfile.created_at
-          }];
-        }
-        return [];
+      const { data, error } = await supabase.rpc('search_users_paginated', {
+        search_term: searchTerm,
+        page_size: pageSize,
+        page_offset: currentPage * pageSize
+      });
+      
+      if (error) {
+        console.error('Error searching users:', error);
+        throw error;
       }
       
-      // Recherche par email dans auth.users (simulation - en production, vous devriez utiliser une fonction RPC)
-      const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .limit(10);
-      
-      // Note: En production, vous devriez créer une fonction RPC pour rechercher dans auth.users
-      return profiles?.map(profile => ({
-        id: profile.id,
-        email: 'recherche@example.com', // Placeholder
-        username: 'utilisateur',
-        role: profile.role as UserRole,
-        created_at: profile.created_at
-      })) || [];
+      return data || [];
     },
-    enabled: searchTerm.length >= 3
+    enabled: searchTerm.length === 0 || searchTerm.length >= 2
   });
 
   const handleSearch = () => {
+    setCurrentPage(0);
     setIsSearching(true);
+    refetch();
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   const getRoleColor = (role: UserRole) => {
@@ -84,19 +70,30 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
     }
   };
 
+  const totalCount = searchResults?.[0]?.total_count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Rechercher par ID utilisateur, email ou nom d'utilisateur..."
+            placeholder="Rechercher par ID utilisateur, email ou nom d'utilisateur (min. 2 caractères)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
           />
         </div>
-        <Button onClick={handleSearch} disabled={isLoading || searchTerm.length < 3}>
+        <Button 
+          onClick={handleSearch} 
+          disabled={isLoading || (searchTerm.length > 0 && searchTerm.length < 2)}
+        >
           {isLoading ? 'Recherche...' : 'Rechercher'}
         </Button>
       </div>
@@ -104,7 +101,34 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
       {searchResults && searchResults.length > 0 && (
         <Card>
           <CardContent className="p-4">
-            <h4 className="font-medium mb-3">Résultats de recherche:</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium">
+                Résultats de recherche: {totalCount} utilisateur(s) trouvé(s)
+              </h4>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm">
+                    Page {currentPage + 1} sur {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages - 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
             <div className="space-y-2">
               {searchResults.map((user) => (
                 <div
@@ -125,11 +149,14 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
                         {user.username && (
                           <div className="flex items-center gap-2 mt-1">
                             <UserCheck className="h-3 w-3 text-gray-400" />
-                            <span className="text-xs text-gray-600">{user.username}</span>
+                            <span className="text-xs text-gray-600">@{user.username}</span>
                           </div>
                         )}
                         <div className="text-xs text-gray-500 mt-1">
                           ID: {user.id}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Créé le: {new Date(user.created_at).toLocaleDateString('fr-FR')}
                         </div>
                       </div>
                     </div>
@@ -144,10 +171,18 @@ const UserSearchField: React.FC<UserSearchFieldProps> = ({ onUserSelect, selecte
         </Card>
       )}
 
-      {searchTerm.length >= 3 && searchResults?.length === 0 && !isLoading && (
+      {searchTerm.length >= 2 && searchResults?.length === 0 && !isLoading && (
         <Card>
           <CardContent className="p-4 text-center text-gray-500">
             Aucun utilisateur trouvé pour "{searchTerm}"
+          </CardContent>
+        </Card>
+      )}
+
+      {searchTerm.length > 0 && searchTerm.length < 2 && (
+        <Card>
+          <CardContent className="p-4 text-center text-orange-600">
+            Veuillez saisir au moins 2 caractères pour rechercher
           </CardContent>
         </Card>
       )}

@@ -1007,6 +1007,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_role_changes: {
+        Row: {
+          changed_by: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          new_role: string
+          old_role: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          new_role: string
+          old_role: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          new_role?: string
+          old_role?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           created_at: string
@@ -1172,6 +1205,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_user_role_history: {
+        Args: { target_user_id: string }
+        Returns: {
+          id: string
+          old_role: string
+          new_role: string
+          changed_by: string
+          reason: string
+          created_at: string
+          metadata: Json
+        }[]
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
@@ -1226,6 +1271,17 @@ export type Database = {
       release_transaction_lock: {
         Args: { transaction_uuid: string; lock_identifier: string }
         Returns: boolean
+      }
+      search_users_paginated: {
+        Args: { search_term?: string; page_size?: number; page_offset?: number }
+        Returns: {
+          id: string
+          email: string
+          username: string
+          role: string
+          created_at: string
+          total_count: number
+        }[]
       }
       update_lygos_transaction_status: {
         Args: {
