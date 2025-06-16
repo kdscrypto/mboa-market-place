@@ -67,7 +67,7 @@ export const detectSuspiciousLoginPatterns = async (
       return null;
     }
 
-    return data as SuspiciousLoginAnalysis;
+    return data as unknown as SuspiciousLoginAnalysis;
   } catch (error) {
     console.error('Exception detecting suspicious patterns:', error);
     return null;
@@ -111,7 +111,7 @@ export const validateInputSecurity = async (
       return null;
     }
 
-    return data as InputValidationResult;
+    return data as unknown as InputValidationResult;
   } catch (error) {
     console.error('Exception validating input security:', error);
     return null;

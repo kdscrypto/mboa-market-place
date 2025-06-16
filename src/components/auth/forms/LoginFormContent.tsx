@@ -8,6 +8,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
 import { loginSchema, LoginFormValues } from "../validation/authSchemas";
 import EnhancedEmailField from "../components/EnhancedEmailField";
 import EnhancedPasswordField from "../components/EnhancedPasswordField";
@@ -27,6 +28,7 @@ const LoginFormContent: React.FC<LoginFormContentProps> = ({
   onSubmit, 
   isLoading 
 }) => {
+  const { toast } = useToast();
   const { checkSecurity, validateInput, isBlocked, blockEndTime } = useSecurityCheck();
   const { isAnalyzing } = useEnhancedSecurity();
   const [attemptCount, setAttemptCount] = useState(0);

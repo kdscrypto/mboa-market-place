@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import {
   logLoginAttempt,
@@ -55,12 +56,13 @@ export const checkAuthRateLimit = async (
       });
     }
 
+    const result = data as any;
     return {
-      allowed: Boolean(data?.allowed ?? true),
-      blocked_until: data?.blocked_until ? String(data.blocked_until) : undefined,
-      reason: data?.reason ? String(data.reason) : undefined,
-      current_count: data?.current_count ? Number(data.current_count) : undefined,
-      max_requests: data?.max_requests ? Number(data.max_requests) : undefined
+      allowed: Boolean(result?.allowed ?? true),
+      blocked_until: result?.blocked_until ? String(result.blocked_until) : undefined,
+      reason: result?.reason ? String(result.reason) : undefined,
+      current_count: result?.current_count ? Number(result.current_count) : undefined,
+      max_requests: result?.max_requests ? Number(result.max_requests) : undefined
     };
 
   } catch (error) {
@@ -105,11 +107,12 @@ export const detectSuspiciousActivity = async (
       return null;
     }
 
+    const result = data as any;
     return {
-      risk_score: Number(data?.risk_score ?? 0),
-      auto_block: Boolean(data?.auto_block ?? false),
-      severity: String(data?.severity ?? 'low'),
-      event_type: String(data?.event_type ?? 'unknown')
+      risk_score: Number(result?.risk_score ?? 0),
+      auto_block: Boolean(result?.auto_block ?? false),
+      severity: String(result?.severity ?? 'low'),
+      event_type: String(result?.event_type ?? 'unknown')
     };
 
   } catch (error) {
