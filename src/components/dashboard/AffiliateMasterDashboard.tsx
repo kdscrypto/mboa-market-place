@@ -19,7 +19,8 @@ import {
   Rocket,
   BarChart3,
   Settings,
-  Award
+  Award,
+  Heart
 } from "lucide-react";
 import { AffiliateStats } from "@/services/affiliateService";
 import { useToast } from "@/hooks/use-toast";
