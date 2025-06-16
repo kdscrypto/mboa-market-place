@@ -4,15 +4,31 @@ import { AffiliateStats } from "@/services/affiliateService";
 export const generateEliteData = (affiliateStats: AffiliateStats | null) => {
   if (!affiliateStats) return null;
   
+  // Calculate elite level based on total points (every 100 points = 1 level)
+  const eliteLevel = Math.max(1, Math.floor(affiliateStats.total_points / 100) + 1);
+  
+  // Calculate mastery score based on actual performance metrics
+  const totalReferrals = affiliateStats.level_1_referrals + affiliateStats.level_2_referrals;
+  const referralScore = Math.min(40, totalReferrals * 2); // Max 40 points for referrals
+  const pointsScore = Math.min(40, affiliateStats.total_points / 5); // Max 40 points for points
+  const conversionScore = totalReferrals > 0 ? 
+    Math.min(20, (affiliateStats.level_1_referrals / totalReferrals) * 20) : 0; // Max 20 for conversion
+  
+  const masteryScore = Math.floor(referralScore + pointsScore + conversionScore);
+  
+  // Calculate network contribution based on actual network size
+  const networkContribution = Math.min(100, totalReferrals * 3);
+  
   return {
-    elite_level: Math.min(10, Math.floor(affiliateStats.total_points / 100) + 1),
-    mastery_score: Math.min(100, 60 + (affiliateStats.total_points / 20)),
-    collective_contribution: Math.floor(Math.random() * 80) + 20,
+    elite_level: eliteLevel,
+    mastery_score: masteryScore,
+    collective_contribution: networkContribution,
     elite_badges: [
-      { name: 'Master Recruiter', earned: affiliateStats.level_1_referrals >= 10 },
-      { name: 'Network Builder', earned: affiliateStats.level_2_referrals >= 5 },
-      { name: 'Point Collector', earned: affiliateStats.total_points >= 100 },
-      { name: 'Elite Champion', earned: affiliateStats.total_points >= 500 }
+      { name: 'Premier Pas', earned: affiliateStats.level_1_referrals >= 1 },
+      { name: 'Constructeur de Réseau', earned: affiliateStats.level_1_referrals >= 5 },
+      { name: 'Collectionneur de Points', earned: affiliateStats.total_points >= 50 },
+      { name: 'Expert Affiliation', earned: affiliateStats.total_points >= 200 },
+      { name: 'Maître du Réseau', earned: totalReferrals >= 20 }
     ],
     exclusive_perks: {
       vip_support: affiliateStats.total_points >= 100,
@@ -21,8 +37,8 @@ export const generateEliteData = (affiliateStats: AffiliateStats | null) => {
       personal_manager: affiliateStats.total_points >= 500
     },
     next_tier: {
-      name: 'Diamond Elite',
-      required_points: Math.ceil((affiliateStats.total_points + 100) / 100) * 100,
+      name: eliteLevel < 5 ? `Elite Niveau ${eliteLevel + 1}` : 'Master Elite',
+      required_points: (eliteLevel * 100),
       progress: (affiliateStats.total_points % 100) / 100
     }
   };

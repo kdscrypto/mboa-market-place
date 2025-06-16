@@ -1,3 +1,4 @@
+
 import { AffiliateStats } from "@/services/affiliateService";
 
 export interface MasterMetric {
@@ -10,15 +11,6 @@ export interface MasterMetric {
   trend: 'up' | 'down' | 'stable';
   progress: number;
   type: 'performance' | 'network' | 'efficiency' | 'innovation' | 'achievement' | 'consistency';
-}
-
-export interface MasterMetrics {
-  elite_score: number;
-  network_influence: number;
-  community_contribution: number;
-  innovation_index: number;
-  leadership_rating: number;
-  consistency_score: number;
 }
 
 export interface EliteGoal {
@@ -34,252 +26,246 @@ export interface EliteGoal {
   reward: string;
 }
 
-export interface MasterTool {
-  id: string;
-  name: string;
-  description: string;
-  category: 'analytics' | 'automation' | 'optimization' | 'community';
-  usage_level: number;
-  efficiency_gain: string;
-  premium_feature: boolean;
-  icon: string;
-}
-
-export interface PerformanceInsight {
-  id: string;
-  title: string;
-  insight: string;
-  action_required: boolean;
-  impact_level: 'low' | 'medium' | 'high' | 'critical';
-  category: string;
-  data_source: string;
-}
-
 export const generateMasterMetrics = (stats: AffiliateStats): MasterMetric[] => {
-  const metricsData = {
-    elite_score: Math.min(100, 65 + (stats.total_points / 20)),
-    network_influence: Math.min(100, 70 + (stats.level_1_referrals * 2)),
-    community_contribution: Math.floor(Math.random() * 30) + 70,
-    innovation_index: Math.floor(Math.random() * 25) + 75,
-    leadership_rating: Math.min(100, 60 + (stats.total_points / 15)),
-    consistency_score: Math.floor(Math.random() * 20) + 80
-  };
-
+  // Calculate metrics based only on real data
+  const totalReferrals = stats.level_1_referrals + stats.level_2_referrals;
+  const conversionRate = totalReferrals > 0 ? Math.min(100, (stats.level_1_referrals / totalReferrals) * 100) : 0;
+  const networkStrength = Math.min(100, (stats.level_1_referrals * 10) + (stats.level_2_referrals * 5));
+  const activityScore = Math.min(100, stats.total_points * 2);
+  
   return [
     {
-      id: 'elite_score',
-      title: 'Score Elite Master',
-      value: metricsData.elite_score,
-      unit: '/100',
-      description: 'Performance globale elite',
-      change: '+12%',
-      trend: 'up' as const,
-      progress: metricsData.elite_score,
+      id: 'total_points',
+      title: 'Points Totaux',
+      value: stats.total_points,
+      unit: 'pts',
+      description: 'Points d\'affiliation accumulés',
+      change: '0%', // Real change would need historical data
+      trend: 'stable' as const,
+      progress: Math.min(100, stats.total_points / 5), // Progress out of 500 points max
       type: 'performance' as const
     },
     {
-      id: 'network_influence',
-      title: 'Influence Réseau',
-      value: metricsData.network_influence,
-      unit: '/100',
-      description: 'Impact sur la communauté',
-      change: '+8%',
-      trend: 'up' as const,
-      progress: metricsData.network_influence,
+      id: 'network_size',
+      title: 'Taille du Réseau',
+      value: totalReferrals,
+      unit: 'membres',
+      description: 'Nombre total de parrainages',
+      change: '0%',
+      trend: 'stable' as const,
+      progress: Math.min(100, totalReferrals * 4), // Progress out of 25 referrals max
       type: 'network' as const
     },
     {
-      id: 'community_contribution',
-      title: 'Contribution Communauté',
-      value: metricsData.community_contribution,
-      unit: '/100',
-      description: 'Engagement communautaire',
-      change: '+5%',
-      trend: 'up' as const,
-      progress: metricsData.community_contribution,
+      id: 'conversion_rate',
+      title: 'Taux de Conversion',
+      value: Math.round(conversionRate),
+      unit: '%',
+      description: 'Parrainages niveau 1 / Total',
+      change: '0%',
+      trend: 'stable' as const,
+      progress: conversionRate,
       type: 'efficiency' as const
     },
     {
-      id: 'innovation_index',
-      title: 'Index Innovation',
-      value: metricsData.innovation_index,
+      id: 'network_strength',
+      title: 'Force du Réseau',
+      value: Math.round(networkStrength),
       unit: '/100',
-      description: 'Créativité et innovation',
-      change: '+15%',
-      trend: 'up' as const,
-      progress: metricsData.innovation_index,
-      type: 'innovation' as const
-    },
-    {
-      id: 'leadership_rating',
-      title: 'Rating Leadership',
-      value: metricsData.leadership_rating,
-      unit: '/100',
-      description: 'Capacités de leadership',
-      change: '+7%',
-      trend: 'up' as const,
-      progress: metricsData.leadership_rating,
+      description: 'Impact de votre réseau',
+      change: '0%',
+      trend: 'stable' as const,
+      progress: networkStrength,
       type: 'achievement' as const
-    },
-    {
-      id: 'consistency_score',
-      title: 'Score Consistance',
-      value: metricsData.consistency_score,
-      unit: '/100',
-      description: 'Régularité des performances',
-      change: '+3%',
-      trend: 'up' as const,
-      progress: metricsData.consistency_score,
-      type: 'consistency' as const
     }
   ];
 };
 
 export const generateEliteGoals = (stats: AffiliateStats): EliteGoal[] => {
-  return [
-    {
-      id: 'network_expansion',
-      title: 'Extension du Réseau Elite',
-      description: 'Construire un réseau de 50 membres actifs',
-      current_value: stats.level_1_referrals + stats.level_2_referrals,
-      target_value: 50,
-      unit: 'membres',
+  const totalReferrals = stats.level_1_referrals + stats.level_2_referrals;
+  
+  // Generate realistic goals based on current performance
+  const goals: EliteGoal[] = [];
+  
+  // Goal 1: Increase total referrals
+  if (totalReferrals < 10) {
+    goals.push({
+      id: 'reach_10_referrals',
+      title: 'Atteindre 10 Parrainages',
+      description: 'Développer votre réseau à 10 membres',
+      current_value: totalReferrals,
+      target_value: 10,
+      unit: 'parrainages',
       category: 'growth',
       priority: 'high',
-      deadline: '2024-03-31',
-      reward: 'Badge Master Network + 500 points'
-    },
-    {
-      id: 'influence_score',
-      title: 'Score d\'Influence Maximum',
-      description: 'Atteindre un score d\'influence de 95/100',
-      current_value: Math.min(100, 70 + (stats.level_1_referrals * 2)),
-      target_value: 95,
+      deadline: 'Objectif mensuel',
+      reward: '50 points bonus'
+    });
+  } else if (totalReferrals < 25) {
+    goals.push({
+      id: 'reach_25_referrals',
+      title: 'Réseau de 25 Membres',
+      description: 'Construire un réseau solide de 25 personnes',
+      current_value: totalReferrals,
+      target_value: 25,
+      unit: 'parrainages',
+      category: 'growth',
+      priority: 'medium',
+      deadline: 'Objectif trimestriel',
+      reward: '150 points bonus'
+    });
+  }
+  
+  // Goal 2: Improve points
+  if (stats.total_points < 100) {
+    goals.push({
+      id: 'reach_100_points',
+      title: 'Collectionneur de Points',
+      description: 'Accumuler 100 points d\'affiliation',
+      current_value: stats.total_points,
+      target_value: 100,
       unit: 'points',
-      category: 'influence',
-      priority: 'medium',
-      deadline: '2024-04-15',
-      reward: 'Statut Influenceur + Outils Premium'
-    },
-    {
-      id: 'community_leader',
-      title: 'Leader Communautaire',
-      description: 'Contribuer 10 insights vérifiés à la communauté',
-      current_value: 3,
-      target_value: 10,
-      unit: 'insights',
-      category: 'community',
+      category: 'growth',
       priority: 'high',
-      deadline: '2024-02-29',
-      reward: 'Badge Community Leader + Mentorat'
-    },
-    {
-      id: 'innovation_pioneer',
-      title: 'Pionnier de l\'Innovation',
-      description: 'Développer 3 nouvelles stratégies d\'affiliation',
-      current_value: 1,
-      target_value: 3,
-      unit: 'stratégies',
-      category: 'innovation',
+      deadline: 'Objectif mensuel',
+      reward: 'Badge Collectionneur'
+    });
+  } else if (stats.total_points < 500) {
+    goals.push({
+      id: 'reach_500_points',
+      title: 'Expert en Affiliation',
+      description: 'Devenir un expert avec 500 points',
+      current_value: stats.total_points,
+      target_value: 500,
+      unit: 'points',
+      category: 'growth',
       priority: 'medium',
-      deadline: '2024-05-01',
-      reward: 'Certification Innovation + Bonus 1000pts'
-    }
-  ];
-};
-
-export const generateMasterTools = (): MasterTool[] => {
-  return [
-    {
-      id: 'advanced_analytics',
-      name: 'Analytics Avancés',
-      description: 'Tableaux de bord et métriques détaillées en temps réel',
-      category: 'analytics',
-      usage_level: 85,
-      efficiency_gain: '+40% insights',
-      premium_feature: true,
-      icon: '📊'
-    },
-    {
-      id: 'auto_campaigns',
-      name: 'Campagnes Automatisées',
-      description: 'Système d\'automatisation complète des campagnes',
-      category: 'automation',
-      usage_level: 92,
-      efficiency_gain: '+60% productivité',
-      premium_feature: true,
-      icon: '🤖'
-    },
-    {
-      id: 'ai_optimizer',
-      name: 'Optimiseur IA',
-      description: 'Intelligence artificielle pour optimiser les performances',
-      category: 'optimization',
-      usage_level: 78,
-      efficiency_gain: '+35% conversion',
-      premium_feature: true,
-      icon: '🧠'
-    },
-    {
-      id: 'community_hub',
-      name: 'Hub Communautaire',
-      description: 'Outils de gestion et d\'engagement communautaire',
+      deadline: 'Objectif semestriel',
+      reward: 'Statut Expert'
+    });
+  }
+  
+  // Goal 3: Level 1 referrals focus
+  if (stats.level_1_referrals < 5) {
+    goals.push({
+      id: 'direct_referrals',
+      title: 'Parrainages Directs',
+      description: 'Obtenir 5 parrainages de niveau 1',
+      current_value: stats.level_1_referrals,
+      target_value: 5,
+      unit: 'parrainages directs',
+      category: 'influence',
+      priority: 'high',
+      deadline: 'Objectif hebdomadaire',
+      reward: '25 points bonus'
+    });
+  }
+  
+  // If no goals are applicable, show a completion message
+  if (goals.length === 0) {
+    goals.push({
+      id: 'master_affiliate',
+      title: 'Maître Affilié',
+      description: 'Félicitations ! Vous avez atteint un excellent niveau',
+      current_value: 100,
+      target_value: 100,
+      unit: '%',
       category: 'community',
-      usage_level: 88,
-      efficiency_gain: '+50% engagement',
-      premium_feature: false,
-      icon: '👥'
-    },
-    {
-      id: 'predictive_model',
-      name: 'Modèles Prédictifs',
-      description: 'Prédiction des tendances et opportunités',
-      category: 'analytics',
-      usage_level: 65,
-      efficiency_gain: '+25% anticipation',
-      premium_feature: true,
-      icon: '🔮'
-    }
-  ];
+      priority: 'low',
+      deadline: 'Objectif atteint',
+      reward: 'Statut Master'
+    });
+  }
+  
+  return goals;
 };
 
-export const generatePerformanceInsights = (): PerformanceInsight[] => {
-  return [
-    {
-      id: 'peak_performance',
-      title: 'Pic de Performance Détecté',
-      insight: 'Vos conversions sont 180% plus élevées le mardi entre 19h-21h. Concentrez vos efforts sur ce créneau.',
+// Simplified, real data only - no more fictitious tools
+export const generateMasterTools = (stats: AffiliateStats) => {
+  // Return empty array or basic tools based on actual user level
+  const tools = [];
+  
+  if (stats.total_points >= 50) {
+    tools.push({
+      id: 'basic_analytics',
+      name: 'Statistiques de Base',
+      description: 'Consultez vos statistiques d\'affiliation détaillées',
+      category: 'analytics',
+      usage_level: 100, // Always available once unlocked
+      efficiency_gain: 'Suivi en temps réel',
+      premium_feature: false,
+      icon: '📊'
+    });
+  }
+  
+  if (stats.total_points >= 100) {
+    tools.push({
+      id: 'share_links',
+      name: 'Liens de Partage',
+      description: 'Outils avancés de partage de votre code d\'affiliation',
+      category: 'automation',
+      usage_level: 100,
+      efficiency_gain: 'Partage facilité',
+      premium_feature: false,
+      icon: '🔗'
+    });
+  }
+  
+  return tools;
+};
+
+// Simplified insights based on real performance
+export const generatePerformanceInsights = (stats: AffiliateStats) => {
+  const insights = [];
+  const totalReferrals = stats.level_1_referrals + stats.level_2_referrals;
+  
+  if (stats.level_1_referrals === 0) {
+    insights.push({
+      id: 'first_referral',
+      title: 'Premier Parrainage',
+      insight: 'Commencez par partager votre code d\'affiliation avec vos proches pour obtenir votre premier parrainage.',
       action_required: true,
       impact_level: 'high',
-      category: 'Timing',
-      data_source: 'Analytics IA'
-    },
-    {
-      id: 'network_opportunity',
-      title: 'Opportunité Réseau',
-      insight: 'Votre réseau niveau 2 montre un potentiel de croissance de 40%. Engagez plus avec vos filleuls.',
+      category: 'Démarrage',
+      data_source: 'Analyse de Performance'
+    });
+  }
+  
+  if (stats.level_1_referrals > 0 && stats.level_2_referrals === 0) {
+    insights.push({
+      id: 'second_level',
+      title: 'Développer le Niveau 2',
+      insight: 'Encouragez vos filleuls à parrainer à leur tour pour développer votre réseau de niveau 2.',
       action_required: true,
       impact_level: 'medium',
-      category: 'Réseau',
-      data_source: 'Analyse Collective'
-    },
-    {
-      id: 'content_trend',
-      title: 'Tendance Contenu',
-      insight: 'Les contenus vidéo courts génèrent 3x plus d\'engagement dans votre niche. Adaptez votre stratégie.',
-      action_required: false,
-      impact_level: 'medium',
-      category: 'Contenu',
-      data_source: 'Veille Tendances'
-    },
-    {
-      id: 'competitive_advantage',
-      title: 'Avantage Concurrentiel',
-      insight: 'Votre approche personnalisée vous démarque de 85% des autres affiliés. Maintenez cette différenciation.',
+      category: 'Croissance',
+      data_source: 'Analyse de Réseau'
+    });
+  }
+  
+  if (totalReferrals >= 5) {
+    insights.push({
+      id: 'good_progress',
+      title: 'Excellents Progrès',
+      insight: `Avec ${totalReferrals} parrainages, vous êtes sur la bonne voie ! Continuez à partager activement.`,
       action_required: false,
       impact_level: 'low',
-      category: 'Stratégie',
-      data_source: 'Benchmark'
-    }
-  ];
+      category: 'Encouragement',
+      data_source: 'Analyse de Performance'
+    });
+  }
+  
+  if (insights.length === 0) {
+    insights.push({
+      id: 'get_started',
+      title: 'Commencer',
+      insight: 'Partagez votre code d\'affiliation pour commencer à développer votre réseau et gagner des points.',
+      action_required: true,
+      impact_level: 'high',
+      category: 'Démarrage',
+      data_source: 'Guide d\'Utilisation'
+    });
+  }
+  
+  return insights;
 };

@@ -6,11 +6,11 @@ import MasterMetricsCards from "./components/MasterMetricsCards";
 import EliteGoalsSection from "./components/EliteGoalsSection";
 import MasterToolsSection from "./components/MasterToolsSection";
 import PerformanceInsightsSection from "./components/PerformanceInsightsSection";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Info } from "lucide-react";
 import {
   MasterMetric,
   EliteGoal,
-  MasterTool,
-  PerformanceInsight,
   generateMasterMetrics,
   generateEliteGoals,
   generateMasterTools,
@@ -30,8 +30,8 @@ const AffiliateMasterDashboard: React.FC<AffiliateMasterDashboardProps> = ({
 }) => {
   const [masterMetrics, setMasterMetrics] = useState<MasterMetric[]>([]);
   const [eliteGoals, setEliteGoals] = useState<EliteGoal[]>([]);
-  const [masterTools, setMasterTools] = useState<MasterTool[]>([]);
-  const [performanceInsights, setPerformanceInsights] = useState<PerformanceInsight[]>([]);
+  const [masterTools, setMasterTools] = useState<any[]>([]);
+  const [performanceInsights, setPerformanceInsights] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -41,8 +41,8 @@ const AffiliateMasterDashboard: React.FC<AffiliateMasterDashboardProps> = ({
   const initializeMasterData = () => {
     const metrics = generateMasterMetrics(stats);
     const goals = generateEliteGoals(stats);
-    const tools = generateMasterTools();
-    const insights = generatePerformanceInsights();
+    const tools = generateMasterTools(stats);
+    const insights = generatePerformanceInsights(stats);
 
     setMasterMetrics(metrics);
     setEliteGoals(goals);
@@ -51,28 +51,55 @@ const AffiliateMasterDashboard: React.FC<AffiliateMasterDashboardProps> = ({
   };
 
   const optimizeTool = (toolId: string) => {
-    setMasterTools(prev => prev.map(tool => 
-      tool.id === toolId 
-        ? { ...tool, usage_level: Math.min(100, tool.usage_level + 5) }
-        : tool
-    ));
-    
     toast({
-      title: "🔧 Outil optimisé",
-      description: "L'efficacité de l'outil a été améliorée !",
+      title: "🔧 Outil utilisé",
+      description: "Outil d'affiliation utilisé avec succès !",
       duration: 3000
     });
   };
 
-  if (!masterMetrics.length) {
-    return <div>Loading...</div>;
+  // Show welcome message for new users
+  if (stats.total_points === 0 && stats.level_1_referrals === 0) {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-theme-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-theme-text">
+              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              Bienvenue dans le Programme d'Affiliation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-theme-text-secondary">
+              Commencez votre parcours d'affiliation en partageant votre code unique. 
+              Vos statistiques et outils se déverrouilleront au fur et à mesure de vos progrès.
+            </p>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-theme-text">Prochaines étapes :</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm text-theme-text-secondary">
+                <li>Partagez votre code d'affiliation : <strong>{stats.affiliate_code}</strong></li>
+                <li>Obtenez votre premier parrainage pour débloquer les outils de base</li>
+                <li>Accumulez 50 points pour accéder aux statistiques avancées</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <MasterMetricsCards metrics={masterMetrics} />
+        <PerformanceInsightsSection insights={performanceInsights} />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <MasterMetricsCards metrics={masterMetrics} />
       <EliteGoalsSection goals={eliteGoals} />
-      <MasterToolsSection tools={masterTools} onOptimizeTool={optimizeTool} />
+      
+      {masterTools.length > 0 && (
+        <MasterToolsSection tools={masterTools} onOptimizeTool={optimizeTool} />
+      )}
+      
       <PerformanceInsightsSection insights={performanceInsights} />
     </div>
   );
