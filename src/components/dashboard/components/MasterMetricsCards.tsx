@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, Users, Target, Zap, Award, BarChart3 } from "lucide-react";
-import { MasterMetric } from "../utils/masterDataGenerator";
+import { MasterMetric } from "../utils/types/masterTypes";
 
 interface MasterMetricsCardsProps {
   metrics: MasterMetric[];

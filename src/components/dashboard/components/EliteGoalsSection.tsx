@@ -1,10 +1,9 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Trophy } from "lucide-react";
-import { EliteGoal } from "../utils/masterDataGenerator";
+import { EliteGoal } from "../utils/types/masterTypes";
 
 interface EliteGoalsSectionProps {
   goals: EliteGoal[];

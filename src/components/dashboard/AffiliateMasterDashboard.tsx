@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { AffiliateStats } from "@/services/affiliateService";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +14,7 @@ import {
   generateEliteGoals,
   generateMasterTools,
   generatePerformanceInsights
-} from "./utils/masterDataGenerator";
+} from "./utils/masterDataIndex";
 
 interface AffiliateMasterDashboardProps {
   stats: AffiliateStats;
