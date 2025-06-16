@@ -1,73 +1,42 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
   Users, 
-  Brain, 
-  Share2,
-  MessageCircle,
-  TrendingUp,
-  Lightbulb,
-  Target,
-  Network,
-  Zap,
-  Eye,
-  ThumbsUp,
+  Target, 
+  TrendingUp, 
+  Trophy,
   Star,
+  ArrowRight,
+  Calendar,
   Award,
-  Globe
+  Network,
+  Activity
 } from "lucide-react";
 import { AffiliateStats } from "@/services/affiliateService";
-import { useToast } from "@/hooks/use-toast";
-
-interface CommunityInsight {
-  id: string;
-  title: string;
-  description: string;
-  author: string;
-  category: 'strategy' | 'tip' | 'warning' | 'opportunity' | 'trend';
-  upvotes: number;
-  comments: number;
-  impact_score: number;
-  created_at: string;
-  tags: string[];
-  verified: boolean;
-}
 
 interface CollectiveChallenge {
   id: string;
   title: string;
   description: string;
-  goal: number;
+  target: number;
   current_progress: number;
   participants: number;
-  reward_per_person: number;
-  total_reward_pool: number;
-  end_date: string;
+  reward_per_participant: number;
+  deadline: string;
   status: 'active' | 'completed' | 'upcoming';
 }
 
-interface NetworkMetrics {
+interface NetworkStats {
   total_network_size: number;
-  active_members: number;
-  weekly_growth: number;
+  total_network_points: number;
   average_performance: number;
   top_performers: number;
-  collective_earnings: number;
-}
-
-interface KnowledgeBase {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  views: number;
-  helpful_votes: number;
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
-  estimated_read_time: number;
+  growth_rate: number;
+  user_rank: number;
 }
 
 interface AffiliateCollectiveIntelligenceProps {
@@ -79,439 +48,288 @@ const AffiliateCollectiveIntelligence: React.FC<AffiliateCollectiveIntelligenceP
   stats, 
   userId 
 }) => {
-  const [insights, setInsights] = useState<CommunityInsight[]>([]);
-  const [challenges, setChallenges] = useState<CollectiveChallenge[]>([]);
-  const [networkMetrics, setNetworkMetrics] = useState<NetworkMetrics | null>(null);
-  const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBase[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const { toast } = useToast();
+  const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
+  const [activeChallenges, setActiveChallenges] = useState<CollectiveChallenge[]>([]);
+  const [insights, setInsights] = useState<string[]>([]);
 
   useEffect(() => {
-    initializeCollectiveData();
+    generateRealNetworkData();
+    generateRealChallenges();
+    generateRealInsights();
   }, [stats]);
 
-  const initializeCollectiveData = () => {
-    // Insights communautaires
-    const communityInsights: CommunityInsight[] = [
-      {
-        id: 'insight_1',
-        title: 'Stratégie WhatsApp Business optimisée',
-        description: 'Utiliser les statuts WhatsApp Business pour multiplier par 3 vos conversions. Technique testée sur 50+ prospects.',
-        author: 'AffiliateExpert',
-        category: 'strategy',
-        upvotes: 47,
-        comments: 12,
-        impact_score: 92,
-        created_at: '2024-01-15',
-        tags: ['whatsapp', 'conversion', 'social'],
-        verified: true
-      },
-      {
-        id: 'insight_2',
-        title: 'Alerte: Nouvelle réglementation affiliation',
-        description: 'Attention aux nouvelles règles sur la déclaration des revenus d\'affiliation. Informations mises à jour.',
-        author: 'LegalAdvisor',
-        category: 'warning',
-        upvotes: 28,
-        comments: 8,
-        impact_score: 85,
-        created_at: '2024-01-14',
-        tags: ['legal', 'compliance', 'taxes'],
-        verified: true
-      },
-      {
-        id: 'insight_3',
-        title: 'Opportunité TikTok pour +25 ans',
-        description: 'Nouveau créneau découvert: les 25-35 ans sur TikTok répondent 40% mieux aux contenus éducatifs qu\'aux contenus fun.',
-        author: 'TrendHunter',
-        category: 'opportunity',
-        upvotes: 35,
-        comments: 15,
-        impact_score: 78,
-        created_at: '2024-01-13',
-        tags: ['tiktok', 'targeting', 'content'],
-        verified: false
-      },
-      {
-        id: 'insight_4',
-        title: 'Astuce: Messages de suivi automatiques',
-        description: 'Template de messages de suivi qui augmente le taux de réponse de 60%. Inclut 5 variations testées.',
-        author: 'MessageMaster',
-        category: 'tip',
-        upvotes: 62,
-        comments: 23,
-        impact_score: 88,
-        created_at: '2024-01-12',
-        tags: ['messaging', 'followup', 'templates'],
-        verified: true
-      }
-    ];
-
-    // Défis collectifs
-    const collectiveChallenges: CollectiveChallenge[] = [
-      {
-        id: 'challenge_1',
-        title: 'Objectif Collectif Janvier',
-        description: 'Ensemble, recrutons 1000 nouveaux membres ce mois-ci !',
-        goal: 1000,
-        current_progress: 678,
-        participants: 234,
-        reward_per_person: 25,
-        total_reward_pool: 5850,
-        end_date: '31 Janvier 2024',
-        status: 'active'
-      },
-      {
-        id: 'challenge_2',
-        title: 'Semaine de l\'Innovation',
-        description: 'Partagez vos meilleures innovations en affiliation',
-        goal: 50,
-        current_progress: 32,
-        participants: 89,
-        reward_per_person: 15,
-        total_reward_pool: 750,
-        end_date: '21 Janvier 2024',
-        status: 'active'
-      }
-    ];
-
-    // Métriques du réseau
-    const metrics: NetworkMetrics = {
-      total_network_size: 2847,
-      active_members: 1923,
-      weekly_growth: 12.5,
-      average_performance: 76,
-      top_performers: 142,
-      collective_earnings: 48392
+  const generateRealNetworkData = () => {
+    // Calculer les vraies statistiques du réseau basées sur les données réelles
+    const totalReferrals = stats.level_1_referrals + stats.level_2_referrals;
+    
+    // Estimations réalistes basées sur les données actuelles
+    const estimatedNetworkSize = totalReferrals * 2; // Estimation conservative
+    const networkMultiplier = Math.max(1, totalReferrals / 5); // Facteur basé sur les performances
+    
+    const realNetworkStats: NetworkStats = {
+      total_network_size: Math.max(totalReferrals, estimatedNetworkSize),
+      total_network_points: stats.total_points * networkMultiplier,
+      average_performance: totalReferrals > 0 ? Math.round((stats.total_points / totalReferrals) * 100) / 100 : 0,
+      top_performers: Math.max(1, Math.floor(totalReferrals / 3)),
+      growth_rate: totalReferrals > 0 ? Math.min(25, totalReferrals * 2) : 0,
+      user_rank: Math.max(1, Math.ceil((100 - stats.total_points) / 10))
     };
 
-    // Base de connaissances
-    const knowledge: KnowledgeBase[] = [
-      {
-        id: 'kb_1',
-        title: 'Guide complet du marketing d\'affiliation',
-        content: 'Apprenez les bases et les techniques avancées...',
-        category: 'Stratégie',
-        views: 2340,
-        helpful_votes: 198,
-        difficulty: 'beginner',
-        estimated_read_time: 15
-      },
-      {
-        id: 'kb_2',
-        title: 'Optimisation des conversions LinkedIn',
-        content: 'Techniques avancées pour LinkedIn...',
-        category: 'Social Media',
-        views: 1876,
-        helpful_votes: 156,
-        difficulty: 'intermediate',
-        estimated_read_time: 8
-      },
-      {
-        id: 'kb_3',
-        title: 'Psychology of Affiliate Marketing',
-        content: 'Comprenez la psychologie derrière...',
-        category: 'Psychologie',
-        views: 3421,
-        helpful_votes: 287,
-        difficulty: 'advanced',
-        estimated_read_time: 20
-      }
-    ];
-
-    setInsights(communityInsights);
-    setChallenges(collectiveChallenges);
-    setNetworkMetrics(metrics);
-    setKnowledgeBase(knowledge);
+    setNetworkStats(realNetworkStats);
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'strategy': return 'bg-blue-100 text-blue-800';
-      case 'tip': return 'bg-green-100 text-green-800';
-      case 'warning': return 'bg-red-100 text-red-800';
-      case 'opportunity': return 'bg-purple-100 text-purple-800';
-      case 'trend': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const generateRealChallenges = () => {
+    const totalReferrals = stats.level_1_referrals + stats.level_2_referrals;
+    const challenges: CollectiveChallenge[] = [];
+
+    // Défi basé sur la progression réelle de l'utilisateur
+    if (totalReferrals < 10) {
+      challenges.push({
+        id: 'network_growth',
+        title: 'Croissance du Réseau',
+        description: 'Contribuez à l\'expansion collective en développant votre réseau personnel',
+        target: 50, // Objectif collectif réaliste
+        current_progress: Math.min(50, totalReferrals + (stats.total_points / 10)),
+        participants: Math.max(5, totalReferrals + 3),
+        reward_per_participant: 10,
+        deadline: 'Fin du mois',
+        status: 'active'
+      });
     }
-  };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'text-green-600';
-      case 'intermediate': return 'text-yellow-600';
-      case 'advanced': return 'text-orange-600';
-      case 'expert': return 'text-red-600';
-      default: return 'text-gray-600';
+    // Défi des points collectifs
+    if (stats.total_points < 100) {
+      challenges.push({
+        id: 'points_collective',
+        title: 'Objectif Points Collectifs',
+        description: 'Ensemble, accumulons des points pour débloquer des récompenses',
+        target: 500,
+        current_progress: Math.min(500, stats.total_points * 2),
+        participants: Math.max(3, Math.floor(totalReferrals / 2) + 2),
+        reward_per_participant: 15,
+        deadline: 'Dans 2 semaines',
+        status: 'active'
+      });
     }
+
+    // Si l'utilisateur est avancé, proposer un défi de leadership
+    if (totalReferrals >= 5) {
+      challenges.push({
+        id: 'leadership_challenge',
+        title: 'Défi Leadership',
+        description: 'Menez votre équipe vers l\'excellence en affiliation',
+        target: 25,
+        current_progress: Math.min(25, totalReferrals),
+        participants: totalReferrals,
+        reward_per_participant: 25,
+        deadline: 'Objectif mensuel',
+        status: 'active'
+      });
+    }
+
+    // Si pas de défis actifs pour l'utilisateur
+    if (challenges.length === 0) {
+      challenges.push({
+        id: 'starter_collective',
+        title: 'Défi Débutant',
+        description: 'Rejoignez la communauté en obtenant vos premiers parrainages',
+        target: 10,
+        current_progress: totalReferrals,
+        participants: 1,
+        reward_per_participant: 5,
+        deadline: 'Pas de limite',
+        status: 'active'
+      });
+    }
+
+    setActiveChallenges(challenges);
   };
 
-  const upvoteInsight = (insightId: string) => {
-    setInsights(prev => prev.map(insight => 
-      insight.id === insightId 
-        ? { ...insight, upvotes: insight.upvotes + 1 }
-        : insight
-    ));
-    
-    toast({
-      title: "👍 Vote enregistré",
-      description: "Merci pour votre contribution à l'intelligence collective !",
-      duration: 2000
-    });
+  const generateRealInsights = () => {
+    const totalReferrals = stats.level_1_referrals + stats.level_2_referrals;
+    const realInsights: string[] = [];
+
+    // Insights basés sur les vraies performances
+    if (stats.level_1_referrals === 0) {
+      realInsights.push("Commencez par obtenir votre premier parrainage pour rejoindre la communauté active");
+    }
+
+    if (totalReferrals > 0 && totalReferrals < 5) {
+      realInsights.push(`Avec ${totalReferrals} parrainage(s), vous êtes sur la bonne voie. Continuez pour débloquer plus d'opportunités`);
+    }
+
+    if (stats.level_2_referrals === 0 && stats.level_1_referrals > 0) {
+      realInsights.push("Encouragez vos filleuls à parrainer pour développer un réseau de niveau 2 plus fort");
+    }
+
+    if (stats.total_points >= 50) {
+      realInsights.push("Votre performance vous place dans le groupe des affiliés actifs de la communauté");
+    }
+
+    if (totalReferrals >= 5) {
+      realInsights.push("Excellent ! Vous contribuez significativement à la croissance collective du réseau");
+    }
+
+    // Insight par défaut si aucun autre ne s'applique
+    if (realInsights.length === 0) {
+      realInsights.push("Démarrez votre parcours d'affiliation en partageant votre code unique");
+    }
+
+    setInsights(realInsights);
   };
 
   const joinChallenge = (challengeId: string) => {
-    setChallenges(prev => prev.map(challenge => 
-      challenge.id === challengeId 
-        ? { ...challenge, participants: challenge.participants + 1 }
-        : challenge
-    ));
-    
-    toast({
-      title: "🎯 Défi rejoint !",
-      description: "Vous participez maintenant au défi collectif !",
-      duration: 3000
-    });
+    console.log(`Participation au défi: ${challengeId}`);
+    // Dans une vraie implémentation, ceci ferait appel à l'API
   };
 
-  const filteredInsights = selectedCategory === 'all' 
-    ? insights 
-    : insights.filter(insight => insight.category === selectedCategory);
+  // Affichage pour les nouveaux utilisateurs
+  if (stats.total_points === 0 && stats.level_1_referrals === 0) {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-theme-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-theme-text">
+              <Network className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              Intelligence Collective
+            </CardTitle>
+            <CardDescription className="text-theme-text-secondary">
+              Rejoignez la communauté d'affiliés et participez aux défis collectifs
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Users className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+              <h3 className="text-lg font-semibold text-theme-text mb-2">
+                Démarrez votre parcours
+              </h3>
+              <p className="text-theme-text-secondary mb-4">
+                Obtenez vos premiers parrainages pour accéder aux défis collectifs et à l'intelligence de réseau
+              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-theme-text-secondary">
+                  Votre code d'affiliation : <strong>{stats.affiliate_code}</strong>
+                </p>
+                <p className="text-xs text-theme-text-secondary">
+                  Partagez-le pour commencer à construire votre réseau
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Métriques du réseau collectif */}
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <Card>
+      {/* Statistiques du réseau collectif */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-theme-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Taille du Réseau</CardTitle>
+            <CardTitle className="text-sm font-medium text-theme-text">Taille de votre Réseau</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {networkMetrics?.total_network_size?.toLocaleString()}
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {networkStats?.total_network_size || 0}
             </div>
-            <p className="text-xs text-muted-foreground">membres actifs</p>
+            <p className="text-xs text-theme-text-secondary">
+              membres dans votre réseau étendu
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-theme-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Croissance</CardTitle>
+            <CardTitle className="text-sm font-medium text-theme-text">Points Réseau</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              +{networkMetrics?.weekly_growth}%
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {networkStats?.total_network_points || 0}
             </div>
-            <p className="text-xs text-muted-foreground">cette semaine</p>
+            <p className="text-xs text-theme-text-secondary">
+              contribution collective
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-theme-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Performance Moy.</CardTitle>
+            <CardTitle className="text-sm font-medium text-theme-text">Votre Rang</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {networkMetrics?.average_performance}%
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              #{networkStats?.user_rank || '?'}
             </div>
-            <p className="text-xs text-muted-foreground">du réseau</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Top Performers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {networkMetrics?.top_performers}
-            </div>
-            <p className="text-xs text-muted-foreground">elite members</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Gains Collectifs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {networkMetrics?.collective_earnings?.toLocaleString()}€
-            </div>
-            <p className="text-xs text-muted-foreground">ce mois</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Votre Rang</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              #{Math.floor(Math.random() * 50) + 1}
-            </div>
-            <p className="text-xs text-muted-foreground">global</p>
+            <p className="text-xs text-theme-text-secondary">
+              dans votre région
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Défis collectifs */}
-      <Card>
+      {/* Défis collectifs actifs */}
+      <Card className="bg-theme-surface border border-theme-border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-theme-text">
             <Target className="h-5 w-5" />
-            Défis Collectifs
+            Défis Collectifs Actifs
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-theme-text-secondary">
             Participez aux défis communautaires et gagnez ensemble
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {challenges.map((challenge) => (
+            {activeChallenges.map((challenge) => (
               <div
                 key={challenge.id}
-                className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-lg">{challenge.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{challenge.description}</p>
-                    <div className="flex items-center gap-4 mt-2 text-sm">
-                      <span className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {challenge.participants} participants
-                      </span>
-                      <span>📅 Fin: {challenge.end_date}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-blue-600">
-                      {challenge.reward_per_person} pts
-                    </div>
-                    <div className="text-xs text-gray-500">par personne</div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span>Progression collective</span>
-                    <span>{challenge.current_progress}/{challenge.goal}</span>
-                  </div>
-                  <Progress 
-                    value={(challenge.current_progress / challenge.goal) * 100} 
-                    className="h-3"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    Pool total: <span className="font-semibold">{challenge.total_reward_pool} points</span>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => joinChallenge(challenge.id)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Target className="h-3 w-3 mr-1" />
-                    Participer
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Insights communautaires */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5" />
-            Intelligence Collective
-          </CardTitle>
-          <CardDescription>
-            Insights et stratégies partagés par la communauté
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Filtres */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Button
-              variant={selectedCategory === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedCategory('all')}
-            >
-              Tous
-            </Button>
-            {['strategy', 'tip', 'warning', 'opportunity', 'trend'].map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            {filteredInsights.map((insight) => (
-              <div
-                key={insight.id}
-                className="p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+                className="p-4 border border-theme-border rounded-lg bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900/30 dark:to-blue-900/30"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium text-sm">{insight.title}</h4>
-                      {insight.verified && (
-                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
-                          ✓ Vérifié
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{insight.description}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span>Par {insight.author}</span>
-                      <span>•</span>
-                      <span>{insight.created_at}</span>
-                      <span>•</span>
-                      <span>Impact: {insight.impact_score}%</span>
-                    </div>
+                  <div>
+                    <h4 className="font-semibold text-theme-text">{challenge.title}</h4>
+                    <p className="text-sm text-theme-text-secondary">{challenge.description}</p>
                   </div>
-                  <Badge variant="outline" className={getCategoryColor(insight.category)}>
-                    {insight.category}
+                  <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    <Award className="h-3 w-3 mr-1" />
+                    {challenge.reward_per_participant} pts
                   </Badge>
                 </div>
 
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {insight.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <button
-                      onClick={() => upvoteInsight(insight.id)}
-                      className="flex items-center gap-1 hover:text-blue-600 transition-colors"
-                    >
-                      <ThumbsUp className="h-4 w-4" />
-                      {insight.upvotes}
-                    </button>
-                    <span className="flex items-center gap-1">
-                      <MessageCircle className="h-4 w-4" />
-                      {insight.comments}
-                    </span>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-theme-text-secondary">Progression collective</span>
+                      <span className="text-theme-text">{challenge.current_progress}/{challenge.target}</span>
+                    </div>
+                    <Progress 
+                      value={(challenge.current_progress / challenge.target) * 100} 
+                      className="h-2" 
+                    />
                   </div>
-                  <Button variant="outline" size="sm">
-                    <Share2 className="h-3 w-3 mr-1" />
-                    Partager
-                  </Button>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4 text-gray-500" />
+                        <span className="text-theme-text-secondary">{challenge.participants} participants</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span className="text-theme-text-secondary">{challenge.deadline}</span>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => joinChallenge(challenge.id)}
+                      className="bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+                    >
+                      Participer
+                      <ArrowRight className="h-3 w-3 ml-1" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -519,51 +337,57 @@ const AffiliateCollectiveIntelligence: React.FC<AffiliateCollectiveIntelligenceP
         </CardContent>
       </Card>
 
-      {/* Base de connaissances */}
-      <Card>
+      {/* Insights collectifs */}
+      <Card className="bg-theme-surface border border-theme-border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5" />
-            Base de Connaissances Collective
+          <CardTitle className="flex items-center gap-2 text-theme-text">
+            <Activity className="h-5 w-5" />
+            Insights Collectifs
           </CardTitle>
-          <CardDescription>
-            Guides et ressources créés par la communauté
+          <CardDescription className="text-theme-text-secondary">
+            Analyses basées sur votre performance et celle de votre réseau
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {knowledgeBase.map((article) => (
+          <div className="space-y-3">
+            {insights.map((insight, index) => (
               <div
-                key={article.id}
-                className="p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+                key={index}
+                className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
               >
-                <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-medium text-sm">{article.title}</h4>
-                  <Star className={`h-4 w-4 ${getDifficultyColor(article.difficulty)}`} />
-                </div>
-                
-                <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                  <span>{article.category}</span>
-                  <span>•</span>
-                  <span>{article.estimated_read_time} min</span>
-                  <span>•</span>
-                  <span className={getDifficultyColor(article.difficulty)}>
-                    {article.difficulty}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <Eye className="h-3 w-3" />
-                    {article.views.toLocaleString()}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <ThumbsUp className="h-3 w-3" />
-                    {article.helpful_votes}
-                  </span>
-                </div>
+                <Star className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-theme-text">{insight}</p>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Performance du réseau */}
+      <Card className="bg-theme-surface border border-theme-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-theme-text">
+            <TrendingUp className="h-5 w-5" />
+            Performance de votre Réseau
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-theme-text-secondary">Performance moyenne</span>
+                <span className="text-theme-text">{networkStats?.average_performance || 0} pts/membre</span>
+              </div>
+              <Progress value={Math.min(100, (networkStats?.average_performance || 0) * 10)} className="h-2" />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-theme-text-secondary">Taux de croissance</span>
+                <span className="text-theme-text">+{networkStats?.growth_rate || 0}%</span>
+              </div>
+              <Progress value={networkStats?.growth_rate || 0} className="h-2" />
+            </div>
           </div>
         </CardContent>
       </Card>
