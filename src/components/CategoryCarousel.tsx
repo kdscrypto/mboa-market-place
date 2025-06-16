@@ -67,7 +67,6 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }
   }
 
   // Desktop: Keep existing Embla carousel
-  // ... keep existing code (embla carousel implementation)
   const autoplayPlugin = React.useRef(
     Autoplay({
       delay: 5000,
