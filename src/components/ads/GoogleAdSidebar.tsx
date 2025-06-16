@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { useGoogleAds } from "@/hooks/useGoogleAds";
 import AdContainer from "./AdContainer";
 
@@ -14,7 +14,7 @@ interface GoogleAdSidebarProps {
   fullWidthResponsive?: boolean;
 }
 
-const GoogleAdSidebar: React.FC<GoogleAdSidebarProps> = ({
+const GoogleAdSidebar: React.FC<GoogleAdSidebarProps> = memo(({
   adSlot,
   className,
   style = { width: "300px", height: "250px" },
@@ -49,6 +49,8 @@ const GoogleAdSidebar: React.FC<GoogleAdSidebarProps> = ({
       </div>
     </AdContainer>
   );
-};
+});
+
+GoogleAdSidebar.displayName = 'GoogleAdSidebar';
 
 export default GoogleAdSidebar;

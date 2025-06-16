@@ -14,12 +14,16 @@ import { Ad } from "@/types/adTypes";
 import { categories } from "@/data/categoriesData";
 import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
 import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 
 const Index = () => {
   const navigate = useNavigate();
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
+  
+  // Performance monitoring
+  usePerformanceMonitor('Index');
   
   // Featured categories - select first 12 categories to display
   const featuredCategories = categories.slice(0, 12);

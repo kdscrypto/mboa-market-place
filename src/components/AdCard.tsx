@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 
 interface AdCardProps {
   id: string;
@@ -37,60 +38,19 @@ const AdCard: React.FC<AdCardProps> = ({
 
   // Format price with thousands separator
   const formattedPrice = new Intl.NumberFormat('fr-FR').format(price);
-  
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  
-  // Process image URL to handle cache issues and ensure consistency across devices
-  const processImageUrl = (url: string): string => {
-    if (!url || url === '/placeholder.svg') return '/placeholder.svg';
-    
-    // For Supabase URLs, add cache busting and ensure proper formatting
-    if (url.includes('supabase.co/storage/v1/object/public')) {
-      const separator = url.includes('?') ? '&' : '?';
-      return `${url}${separator}t=${new Date().getTime()}`;
-    }
-    
-    return url;
-  };
-
-  // The processed image URL with cache busting
-  const finalImageUrl = imageError ? '/placeholder.svg' : processImageUrl(imageUrl);
 
   return (
     <Link to={`/annonce/${id}`} className="block h-full">
-      <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
+      <Card className="h-full overflow-hidden hover:shadow-md transition-shadow duration-200">
         <div className="relative">
           <AspectRatio ratio={1/1} className="bg-gray-100">
-            {/* Loading skeleton */}
-            {!imageLoaded && !imageError && (
-              <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
-                <span className="sr-only">Chargement de l'image...</span>
-              </div>
-            )}
-            
-            {/* Actual image */}
-            <img
-              src={finalImageUrl}
+            <OptimizedImage
+              src={imageUrl}
               alt={title}
-              className={cn(
-                "object-cover w-full h-full transition-opacity duration-200",
-                imageLoaded && !imageError ? "opacity-100" : "opacity-0"
-              )}
-              style={{
-                objectFit: 'cover',
-              }}
-              onError={(e) => {
-                console.error(`Image error for ad: ${id}, URL: ${imageUrl}`);
-                setImageError(true);
-                setImageLoaded(true);
-              }}
-              onLoad={() => {
-                console.log(`Image loaded successfully for ad: ${id}`);
-                setImageLoaded(true);
-              }}
-              loading="lazy"
-              crossOrigin="anonymous"
+              width={300}
+              height={300}
+              className="w-full h-full"
+              placeholder="/placeholder.svg"
             />
           </AspectRatio>
         </div>
