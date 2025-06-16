@@ -30,7 +30,7 @@ export const validateAffiliateCode = async (code: string): Promise<AffiliateVali
       return { valid: false, message: 'Erreur lors de la validation du code' };
     }
 
-    return data as AffiliateValidation;
+    return data as unknown as AffiliateValidation;
   } catch (error) {
     console.error('Error validating affiliate code:', error);
     return { valid: false, message: 'Erreur lors de la validation du code' };
@@ -73,7 +73,7 @@ export const getAffiliateStats = async (userId: string): Promise<AffiliateStats 
       return null;
     }
 
-    return data as AffiliateStats;
+    return data as unknown as AffiliateStats;
   } catch (error) {
     console.error('Error getting affiliate stats:', error);
     return null;
