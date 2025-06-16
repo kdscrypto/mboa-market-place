@@ -4,9 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Users, Gift, Share2, Copy, Check } from "lucide-react";
+import { Users, Gift, Share2, Copy, Check, TrendingUp } from "lucide-react";
 import { getAffiliateStats, AffiliateStats } from "@/services/affiliateService";
 import { useToast } from "@/hooks/use-toast";
+import AffiliateShareLinks from "./AffiliateShareLinks";
+import AffiliateRealTimeStats from "./AffiliateRealTimeStats";
+import AffiliateNotifications from "./AffiliateNotifications";
 
 interface AffiliateTabProps {
   userId: string;
@@ -67,7 +70,7 @@ const AffiliateTab: React.FC<AffiliateTabProps> = ({ userId }) => {
     const shareData = {
       title: "Rejoignez MBOA !",
       text: `Utilisez mon code de parrainage ${stats.affiliate_code} pour vous inscrire sur MBOA et bénéficier d'avantages exclusifs !`,
-      url: `${window.location.origin}/inscription?ref=${stats.affiliate_code}`
+      url: `${window.location.origin}/connexion?ref=${stats.affiliate_code}`
     };
 
     try {
@@ -84,6 +87,10 @@ const AffiliateTab: React.FC<AffiliateTabProps> = ({ userId }) => {
     } catch (error) {
       console.error("Error sharing:", error);
     }
+  };
+
+  const handleStatsUpdate = (newStats: AffiliateStats) => {
+    setStats(newStats);
   };
 
   if (loading) {
@@ -113,6 +120,9 @@ const AffiliateTab: React.FC<AffiliateTabProps> = ({ userId }) => {
 
   return (
     <div className="space-y-6">
+      {/* Notification des nouvelles fonctionnalités */}
+      <AffiliateNotifications />
+
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -128,7 +138,7 @@ const AffiliateTab: React.FC<AffiliateTabProps> = ({ userId }) => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Points gagnés</CardTitle>
-            <Gift className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total_earned}</div>
@@ -156,6 +166,17 @@ const AffiliateTab: React.FC<AffiliateTabProps> = ({ userId }) => {
             <p className="text-xs text-muted-foreground">+1 point chacun</p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Real-time stats and share links */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <AffiliateRealTimeStats 
+          userId={userId} 
+          initialStats={stats}
+          onStatsUpdate={handleStatsUpdate}
+        />
+        
+        <AffiliateShareLinks affiliateCode={stats.affiliate_code} />
       </div>
 
       {/* Affiliate Code Section */}
@@ -210,22 +231,22 @@ const AffiliateTab: React.FC<AffiliateTabProps> = ({ userId }) => {
           <div className="flex items-start gap-3">
             <div className="bg-mboa-orange text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
             <div>
-              <p className="font-medium">Partagez votre code</p>
-              <p className="text-sm text-gray-600">Envoyez votre code à vos amis et famille</p>
+              <p className="font-medium">Utilisez les liens de partage</p>
+              <p className="text-sm text-gray-600">Partagez vos liens personnalisés sur WhatsApp, email ou réseaux sociaux</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <div className="bg-mboa-orange text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
             <div>
-              <p className="font-medium">Ils s'inscrivent</p>
-              <p className="text-sm text-gray-600">Chaque inscription avec votre code vous rapporte 2 points</p>
+              <p className="font-medium">Ils s'inscrivent avec votre code</p>
+              <p className="text-sm text-gray-600">Chaque inscription avec votre code vous rapporte 2 points automatiquement</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <div className="bg-mboa-orange text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
             <div>
-              <p className="font-medium">Bonus niveau 2</p>
-              <p className="text-sm text-gray-600">Quand vos filleuls parrainent, vous gagnez 1 point supplémentaire</p>
+              <p className="font-medium">Bonus niveau 2 automatique</p>
+              <p className="text-sm text-gray-600">Quand vos filleuls parrainent à leur tour, vous gagnez 1 point supplémentaire</p>
             </div>
           </div>
         </CardContent>
