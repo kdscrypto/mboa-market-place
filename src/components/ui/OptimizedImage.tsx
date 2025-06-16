@@ -29,7 +29,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   
-  const { elementRef, isIntersecting } = useEnhancedLazyLoading({
+  const { elementRef, isIntersecting } = useEnhancedLazyLoading<HTMLDivElement>({
     threshold: 0.1,
     rootMargin: '50px',
     triggerOnce: true

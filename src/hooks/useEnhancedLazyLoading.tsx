@@ -7,10 +7,10 @@ interface LazyLoadOptions {
   triggerOnce?: boolean;
 }
 
-export const useEnhancedLazyLoading = (options: LazyLoadOptions = {}) => {
+export const useEnhancedLazyLoading = <T extends HTMLElement = HTMLDivElement>(options: LazyLoadOptions = {}) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const elementRef = useRef<HTMLElement>(null);
+  const elementRef = useRef<T>(null);
 
   const {
     threshold = 0.1,

@@ -9,6 +9,13 @@ interface PerformanceMetrics {
   ttfb?: number;
 }
 
+// Extend Window interface to include gtag
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 export const usePerformanceMetrics = (pageName: string) => {
   const metricsRef = useRef<PerformanceMetrics>({});
 
@@ -98,10 +105,10 @@ export const usePerformanceMetrics = (pageName: string) => {
     const reportTimer = setTimeout(() => {
       console.log(`[${pageName}] Performance Summary:`, metricsRef.current);
       
-      // Send to analytics (if implemented)
-      if (window.gtag) {
+      // Send to analytics (if gtag is available)
+      if (typeof window !== 'undefined' && window.gtag) {
         Object.entries(metricsRef.current).forEach(([metric, value]) => {
-          if (value !== undefined) {
+          if (value !== undefined && window.gtag) {
             window.gtag('event', 'performance_metric', {
               metric_name: metric,
               metric_value: Math.round(value),
