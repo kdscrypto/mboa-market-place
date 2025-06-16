@@ -929,6 +929,10 @@ export type Database = {
         }
         Returns: Json
       }
+      check_user_permissions: {
+        Args: { required_role?: string }
+        Returns: boolean
+      }
       cleanup_expired_lygos_transactions: {
         Args: Record<PropertyKey, never>
         Returns: number
