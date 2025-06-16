@@ -5,6 +5,15 @@ export interface PasswordValidationResult {
   isStrong: boolean;
 }
 
+export interface PasswordComplexityResult {
+  hasMinLength: boolean;
+  hasUpperCase: boolean;
+  hasLowerCase: boolean;
+  hasNumbers: boolean;
+  hasSpecialChars: boolean;
+  entropy: number;
+}
+
 export const validatePasswordStrength = (password: string): PasswordValidationResult => {
   let score = 0;
   const suggestions: string[] = [];
@@ -46,6 +55,32 @@ export const validatePasswordStrength = (password: string): PasswordValidationRe
     score: Math.max(0, Math.min(100, score)),
     suggestions,
     isStrong: score >= 70
+  };
+};
+
+export const validatePasswordComplexity = (password: string): PasswordComplexityResult => {
+  const hasMinLength = password.length >= 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /[0-9]/.test(password);
+  const hasSpecialChars = /[^a-zA-Z0-9]/.test(password);
+  
+  // Calculate entropy (simplified)
+  let charsetSize = 0;
+  if (hasLowerCase) charsetSize += 26;
+  if (hasUpperCase) charsetSize += 26;
+  if (hasNumbers) charsetSize += 10;
+  if (hasSpecialChars) charsetSize += 32;
+  
+  const entropy = password.length * Math.log2(charsetSize || 1);
+  
+  return {
+    hasMinLength,
+    hasUpperCase,
+    hasLowerCase,
+    hasNumbers,
+    hasSpecialChars,
+    entropy
   };
 };
 

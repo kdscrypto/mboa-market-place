@@ -72,9 +72,12 @@ export const validateSessionSecurity = async (sessionId: string): Promise<boolea
     }
 
     // Check security flags for any red flags
-    const securityFlags = data.security_flags || {};
-    if (securityFlags.suspicious_activity || securityFlags.force_logout) {
-      return false;
+    const securityFlags = data.security_flags;
+    if (securityFlags && typeof securityFlags === 'object' && !Array.isArray(securityFlags)) {
+      const flags = securityFlags as Record<string, any>;
+      if (flags.suspicious_activity || flags.force_logout) {
+        return false;
+      }
     }
 
     return true;

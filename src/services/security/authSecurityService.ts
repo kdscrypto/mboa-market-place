@@ -122,6 +122,53 @@ export const logInputValidation = async (
   }
 };
 
+// Log password security events
+export const logPasswordSecurityEvent = async (
+  eventType: string,
+  userId: string | null,
+  passwordScore: number,
+  additionalData?: Record<string, any>
+): Promise<void> => {
+  try {
+    const clientIP = await getEnhancedClientIP();
+    await supabase
+      .from('auth_security_events')
+      .insert({
+        event_type: eventType,
+        severity: passwordScore < 30 ? 'high' : passwordScore < 50 ? 'medium' : 'low',
+        identifier: userId || clientIP,
+        identifier_type: userId ? 'user' : 'ip',
+        event_data: {
+          password_score: passwordScore,
+          client_ip: clientIP,
+          timestamp: new Date().toISOString(),
+          user_agent: navigator.userAgent,
+          ...additionalData
+        },
+        risk_score: Math.max(0, 100 - passwordScore)
+      });
+  } catch (error) {
+    console.error('Error logging password security event:', error);
+  }
+};
+
+// Create user session (alias for compatibility)
+export const createUserSession = async (
+  userId: string,
+  sessionToken: string,
+  deviceFingerprint?: string,
+  expiresAt?: Date
+) => {
+  // Import the actual function to avoid circular dependency
+  const { createSecureUserSession } = await import('./sessionSecurityService');
+  return createSecureUserSession({
+    userId,
+    sessionToken,
+    deviceFingerprint,
+    expiresAt
+  });
+};
+
 // Get client IP address (enhanced)
 export const getEnhancedClientIP = async (): Promise<string> => {
   try {
