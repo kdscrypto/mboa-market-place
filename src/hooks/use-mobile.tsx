@@ -7,12 +7,12 @@ export const useIsMobile = () => {
   useEffect(() => {
     const checkMobile = () => {
       try {
-        const mobile = window.innerWidth < 768;
-        console.log("Mobile detection:", { width: window.innerWidth, isMobile: mobile });
+        const width = window.innerWidth;
+        const mobile = width < 768;
+        console.log("Mobile detection (use-mobile):", { width, isMobile: mobile });
         setIsMobile(mobile);
       } catch (error) {
         console.error("Error in mobile detection:", error);
-        // Fallback to false if there's an error
         setIsMobile(false);
       }
     };
@@ -21,10 +21,18 @@ export const useIsMobile = () => {
     checkMobile();
 
     // Add event listener for resize
-    window.addEventListener("resize", checkMobile);
+    const handleResize = () => {
+      try {
+        checkMobile();
+      } catch (error) {
+        console.error("Error in resize handler:", error);
+      }
+    };
+    
+    window.addEventListener("resize", handleResize);
     
     return () => {
-      window.removeEventListener("resize", checkMobile);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
