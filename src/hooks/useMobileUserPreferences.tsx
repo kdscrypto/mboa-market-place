@@ -112,21 +112,19 @@ export const useMobileUserPreferences = (): MobileUserPreferencesHook => {
       // Auto-enable data saver for slow connections
       if (connectionType === 'slow-2g' || connectionType === '2g') {
         updates.dataSaver = true;
-        if (updates.layout) {
-          updates.layout.showImages = false;
-        } else {
-          updates.layout = { ...preferences.layout, showImages: false };
-        }
+        updates.layout = { 
+          ...preferences.layout, 
+          showImages: false 
+        };
       }
 
       // Optimize for low-performance devices
       if (performanceLevel === 'low') {
         updates.reducedMotion = true;
-        if (updates.layout) {
-          updates.layout.compactMode = true;
-        } else {
-          updates.layout = { ...preferences.layout, compactMode: true };
-        }
+        updates.layout = { 
+          ...preferences.layout, 
+          compactMode: true 
+        };
       }
 
       if (Object.keys(updates).length > 0) {
@@ -141,12 +139,24 @@ export const useMobileUserPreferences = (): MobileUserPreferencesHook => {
     key: K,
     value: MobileUserPreferences[K] | Partial<MobileUserPreferences[K]>
   ) => {
-    setPreferences(prev => ({
-      ...prev,
-      [key]: typeof value === 'object' && value !== null && !Array.isArray(value)
-        ? { ...prev[key], ...value }
-        : value
-    }));
+    setPreferences(prev => {
+      const currentValue = prev[key];
+      
+      // Handle nested object updates
+      if (typeof value === 'object' && value !== null && !Array.isArray(value) && 
+          typeof currentValue === 'object' && currentValue !== null && !Array.isArray(currentValue)) {
+        return {
+          ...prev,
+          [key]: { ...currentValue, ...value }
+        };
+      }
+      
+      // Handle direct value updates
+      return {
+        ...prev,
+        [key]: value
+      };
+    });
   }, []);
 
   const resetToDefaults = useCallback(() => {
