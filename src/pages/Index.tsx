@@ -82,16 +82,9 @@ const Index = () => {
     navigate(`/recherche?${searchParams.toString()}`);
   };
 
-  const content = (
+  // Simplified main content
+  const mainContent = (
     <div className="min-h-screen">
-      {/* Phase 4 Performance Optimizations */}
-      <PerformanceOptimizationManager 
-        enableBudgetMonitoring={true}
-        enableServiceWorker={true}
-        enableResourceHints={true}
-        enableFontOptimization={true}
-      />
-      
       <Header />
       <main>
         <HeroSection />
@@ -138,14 +131,21 @@ const Index = () => {
 
   return (
     <CriticalCSS>
+      <PerformanceOptimizationManager 
+        enableBudgetMonitoring={true}
+        enableServiceWorker={true}
+        enableResourceHints={true}
+        enableFontOptimization={true}
+      />
+      
       {isMobile ? (
         <MobilePerformanceOptimizer>
           <MobileContextualUI>
-            {content}
+            {mainContent}
           </MobileContextualUI>
         </MobilePerformanceOptimizer>
       ) : (
-        content
+        mainContent
       )}
     </CriticalCSS>
   );
