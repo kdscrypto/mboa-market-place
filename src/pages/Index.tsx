@@ -16,25 +16,36 @@ import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
 import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 import PerformanceOptimizationManager from "@/components/performance/PerformanceOptimizationManager";
 import CriticalCSS from "@/components/performance/CriticalCSS";
-import SimpleMobileWrapper from "@/components/mobile/SimpleMobileWrapper";
-import { useIsMobile } from "@/hooks/use-mobile";
+import MobileNavigationBar from "@/components/mobile/MobileNavigationBar";
 
 const Index = () => {
   console.log("=== INDEX COMPONENT RENDER START ===");
   
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
-  const [renderError, setRenderError] = useState<string | null>(null);
+  
+  // Simple mobile detection without external hooks
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      console.log("Mobile detection:", { width: window.innerWidth, isMobile: mobile });
+    };
+    
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   
   console.log('Index component state:', { 
     isMobile, 
     recentAdsCount: recentAds.length,
     isLoading,
-    error,
-    renderError 
+    error 
   });
   
   // Featured categories - select first 12 categories to display
@@ -95,96 +106,71 @@ const Index = () => {
     navigate(`/recherche?${searchParams.toString()}`);
   };
 
-  // Simplified main content rendering with error boundaries
+  // Simplified main content rendering
   const renderMainContent = () => {
     console.log('Rendering main content...');
     
-    try {
-      return (
-        <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
-          <Header />
-          <main>
-            <HeroSection />
-            <SearchSection onSearch={handleSearch} />
-            
-            <div className="mboa-container">
-              <div className="flex flex-col lg:flex-row gap-8">
-                <div className="flex-1">
-                  <CategoriesSection categories={featuredCategories} />
-                  
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className={isMobile ? "mobile-with-nav" : ""}>
+          <HeroSection />
+          <SearchSection onSearch={handleSearch} />
+          
+          <div className="mboa-container">
+            <div className="flex flex-col lg:flex-row gap-8">
+              <div className="flex-1">
+                <CategoriesSection categories={featuredCategories} />
+                
+                {!isMobile && (
                   <div className="mb-6">
                     <GoogleAdBanner
                       adSlot="9876543210"
                       style={{ width: "100%", height: "120px" }}
                     />
                   </div>
-                  
-                  <AdsSection 
-                    recentAds={recentAds} 
-                    isLoading={isLoading} 
-                    error={error} 
-                  />
-                </div>
+                )}
                 
+                <AdsSection 
+                  recentAds={recentAds} 
+                  isLoading={isLoading} 
+                  error={error} 
+                />
+              </div>
+              
+              {!isMobile && (
                 <div className="hidden lg:block lg:w-80">
                   <GoogleAdSidebar
                     adSlot="1234567890"
                     style={{ width: "300px", height: "600px" }}
                   />
                 </div>
-              </div>
+              )}
             </div>
-            
-            <FeaturesSections />
-            <CTASection />
-          </main>
-          <Footer />
-        </div>
-      );
-    } catch (error) {
-      console.error('CRITICAL ERROR rendering main content:', error);
-      setRenderError(error.message || 'Unknown rendering error');
-      return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="text-center max-w-md">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Erreur de rendu</h1>
-            <p className="text-gray-600 mb-4">Une erreur s'est produite lors du rendu de la page.</p>
-            <p className="text-sm text-gray-500 mb-4">Détails: {renderError}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Recharger la page
-            </button>
           </div>
-        </div>
-      );
-    }
+          
+          <FeaturesSections />
+          <CTASection />
+        </main>
+        <Footer />
+        {isMobile && <MobileNavigationBar />}
+      </div>
+    );
   };
 
-  console.log('About to render Index with mobile status:', { isMobile, renderError });
+  console.log('About to render Index with mobile status:', { isMobile });
 
-  // Render with comprehensive error handling
   try {
     const content = (
-      <>
-        <CriticalCSS>
-          <PerformanceOptimizationManager 
-            enableBudgetMonitoring={true}
-            enableServiceWorker={true}
-            enableResourceHints={true}
-            enableFontOptimization={true}
-          />
-          
-          {isMobile ? (
-            <SimpleMobileWrapper>
-              {renderMainContent()}
-            </SimpleMobileWrapper>
-          ) : (
-            renderMainContent()
-          )}
-        </CriticalCSS>
-      </>
+      <CriticalCSS>
+        <PerformanceOptimizationManager 
+          enableBudgetMonitoring={true}
+          enableServiceWorker={true}
+          enableResourceHints={true}
+          enableFontOptimization={true}
+        />
+        {renderMainContent()}
+      </CriticalCSS>
     );
 
     console.log("=== INDEX COMPONENT RENDER END ===");

@@ -7,31 +7,6 @@ import './styles/mobile-debug.css';
 
 console.log("=== MAIN.TSX EXECUTION START ===");
 
-// Add debug information to window
-window.addEventListener('load', () => {
-  console.log("Window loaded, viewport info:", {
-    innerWidth: window.innerWidth,
-    innerHeight: window.innerHeight,
-    devicePixelRatio: window.devicePixelRatio,
-    userAgent: navigator.userAgent
-  });
-});
-
-// Add error handling
-window.addEventListener('error', (event) => {
-  console.error('Global error caught:', event.error);
-  console.error('Error details:', {
-    message: event.error?.message,
-    stack: event.error?.stack,
-    filename: event.filename,
-    lineno: event.lineno
-  });
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-  console.error('Unhandled promise rejection:', event.reason);
-});
-
 const rootElement = document.getElementById('root');
 console.log("Root element found:", !!rootElement);
 
