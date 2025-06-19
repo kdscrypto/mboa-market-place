@@ -20,26 +20,35 @@ import SimpleMobileWrapper from "@/components/mobile/SimpleMobileWrapper";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
+  console.log("=== INDEX COMPONENT RENDER START ===");
+  
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
+  const [renderError, setRenderError] = useState<string | null>(null);
   
-  console.log('Index component rendering:', { isMobile });
+  console.log('Index component state:', { 
+    isMobile, 
+    recentAdsCount: recentAds.length,
+    isLoading,
+    error,
+    renderError 
+  });
   
   // Featured categories - select first 12 categories to display
   const featuredCategories = categories.slice(0, 12);
 
   useEffect(() => {
-    console.log('Index useEffect running');
+    console.log('Index useEffect running - checking for recovery and loading ads');
     
     // Check if this is a password recovery redirect from Supabase
     const urlHash = window.location.hash;
     const urlParams = new URLSearchParams(urlHash.substring(1));
     const recoveryType = urlParams.get('type');
     
-    console.log("Index page - checking for recovery:", { hash: urlHash, type: recoveryType });
+    console.log("Index page - recovery check:", { hash: urlHash, type: recoveryType });
     
     if (recoveryType === 'recovery') {
       console.log("Recovery type detected, redirecting to reset-password page");
@@ -86,26 +95,23 @@ const Index = () => {
     navigate(`/recherche?${searchParams.toString()}`);
   };
 
-  // Main content with error boundary
+  // Simplified main content rendering with error boundaries
   const renderMainContent = () => {
+    console.log('Rendering main content...');
+    
     try {
-      console.log('Rendering main content...');
-      
       return (
-        <div className="min-h-screen">
+        <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
           <Header />
           <main>
             <HeroSection />
             <SearchSection onSearch={handleSearch} />
             
-            {/* Layout avec sidebar pour la deuxième publicité */}
             <div className="mboa-container">
               <div className="flex flex-col lg:flex-row gap-8">
-                {/* Contenu principal */}
                 <div className="flex-1">
                   <CategoriesSection categories={featuredCategories} />
                   
-                  {/* Première bannière publicitaire Google Ad */}
                   <div className="mb-6">
                     <GoogleAdBanner
                       adSlot="9876543210"
@@ -120,7 +126,6 @@ const Index = () => {
                   />
                 </div>
                 
-                {/* Sidebar avec deuxième publicité - visible sur les grands écrans */}
                 <div className="hidden lg:block lg:w-80">
                   <GoogleAdSidebar
                     adSlot="1234567890"
@@ -137,15 +142,17 @@ const Index = () => {
         </div>
       );
     } catch (error) {
-      console.error('Error rendering main content:', error);
+      console.error('CRITICAL ERROR rendering main content:', error);
+      setRenderError(error.message || 'Unknown rendering error');
       return (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center p-8">
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="text-center max-w-md">
             <h1 className="text-2xl font-bold text-red-600 mb-4">Erreur de rendu</h1>
-            <p className="text-gray-600">Une erreur s'est produite lors du rendu de la page.</p>
+            <p className="text-gray-600 mb-4">Une erreur s'est produite lors du rendu de la page.</p>
+            <p className="text-sm text-gray-500 mb-4">Détails: {renderError}</p>
             <button 
               onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
               Recharger la page
             </button>
@@ -155,26 +162,51 @@ const Index = () => {
     }
   };
 
-  console.log('About to render Index with isMobile:', isMobile);
+  console.log('About to render Index with mobile status:', { isMobile, renderError });
 
-  return (
-    <CriticalCSS>
-      <PerformanceOptimizationManager 
-        enableBudgetMonitoring={true}
-        enableServiceWorker={true}
-        enableResourceHints={true}
-        enableFontOptimization={true}
-      />
-      
-      {isMobile ? (
-        <SimpleMobileWrapper>
-          {renderMainContent()}
-        </SimpleMobileWrapper>
-      ) : (
-        renderMainContent()
-      )}
-    </CriticalCSS>
-  );
+  // Render with comprehensive error handling
+  try {
+    const content = (
+      <>
+        <CriticalCSS>
+          <PerformanceOptimizationManager 
+            enableBudgetMonitoring={true}
+            enableServiceWorker={true}
+            enableResourceHints={true}
+            enableFontOptimization={true}
+          />
+          
+          {isMobile ? (
+            <SimpleMobileWrapper>
+              {renderMainContent()}
+            </SimpleMobileWrapper>
+          ) : (
+            renderMainContent()
+          )}
+        </CriticalCSS>
+      </>
+    );
+
+    console.log("=== INDEX COMPONENT RENDER END ===");
+    return content;
+
+  } catch (error) {
+    console.error('FATAL ERROR in Index component:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-white">
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-red-600 mb-2">Erreur critique</h1>
+          <p className="text-gray-600">L'application ne peut pas se charger.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+          >
+            Recharger
+          </button>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default Index;
