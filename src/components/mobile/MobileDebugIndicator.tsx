@@ -1,9 +1,26 @@
 
-import React from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import React, { useState, useEffect } from 'react';
 
 const MobileDebugIndicator: React.FC = () => {
-  const isMobile = useIsMobile();
+  const [isMobile, setIsMobile] = useState(false);
+  const [width, setWidth] = useState(0);
+  
+  useEffect(() => {
+    try {
+      const updateSize = () => {
+        const currentWidth = window.innerWidth;
+        const mobile = currentWidth < 768;
+        setWidth(currentWidth);
+        setIsMobile(mobile);
+      };
+      
+      updateSize();
+      window.addEventListener('resize', updateSize);
+      return () => window.removeEventListener('resize', updateSize);
+    } catch (error) {
+      console.error('Error in MobileDebugIndicator:', error);
+    }
+  }, []);
   
   if (process.env.NODE_ENV !== 'development') {
     return null;
@@ -11,7 +28,7 @@ const MobileDebugIndicator: React.FC = () => {
   
   return (
     <div className="mobile-device-indicator">
-      {isMobile ? 'Mobile' : 'Desktop'} - {window.innerWidth}px
+      {isMobile ? 'Mobile' : 'Desktop'} - {width}px
     </div>
   );
 };
