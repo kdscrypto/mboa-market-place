@@ -24,159 +24,122 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   
-  // Ultra simple mobile detection - no hooks, no complexity
+  // Simple mobile detection without complex logic
   const [isMobile, setIsMobile] = useState(false);
-  
-  useEffect(() => {
-    try {
-      const checkMobile = () => {
-        const mobile = window.innerWidth < 768;
-        console.log("Simple mobile check:", { width: window.innerWidth, mobile });
-        setIsMobile(mobile);
-      };
-      
-      checkMobile();
-      window.addEventListener("resize", checkMobile);
-      return () => window.removeEventListener("resize", checkMobile);
-    } catch (error) {
-      console.error("Error in mobile detection:", error);
-      setIsMobile(false); // Safe fallback
-    }
-  }, []);
   
   // Featured categories - select first 12 categories to display
   const featuredCategories = categories.slice(0, 12);
 
+  // Simple mobile detection on mount only
   useEffect(() => {
-    console.log('Index useEffect running - checking for recovery and loading ads');
-    
-    try {
-      // Check if this is a password recovery redirect from Supabase
-      const urlHash = window.location.hash;
-      const urlParams = new URLSearchParams(urlHash.substring(1));
-      const recoveryType = urlParams.get('type');
-      
-      console.log("Index page - recovery check:", { hash: urlHash, type: recoveryType });
-      
-      if (recoveryType === 'recovery') {
-        console.log("Recovery type detected, redirecting to reset-password page");
-        navigate('/reset-password' + window.location.hash);
-        return;
+    const checkIfMobile = () => {
+      try {
+        const mobile = window.innerWidth < 768;
+        console.log("Mobile check - width:", window.innerWidth, "isMobile:", mobile);
+        setIsMobile(mobile);
+      } catch (err) {
+        console.error("Mobile detection error:", err);
+        setIsMobile(false);
       }
+    };
+    
+    checkIfMobile();
+  }, []);
 
-      // Load approved ads
-      const loadApprovedAds = async () => {
-        console.log('Starting to load approved ads...');
+  useEffect(() => {
+    console.log('Index useEffect - loading ads and checking recovery');
+    
+    // Simplified recovery check without complex URL parsing
+    const urlFragment = window.location.hash;
+    if (urlFragment.includes('type=recovery')) {
+      console.log("Recovery detected, redirecting");
+      navigate('/reset-password' + urlFragment);
+      return;
+    }
+
+    // Load ads
+    const loadAds = async () => {
+      console.log('Loading approved ads...');
+      try {
         setIsLoading(true);
         setError(false);
-        try {
-          const ads = await fetchApprovedAds(12);
-          console.log("Recent ads loaded for homepage:", ads.length);
-          setRecentAds(ads);
-        } catch (err) {
-          console.error("Error loading approved ads:", err);
-          setError(true);
-          setRecentAds([]);
-        } finally {
-          setIsLoading(false);
-          console.log('Finished loading ads');
-        }
-      };
+        const ads = await fetchApprovedAds(12);
+        console.log("Ads loaded successfully:", ads.length);
+        setRecentAds(ads);
+      } catch (err) {
+        console.error("Error loading ads:", err);
+        setError(true);
+        setRecentAds([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      loadApprovedAds();
-    } catch (error) {
-      console.error("Error in Index useEffect:", error);
-    }
+    loadAds();
   }, [navigate]);
 
   const handleSearch = (filters: any) => {
-    try {
-      console.log("Search filters:", filters);
-      
-      // Convert filters to URL search params
-      const searchParams = new URLSearchParams();
-      
-      // Only add non-empty filters
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== '' && value !== undefined && value !== null) {
-          searchParams.set(key, value as string);
-        }
-      });
-      
-      // Navigate to search results page with the filters in the URL
-      navigate(`/recherche?${searchParams.toString()}`);
-    } catch (error) {
-      console.error("Error in handleSearch:", error);
-    }
+    console.log("Search filters:", filters);
+    
+    const searchParams = new URLSearchParams();
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== '' && value !== undefined && value !== null) {
+        searchParams.set(key, value as string);
+      }
+    });
+    
+    navigate(`/recherche?${searchParams.toString()}`);
   };
 
-  console.log('About to render Index with mobile status:', { isMobile });
+  console.log('Rendering Index with isMobile:', isMobile);
 
-  try {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className={isMobile ? "pb-20" : ""}>
-          <HeroSection />
-          <SearchSection onSearch={handleSearch} />
-          
-          <div className="mboa-container">
-            <div className="flex flex-col lg:flex-row gap-8">
-              <div className="flex-1">
-                <CategoriesSection categories={featuredCategories} />
-                
-                {!isMobile && (
-                  <div className="mb-6">
-                    <GoogleAdBanner
-                      adSlot="9876543210"
-                      style={{ width: "100%", height: "120px" }}
-                    />
-                  </div>
-                )}
-                
-                <AdsSection 
-                  recentAds={recentAds} 
-                  isLoading={isLoading} 
-                  error={error} 
-                />
-              </div>
+  return (
+    <div className="min-h-screen bg-white">
+      <Header />
+      <main className={isMobile ? "pb-20" : ""}>
+        <HeroSection />
+        <SearchSection onSearch={handleSearch} />
+        
+        <div className="mboa-container">
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-1">
+              <CategoriesSection categories={featuredCategories} />
               
               {!isMobile && (
-                <div className="hidden lg:block lg:w-80">
-                  <GoogleAdSidebar
-                    adSlot="1234567890"
-                    style={{ width: "300px", height: "600px" }}
+                <div className="mb-6">
+                  <GoogleAdBanner
+                    adSlot="9876543210"
+                    style={{ width: "100%", height: "120px" }}
                   />
                 </div>
               )}
+              
+              <AdsSection 
+                recentAds={recentAds} 
+                isLoading={isLoading} 
+                error={error} 
+              />
             </div>
+            
+            {!isMobile && (
+              <div className="hidden lg:block lg:w-80">
+                <GoogleAdSidebar
+                  adSlot="1234567890"
+                  style={{ width: "300px", height: "600px" }}
+                />
+              </div>
+            )}
           </div>
-          
-          <FeaturesSections />
-          <CTASection />
-        </main>
-        <Footer />
-        {isMobile && <MobileNavigationBar />}
-      </div>
-    );
-
-  } catch (error) {
-    console.error('FATAL ERROR in Index component:', error);
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-white">
-        <div className="text-center">
-          <h1 className="text-xl font-bold text-red-600 mb-2">Erreur critique</h1>
-          <p className="text-gray-600">L'application ne peut pas se charger.</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
-          >
-            Recharger
-          </button>
         </div>
-      </div>
-    );
-  }
+        
+        <FeaturesSections />
+        <CTASection />
+      </main>
+      <Footer />
+      {isMobile && <MobileNavigationBar />}
+    </div>
+  );
 };
 
 export default Index;

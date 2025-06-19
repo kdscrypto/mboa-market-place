@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import './styles/mobile.css';
-import './styles/mobile-debug.css';
 
 console.log("=== MAIN.TSX EXECUTION START ===");
 
