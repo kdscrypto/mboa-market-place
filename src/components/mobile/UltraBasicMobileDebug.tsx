@@ -5,7 +5,7 @@ const UltraBasicMobileDebug: React.FC = () => {
   useEffect(() => {
     console.log("=== ULTRA BASIC DEBUG INITIALIZING ===");
     
-    // Créer immédiatement un indicateur visuel simplifié
+    // Fonction pour créer l'indicateur de manière ultra-sécurisée
     const createVisualIndicator = () => {
       try {
         // Supprimer l'ancien indicateur s'il existe
@@ -14,170 +14,180 @@ const UltraBasicMobileDebug: React.FC = () => {
           existing.remove();
         }
 
-        // Créer un nouvel indicateur plus simple
+        // Créer un nouvel indicateur plus simple et plus robuste
         const indicator = document.createElement('div');
         indicator.id = 'ultra-debug-indicator';
-        indicator.style.cssText = `
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100vw !important;
-          height: 25px !important;
-          background: #ff0000 !important;
-          z-index: 999999 !important;
-          pointer-events: all !important;
-          font-family: monospace !important;
-          font-size: 10px !important;
-          color: white !important;
-          text-align: center !important;
-          line-height: 25px !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          padding: 0 5px !important;
-          cursor: pointer !important;
-        `;
         
-        indicator.textContent = 'DEBUG ACTIF - Cliquez pour diagnostic';
-        document.body.appendChild(indicator);
-        console.log("Visual indicator created successfully");
+        // Styles CSS inline pour éviter les conflits
+        const styles = [
+          'position: fixed !important',
+          'top: 0 !important',
+          'left: 0 !important',
+          'width: 100vw !important',
+          'height: 30px !important',
+          'background: #dc2626 !important',
+          'z-index: 999999 !important',
+          'pointer-events: all !important',
+          'font-family: monospace !important',
+          'font-size: 11px !important',
+          'color: white !important',
+          'text-align: center !important',
+          'line-height: 30px !important',
+          'display: flex !important',
+          'align-items: center !important',
+          'justify-content: center !important',
+          'padding: 0 10px !important',
+          'cursor: pointer !important',
+          'box-sizing: border-box !important'
+        ];
+        
+        indicator.style.cssText = styles.join('; ');
+        indicator.textContent = '🔧 DEBUG ACTIF - React Error Detected - Cliquez pour diagnostic';
+        
+        // Ajouter au body de manière sécurisée
+        if (document.body) {
+          document.body.appendChild(indicator);
+          console.log("Visual indicator created successfully");
+        } else {
+          console.error("Document.body not available");
+          return;
+        }
 
-        // Diagnostic approfondi après un délai
-        setTimeout(() => {
-          const reactRootElement = document.getElementById('root');
-          const mainAppElement = document.querySelector('[data-main-app]');
-          const headerElement = document.querySelector('header');
-          const mainElement = document.querySelector('main');
-          
-          console.log("=== DIAGNOSTIC DÉTAILLÉ ===");
-          console.log("React Root:", reactRootElement ? 'TROUVÉ' : 'MANQUANT');
-          console.log("React Root children:", reactRootElement?.children.length || 0);
-          console.log("Main App Element:", mainAppElement ? 'TROUVÉ' : 'MANQUANT');
-          console.log("Header Element:", headerElement ? 'TROUVÉ' : 'MANQUANT');
-          console.log("Main Element:", mainElement ? 'TROUVÉ' : 'MANQUANT');
-          
-          // Vérifier les erreurs React dans la console
-          const errors = (window as any).__REACT_ERROR_LOGS || [];
-          console.log("React errors found:", errors.length);
-          
-          // Mettre à jour l'indicateur avec des infos plus précises
-          let status = 'ERREUR REACT DÉTECTÉE';
-          let bgColor = '#ff0000';
-          
-          if (!reactRootElement) {
-            status = 'React Root manquant';
-          } else if (reactRootElement.children.length === 0) {
-            status = 'React Root vide - Erreur de rendu';
-            bgColor = '#ff0000';
-          } else if (!mainAppElement) {
-            status = 'App principale manquante';
-          } else if (!headerElement && !mainElement) {
-            status = 'Composants principaux manquants';
-          } else {
-            status = 'Diagnostic OK';
-            bgColor = '#00aa00';
+        // Diagnostic immédiat et simplifié
+        const performDiagnostic = () => {
+          try {
+            const rootElement = document.getElementById('root');
+            const reactDetected = !!(window as any).React;
+            const rootHasChildren = rootElement ? rootElement.children.length : 0;
+            
+            console.log("=== DIAGNOSTIC SIMPLIFIÉ ===");
+            console.log("Root element:", rootElement ? 'TROUVÉ' : 'MANQUANT');
+            console.log("Root children count:", rootHasChildren);
+            console.log("React detected:", reactDetected);
+            console.log("React version:", (window as any).React?.version || 'Non détectée');
+            
+            // Vérifier les erreurs stockées
+            const renderError = (window as any).__RENDER_ERROR;
+            const importError = (window as any).__IMPORT_ERROR;
+            const reactErrors = (window as any).__REACT_ERROR_LOGS || [];
+            
+            console.log("Render errors:", !!renderError);
+            console.log("Import errors:", !!importError);
+            console.log("React error logs:", reactErrors.length);
+            
+            // Mettre à jour l'indicateur avec le diagnostic
+            let status = 'ERROR DETECTED';
+            let bgColor = '#dc2626';
+            
+            if (!rootElement) {
+              status = 'ROOT ELEMENT MISSING';
+            } else if (!reactDetected) {
+              status = 'REACT NOT DETECTED';
+            } else if (rootHasChildren === 0) {
+              status = 'REACT ROOT EMPTY';
+            } else if (renderError) {
+              status = 'RENDER ERROR';
+            } else if (importError) {
+              status = 'IMPORT ERROR';
+            } else if (reactErrors.length > 0) {
+              status = 'REACT ERRORS';
+            } else {
+              status = 'DIAGNOSTIC OK';
+              bgColor = '#059669';
+            }
+            
+            indicator.style.background = bgColor + ' !important';
+            indicator.textContent = `🔧 DEBUG: ${status} - Cliquez pour plus d'infos`;
+            
+          } catch (diagError) {
+            console.error("Diagnostic failed:", diagError);
+            indicator.textContent = '🔧 DEBUG: Diagnostic failed - Cliquez pour reload';
           }
-          
-          indicator.style.background = bgColor;
-          indicator.textContent = `DEBUG: ${status} - Cliquez pour plus`;
-          
-        }, 2000);
-
-        // Gestionnaire de clic pour ouvrir l'outil avancé
-        const handleDebugClick = () => {
-          console.log("=== OUVERTURE OUTIL DIAGNOSTIC AVANCÉ ===");
-          
-          // Déclencher l'ouverture de l'outil de diagnostic avancé
-          const advancedDebugEvent = new CustomEvent('openAdvancedDebug', {
-            detail: { 
-              source: 'ultra-basic-debug',
-              timestamp: new Date().toISOString()
-            }
-          });
-          window.dispatchEvent(advancedDebugEvent);
-          
-          // Afficher aussi les infos de diagnostic complet
-          console.log("=== DIAGNOSTIC COMPLET ===");
-          
-          // Analyser tous les éléments DOM
-          const allElements = document.querySelectorAll('*');
-          const elementsByTag: { [key: string]: number } = {};
-          allElements.forEach(el => {
-            const tag = el.tagName.toLowerCase();
-            elementsByTag[tag] = (elementsByTag[tag] || 0) + 1;
-          });
-          
-          console.log("Éléments DOM par type:", elementsByTag);
-          console.log("Nombre total d'éléments:", allElements.length);
-          
-          // Vérifier les scripts
-          const scripts = document.querySelectorAll('script');
-          console.log("Scripts chargés:", scripts.length);
-          scripts.forEach((script, i) => {
-            if (script.src) {
-              console.log(`Script ${i}:`, script.src);
-            }
-          });
-          
-          // Vérifier les CSS
-          const stylesheets = document.querySelectorAll('link[rel="stylesheet"], style');
-          console.log("Feuilles de style:", stylesheets.length);
-          
-          // Vérifier l'état de React
-          const reactVersion = (window as any).React?.version;
-          console.log("React version:", reactVersion || 'Non détectée');
-          
-          // Mettre à jour l'indicateur
-          indicator.textContent = `DEBUG: ${allElements.length} éléments, ${scripts.length} scripts - Outil avancé ouvert`;
         };
 
+        // Lancer le diagnostic après un court délai
+        setTimeout(performDiagnostic, 1000);
+
+        // Gestionnaire de clic simplifié
+        const handleDebugClick = () => {
+          try {
+            console.log("=== DEBUG CLICK HANDLER ===");
+            
+            // Afficher les informations complètes
+            const diagnosticInfo = {
+              timestamp: new Date().toISOString(),
+              userAgent: navigator.userAgent,
+              viewport: `${window.innerWidth}x${window.innerHeight}`,
+              reactVersion: (window as any).React?.version || 'Non détectée',
+              rootElement: !!document.getElementById('root'),
+              rootChildren: document.getElementById('root')?.children.length || 0,
+              renderError: (window as any).__RENDER_ERROR?.message || 'None',
+              importError: (window as any).__IMPORT_ERROR?.message || 'None',
+              reactErrors: ((window as any).__REACT_ERROR_LOGS || []).length,
+              totalElements: document.querySelectorAll('*').length,
+              scripts: document.querySelectorAll('script').length,
+              stylesheets: document.querySelectorAll('link[rel="stylesheet"], style').length
+            };
+            
+            console.log("=== DIAGNOSTIC COMPLET ===", diagnosticInfo);
+            
+            // Déclencher l'ouverture de l'outil avancé si possible
+            const advancedDebugEvent = new CustomEvent('openAdvancedDebug', {
+              detail: { 
+                source: 'ultra-basic-debug',
+                diagnosticInfo
+              }
+            });
+            window.dispatchEvent(advancedDebugEvent);
+            
+            // Mettre à jour l'indicateur
+            indicator.textContent = `🔧 DEBUG: Info logged - ${diagnosticInfo.totalElements} elements total`;
+            
+          } catch (clickError) {
+            console.error("Click handler error:", clickError);
+            // En cas d'erreur, proposer un reload simple
+            if (confirm('Erreur dans le diagnostic. Recharger la page ?')) {
+              window.location.reload();
+            }
+          }
+        };
+
+        // Attacher le gestionnaire de clic
         indicator.addEventListener('click', handleDebugClick);
+        
+        // Stocker la référence pour nettoyage
+        (window as any).__DEBUG_INDICATOR = indicator;
 
       } catch (error) {
         console.error("Failed to create visual indicator:", error);
+        
+        // Fallback ultra-simple en cas d'échec total
+        try {
+          const simpleDiv = document.createElement('div');
+          simpleDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:25px;background:red;color:white;text-align:center;z-index:999999;font-size:12px;line-height:25px;';
+          simpleDiv.textContent = 'DEBUG: Error creating indicator - Click to reload';
+          simpleDiv.onclick = () => window.location.reload();
+          document.body?.appendChild(simpleDiv);
+        } catch (fallbackError) {
+          console.error("Even fallback failed:", fallbackError);
+        }
       }
     };
 
     // Créer l'indicateur immédiatement
     createVisualIndicator();
 
-    // Capturer toutes les erreurs possibles
-    const originalError = window.onerror;
-    const errorHandler: OnErrorEventHandler = (message, source, lineno, colno, error) => {
-      console.error("CAPTURED ERROR:", { message, source, lineno, colno, error });
-      
-      // Mettre à jour l'indicateur avec l'erreur
-      const indicator = document.getElementById('ultra-debug-indicator');
-      if (indicator) {
-        indicator.style.background = '#ff0000';
-        indicator.textContent = `ERREUR JS: ${String(message).substring(0, 50)}...`;
-      }
-      
-      if (originalError) {
-        return originalError.call(window, message, source, lineno, colno, error);
-      }
-      return true;
-    };
-    
-    window.onerror = errorHandler;
-
-    // Capturer les rejets de promesses
-    const rejectionHandler = (event: PromiseRejectionEvent) => {
-      console.error("UNHANDLED REJECTION:", event.reason);
-      
-      const indicator = document.getElementById('ultra-debug-indicator');
-      if (indicator) {
-        indicator.style.background = '#ff8800';
-        indicator.textContent = `PROMESSE REJETÉE: ${String(event.reason).substring(0, 40)}...`;
-      }
-    };
-
-    window.addEventListener('unhandledrejection', rejectionHandler);
-
+    // Nettoyer à la destruction du composant
     return () => {
-      // Nettoyer les handlers
-      window.onerror = originalError;
-      window.removeEventListener('unhandledrejection', rejectionHandler);
+      try {
+        const indicator = document.getElementById('ultra-debug-indicator');
+        if (indicator) {
+          indicator.remove();
+        }
+        delete (window as any).__DEBUG_INDICATOR;
+      } catch (cleanupError) {
+        console.error("Cleanup error:", cleanupError);
+      }
     };
   }, []);
 
