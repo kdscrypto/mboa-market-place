@@ -17,9 +17,19 @@ import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 import MobileNavigationBar from "@/components/mobile/MobileNavigationBar";
 import MobileDebugger from "@/components/mobile/MobileDebugger";
 import MobileEmergencyMode from "@/components/mobile/MobileEmergencyMode";
+import UltraBasicMobileDebug from "@/components/mobile/UltraBasicMobileDebug";
 
 const Index = () => {
   console.log("=== INDEX COMPONENT RENDER START ===");
+  
+  // Mettre à jour l'indicateur HTML pour montrer que React fonctionne
+  useEffect(() => {
+    const indicator = document.getElementById('early-debug-indicator');
+    if (indicator) {
+      indicator.style.background = '#0000ff';
+      indicator.textContent = 'REACT DÉMARRÉ - Index render';
+    }
+  }, []);
   
   const navigate = useNavigate();
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
@@ -39,6 +49,12 @@ const Index = () => {
         const mobile = window.innerWidth < 768;
         console.log("Mobile check - width:", window.innerWidth, "isMobile:", mobile);
         setIsMobile(mobile);
+        
+        // Mettre à jour l'indicateur avec les infos mobile
+        const indicator = document.getElementById('early-debug-indicator');
+        if (indicator) {
+          indicator.textContent = `Mobile: ${mobile ? 'OUI' : 'NON'} (${window.innerWidth}px)`;
+        }
       } catch (err) {
         console.error("Mobile detection error:", err);
         setIsMobile(false);
@@ -68,10 +84,24 @@ const Index = () => {
         const ads = await fetchApprovedAds(12);
         console.log("Ads loaded successfully:", ads.length);
         setRecentAds(ads);
+        
+        // Mettre à jour l'indicateur
+        const indicator = document.getElementById('early-debug-indicator');
+        if (indicator) {
+          indicator.style.background = '#00aa00';
+          indicator.textContent = `DONNÉES CHARGÉES (${ads.length} annonces)`;
+        }
       } catch (err) {
         console.error("Error loading ads:", err);
         setError(true);
         setRecentAds([]);
+        
+        // Mettre à jour l'indicateur en cas d'erreur
+        const indicator = document.getElementById('early-debug-indicator');
+        if (indicator) {
+          indicator.style.background = '#aa0000';
+          indicator.textContent = 'ERREUR CHARGEMENT DONNÉES';
+        }
       } finally {
         setIsLoading(false);
       }
@@ -98,6 +128,7 @@ const Index = () => {
 
   return (
     <>
+      <UltraBasicMobileDebug />
       <MobileEmergencyMode />
       <MobileDebugger />
       <div className="min-h-screen bg-white" data-main-app="true">
