@@ -72,9 +72,11 @@ const MobileDebugger: React.FC = () => {
 
       setDebugInfo(info);
       console.log("Mobile Debug Info:", info);
+      
+      return info;
     };
 
-    updateDebugInfo();
+    const currentInfo = updateDebugInfo();
 
     // Capture errors
     const errorHandler = (event: ErrorEvent) => {
@@ -99,7 +101,7 @@ const MobileDebugger: React.FC = () => {
 
     // Auto-show on mobile or if errors
     const timer = setTimeout(() => {
-      if (info.isMobileDevice || info.errors.length > 0) {
+      if (currentInfo.isMobileDevice || currentInfo.errors.length > 0) {
         setIsVisible(true);
       }
     }, 2000);
