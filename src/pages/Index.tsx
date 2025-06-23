@@ -21,9 +21,9 @@ import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 import MobileNavigationBar from "@/components/mobile/MobileNavigationBar";
 
 const Index: React.FC = () => {
-  console.log("Index: Rendu simplifié");
+  console.log("Index: Début du rendu");
   
-  // États ultra-simplifiés
+  // États simplifiés
   const [recentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error] = useState<boolean>(false);
@@ -32,9 +32,9 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
   const featuredCategories = categories.slice(0, 12);
 
-  // Effet ultra-simple pour le chargement
+  // Initialisation ultra-simple
   useEffect(() => {
-    console.log("Index: Initialisation simple");
+    console.log("Index: Initialisation");
     
     // Vérification de récupération de mot de passe
     const urlFragment = window.location.hash;
@@ -43,18 +43,18 @@ const Index: React.FC = () => {
       return;
     }
 
-    // Chargement simple sans promesses complexes
+    // Simulation de chargement minimal
     const timer = setTimeout(() => {
       setIsLoading(false);
       console.log("Index: Chargement terminé");
-    }, 300);
+    }, 100); // Délai réduit à 100ms
     
     return () => clearTimeout(timer);
   }, [navigate]);
 
-  // Gestionnaire de recherche ultra-simple
+  // Gestionnaire de recherche
   const handleSearch = (filters: any) => {
-    console.log("Index: Recherche simple:", filters);
+    console.log("Index: Recherche:", filters);
     
     const searchParams = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
@@ -66,9 +66,9 @@ const Index: React.FC = () => {
     navigate(`/recherche?${searchParams.toString()}`);
   };
 
-  console.log("Index: Rendu JSX simple", { isMobile, isLoading });
+  console.log("Index: Rendu avec", { isMobile, isLoading });
 
-  // Écran de chargement ultra-simple
+  // Écran de chargement minimal
   if (isLoading) {
     return (
       <React.Fragment>
@@ -76,14 +76,14 @@ const Index: React.FC = () => {
         <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Initialisation...</p>
+            <p className="text-gray-600">Chargement...</p>
           </div>
         </div>
       </React.Fragment>
     );
   }
 
-  // Rendu principal ultra-simplifié
+  // Rendu principal
   return (
     <React.Fragment>
       <MinimalMobileDebug />

@@ -7,7 +7,7 @@ interface SimpleMobileWrapperProps {
 
 const SimpleMobileWrapper: React.FC<SimpleMobileWrapperProps> = ({ children }) => {
   return (
-    <div className="w-full min-h-screen">
+    <div className="w-full min-h-screen" style={{ minHeight: '100vh' }}>
       {children}
     </div>
   );

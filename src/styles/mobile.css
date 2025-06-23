@@ -1,5 +1,5 @@
 
-/* CSS mobile ultra-simplifié pour éviter les conflits */
+/* CSS mobile ultra-simplifié */
 
 /* Safe area insets de base */
 @supports (padding: max(0px)) {
@@ -28,19 +28,11 @@
   }
 }
 
-/* Boutons mobiles */
-@media (max-width: 640px) {
-  .mobile-button {
-    min-height: 44px;
-    min-width: 44px;
-    padding: 0.625rem 1rem;
-    font-size: 0.875rem;
-  }
-}
-
 /* Prévenir le scroll horizontal */
 body {
   overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 /* Box sizing global */
@@ -48,17 +40,8 @@ body {
   box-sizing: border-box;
 }
 
-/* Styles simples pour les orientations */
-@media screen and (orientation: portrait) {
-  body {
-    width: 100vw;
-    height: 100vh;
-  }
-}
-
-@media screen and (orientation: landscape) {
-  body {
-    width: 100vw;
-    height: 100vh;
-  }
+/* Styles de base pour mobile */
+html, body, #root {
+  height: 100%;
+  width: 100%;
 }

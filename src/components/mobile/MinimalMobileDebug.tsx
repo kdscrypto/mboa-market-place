@@ -3,59 +3,57 @@ import React from 'react';
 
 const MinimalMobileDebug: React.FC = () => {
   React.useLayoutEffect(() => {
-    // Diagnostic ultra-simple
+    console.log('=== DIAGNOSTIC SIMPLIFIÉ ===');
+    
+    // Diagnostic de base sans vérifications React obsolètes
     const isMobile = window.innerWidth < 768;
     const userAgent = navigator.userAgent;
     const isAndroid = /Android/i.test(userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
     
-    console.log('=== DIAGNOSTIC ULTRA-SIMPLE ===');
     console.log('Mobile:', isMobile);
     console.log('Android:', isAndroid);
     console.log('iOS:', isIOS);
     console.log('Viewport:', window.innerWidth, 'x', window.innerHeight);
-    console.log('User Agent:', userAgent);
     
-    // Vérifications React essentielles
-    const reactExists = !!(window as any).React;
+    // Vérifications DOM plus fiables
     const rootElement = document.getElementById('root');
-    const rootChildren = rootElement?.children.length || 0;
+    const hasMainApp = document.querySelector('[data-main-app]');
+    const hasReactContent = rootElement && rootElement.innerHTML.length > 100;
     
-    console.log('React existe:', reactExists);
     console.log('Root element:', !!rootElement);
-    console.log('Root children:', rootChildren);
+    console.log('Main app marker:', !!hasMainApp);
+    console.log('Has content:', hasReactContent);
     
-    // Indicateur visuel simplifié seulement si erreur majeure
-    if (!reactExists || !rootElement || rootChildren === 0) {
+    // Ne créer un indicateur d'erreur QUE si vraiment nécessaire
+    const hasRealError = !rootElement || (!hasMainApp && !hasReactContent);
+    
+    if (hasRealError) {
       const indicator = document.createElement('div');
-      indicator.id = 'ultra-simple-debug';
+      indicator.id = 'simple-debug';
       indicator.style.cssText = `
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
-        height: 40px !important;
-        background: #dc2626 !important;
+        height: 35px !important;
+        background: #1f2937 !important;
         color: white !important;
         z-index: 999999 !important;
         text-align: center !important;
-        line-height: 40px !important;
-        font-size: 14px !important;
-        font-family: monospace !important;
+        line-height: 35px !important;
+        font-size: 13px !important;
+        font-family: system-ui !important;
+        cursor: pointer !important;
       `;
       
-      let message = 'ERREUR: ';
-      if (!reactExists) message += 'React manquant';
-      else if (!rootElement) message += 'Root manquant';
-      else if (rootChildren === 0) message += 'Root vide';
-      message += ' | Cliquez pour recharger';
-      
-      indicator.textContent = message;
+      indicator.textContent = '⚠️ Erreur de chargement - Cliquez pour recharger';
       indicator.onclick = () => window.location.reload();
       
       document.body?.appendChild(indicator);
-      
-      console.error('ERREUR CRITIQUE DÉTECTÉE:', message);
+      console.error('ERREUR DE CHARGEMENT DÉTECTÉE');
+    } else {
+      console.log('✅ Application chargée correctement');
     }
   }, []);
 
