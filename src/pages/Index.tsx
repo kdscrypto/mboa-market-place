@@ -47,7 +47,7 @@ const Index: React.FC = () => {
     const timer = setTimeout(() => {
       setIsLoading(false);
       console.log("Index: Chargement terminé");
-    }, 100); // Délai réduit à 100ms
+    }, 100);
     
     return () => clearTimeout(timer);
   }, [navigate]);
@@ -71,7 +71,7 @@ const Index: React.FC = () => {
   // Écran de chargement minimal
   if (isLoading) {
     return (
-      <React.Fragment>
+      <div>
         <MinimalMobileDebug />
         <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
@@ -79,13 +79,13 @@ const Index: React.FC = () => {
             <p className="text-gray-600">Chargement...</p>
           </div>
         </div>
-      </React.Fragment>
+      </div>
     );
   }
 
-  // Rendu principal
+  // Rendu principal avec structure JSX simplifiée
   return (
-    <React.Fragment>
+    <div>
       <MinimalMobileDebug />
       
       <SimpleMobileWrapper>
@@ -138,7 +138,7 @@ const Index: React.FC = () => {
           {isMobile && <MobileNavigationBar />}
         </div>
       </SimpleMobileWrapper>
-    </React.Fragment>
+    </div>
   );
 };
 
