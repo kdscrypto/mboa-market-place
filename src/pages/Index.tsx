@@ -15,9 +15,6 @@ import { categories } from "@/data/categoriesData";
 import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
 import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 import MobileNavigationBar from "@/components/mobile/MobileNavigationBar";
-import MobileDiagnostic from "@/components/mobile/MobileDiagnostic";
-import MobileDebugOverlay from "@/components/mobile/MobileDebugOverlay";
-import MobileTestComponent from "@/components/mobile/MobileTestComponent";
 
 const Index = () => {
   console.log("=== INDEX COMPONENT RENDER START ===");
@@ -100,14 +97,14 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      <main className={isMobile ? "pb-20" : ""} data-main-content>
+      <main className={isMobile ? "pb-20" : ""}>
         <HeroSection />
-        <SearchSection onSearch={handleSearch} data-search-section />
+        <SearchSection onSearch={handleSearch} />
         
         <div className="mboa-container">
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="flex-1">
-              <CategoriesSection categories={featuredCategories} data-categories-section />
+              <CategoriesSection categories={featuredCategories} />
               
               {!isMobile && (
                 <div className="mb-6">
@@ -121,8 +118,7 @@ const Index = () => {
               <AdsSection 
                 recentAds={recentAds} 
                 isLoading={isLoading} 
-                error={error}
-                data-ads-section
+                error={error} 
               />
             </div>
             
@@ -141,16 +137,7 @@ const Index = () => {
         <CTASection />
       </main>
       <Footer />
-      {isMobile && <MobileNavigationBar data-mobile-nav />}
-      
-      {/* Composants de diagnostic pour mobile uniquement */}
-      {isMobile && (
-        <>
-          <MobileDiagnostic />
-          <MobileDebugOverlay />
-          <MobileTestComponent />
-        </>
-      )}
+      {isMobile && <MobileNavigationBar />}
     </div>
   );
 };

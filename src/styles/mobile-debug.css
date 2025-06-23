@@ -1,109 +1,39 @@
 
-/* CSS de diagnostic mobile ultra-minimal pour éviter les conflits */
-
-/* Indicateur d'appareil mobile visible */
+/* Simplified mobile debug styles - ultra minimal to avoid conflicts */
 .mobile-device-indicator {
-  position: fixed !important;
-  top: 10px !important;
-  right: 10px !important;
-  background: rgba(255, 0, 0, 0.9) !important;
-  color: white !important;
-  padding: 8px 12px !important;
-  border-radius: 4px !important;
-  font-size: 14px !important;
-  z-index: 10000 !important;
-  pointer-events: none !important;
-  font-family: Arial, sans-serif !important;
-  font-weight: bold !important;
-  border: 2px solid white !important;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 9999;
+  pointer-events: none;
+  font-family: monospace;
 }
 
-/* Style de diagnostic minimal pour écran noir */
-.mobile-black-screen-test {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background: linear-gradient(45deg, #ff0000 25%, #00ff00 25%, #00ff00 50%, #0000ff 50%, #0000ff 75%, #ffff00 75%) !important;
-  background-size: 40px 40px !important;
-  z-index: 9999 !important;
-  display: none !important;
-}
-
-/* Force l'affichage sur écrans très petits */
-@media (max-width: 480px) {
-  .mobile-black-screen-test {
-    display: block !important;
-  }
-}
-
-/* Assurance que le body est visible */
-body {
-  background: white !important;
-  min-height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Test de visibilité des éléments principaux */
-#root {
-  min-height: 100vh !important;
-  background: white !important;
-}
-
-/* Styles de débogage ultra-visibles */
-.debug-border {
-  border: 3px solid red !important;
-  background: rgba(255, 0, 0, 0.1) !important;
-}
-
-.debug-visible {
-  visibility: visible !important;
-  display: block !important;
-  opacity: 1 !important;
-}
-
-/* Tests de compatibilité CSS */
-.css-test-flexbox {
-  display: flex !important;
-}
-
-.css-test-grid {
-  display: grid !important;
-}
-
-.css-test-transform {
-  transform: translateX(0) !important;
-}
-
-/* Assurer la navigation mobile */
+/* Ensure basic mobile navigation spacing */
 @media (max-width: 767px) {
   .mobile-with-nav {
     padding-bottom: 80px !important;
   }
 }
 
-/* Reset complet pour éviter les conflits */
+/* Reset any problematic styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Prevent any layout shifts */
 * {
-  box-sizing: border-box !important;
-}
-
-html {
-  -webkit-text-size-adjust: 100% !important;
-  font-size: 16px !important;
-}
-
-/* Diagnostic du viewport */
-.viewport-info {
-  position: fixed !important;
-  bottom: 10px !important;
-  left: 10px !important;
-  background: rgba(0, 0, 0, 0.9) !important;
-  color: lime !important;
-  padding: 5px !important;
-  font-size: 10px !important;
-  font-family: monospace !important;
-  z-index: 10001 !important;
-  border: 1px solid lime !important;
+  box-sizing: border-box;
 }
