@@ -223,7 +223,13 @@ const MobileDebugger: React.FC = () => {
             <h4 className="font-semibold mb-1 text-yellow-600 text-xs">⚛️ React</h4>
             <div className="text-[10px]">Version: {(window as any).React?.version || 'Non détectée'}</div>
             <div className="text-[10px]">DevTools: {(window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ ? '✅' : '❌'}</div>
-            <div className="text-[10px]">Root Mount: {document.getElementById('root')?._reactInternalInstance ? '✅' : '❌'}</div>
+            <div className="text-[10px]">Root Mount: {(() => {
+              const rootElement = document.getElementById('root');
+              if (!rootElement) return '❌';
+              // Safely check for React internal properties
+              const hasReactInstance = (rootElement as any)._reactInternalInstance || (rootElement as any)._reactInternalFiber;
+              return hasReactInstance ? '✅' : '❌';
+            })()}</div>
           </div>
 
           {/* Errors */}
