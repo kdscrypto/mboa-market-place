@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Ad } from "@/types/adTypes";
 import { categories } from "@/data/categoriesData";
 import MinimalMobileDebug from "@/components/mobile/MinimalMobileDebug";
+import OrientationStabilizer from "@/components/mobile/OrientationStabilizer";
 
 // Import des composants principaux seulement
 import Header from "@/components/Header";
@@ -26,6 +27,7 @@ const Index: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isReady, setIsReady] = useState<boolean>(false);
 
   const navigate = useNavigate();
   const featuredCategories = categories.slice(0, 12);
@@ -33,27 +35,48 @@ const Index: React.FC = () => {
   // Détection mobile simplifiée et sécurisée
   useEffect(() => {
     try {
-      console.log("Index: Détection mobile");
+      console.log("Index: Détection mobile et initialisation");
+      
       const detectMobile = () => {
         const mobile = window.innerWidth < 768;
-        console.log("Index: isMobile =", mobile);
+        console.log("Index: isMobile =", mobile, "dimensions:", window.innerWidth, "x", window.innerHeight);
         setIsMobile(mobile);
+        
+        // Marquer comme prêt après la détection
+        if (!isReady) {
+          setTimeout(() => {
+            setIsReady(true);
+            console.log("Index: Application prête");
+          }, 100);
+        }
       };
       
       detectMobile();
-      window.addEventListener('resize', detectMobile);
+      
+      // Délai pour éviter les événements de resize trop fréquents
+      let resizeTimer: NodeJS.Timeout;
+      const handleResize = () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(detectMobile, 150);
+      };
+      
+      window.addEventListener('resize', handleResize);
       
       return () => {
-        window.removeEventListener('resize', detectMobile);
+        window.removeEventListener('resize', handleResize);
+        if (resizeTimer) clearTimeout(resizeTimer);
       };
     } catch (err) {
       console.error("Index: Erreur détection mobile:", err);
       setIsMobile(false);
+      setIsReady(true);
     }
-  }, []);
+  }, [isReady]);
 
   // Gestion des données simplifiée
   useEffect(() => {
+    if (!isReady) return;
+    
     console.log("Index: Chargement des données");
     
     try {
@@ -73,7 +96,7 @@ const Index: React.FC = () => {
         console.log("Index: Données chargées");
         setRecentAds([]);
         setIsLoading(false);
-      }, 1000);
+      }, 500);
       
       return () => clearTimeout(timer);
     } catch (err) {
@@ -81,7 +104,7 @@ const Index: React.FC = () => {
       setError(true);
       setIsLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, isReady]);
 
   // Gestionnaire de recherche simplifié
   const handleSearch = (filters: any) => {
@@ -101,61 +124,78 @@ const Index: React.FC = () => {
     }
   };
 
-  console.log("Index: Rendu JSX", { isMobile, isLoading, error });
+  console.log("Index: Rendu JSX", { isMobile, isLoading, error, isReady });
 
-  // Rendu principal sécurisé
+  // Attendre que l'application soit prête
+  if (!isReady) {
+    return (
+      <React.Fragment>
+        <MinimalMobileDebug />
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Chargement...</p>
+          </div>
+        </div>
+      </React.Fragment>
+    );
+  }
+
+  // Rendu principal sécurisé avec stabilisateur d'orientation
   return (
     <React.Fragment>
       <MinimalMobileDebug />
       
-      <div className="min-h-screen bg-white">
-        <Header />
-        
-        <main className={isMobile ? "pb-20" : ""}>
-          <HeroSection />
+      <OrientationStabilizer>
+        <div className="min-h-screen bg-white" data-main-app="true">
+          <Header />
           
-          <SearchSection onSearch={handleSearch} />
-          
-          <div className="mboa-container">
-            <div className="flex flex-col lg:flex-row gap-8">
-              <div className="flex-1">
-                <CategoriesSection categories={featuredCategories} />
+          <main className={isMobile ? "pb-20" : ""}>
+            <HeroSection />
+            
+            <SearchSection onSearch={handleSearch} />
+            
+            <div className="mboa-container">
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="flex-1">
+                  <CategoriesSection categories={featuredCategories} />
+                  
+                  {!isMobile && (
+                    <div className="mb-6">
+                      <GoogleAdBanner
+                        adSlot="9876543210"
+                        style={{ width: "100%", height: "120px" }}
+                      />
+                    </div>
+                  )}
+                  
+                  <AdsSection 
+                    recentAds={recentAds} 
+                    isLoading={isLoading} 
+                    error={error} 
+                  />
+                </div>
                 
                 {!isMobile && (
-                  <div className="mb-6">
-                    <GoogleAdBanner
-                      adSlot="9876543210"
-                      style={{ width: "100%", height: "120px" }}
+                  <div className="hidden lg:block lg:w-80">
+                    <GoogleAdSidebar
+                      adSlot="1234567890"
+                      style={{ width: "300px", height: "600px" }}
                     />
                   </div>
                 )}
-                
-                <AdsSection 
-                  recentAds={recentAds} 
-                  isLoading={isLoading} 
-                  error={error} 
-                />
               </div>
-              
-              {!isMobile && (
-                <div className="hidden lg:block lg:w-80">
-                  <GoogleAdSidebar
-                    adSlot="1234567890"
-                    style={{ width: "300px", height: "600px" }}
-                  />
-                </div>
-              )}
             </div>
-          </div>
+            
+            <FeaturesSections />
+            <CTASection />
+          </main>
           
-          <FeaturesSections />
-          <CTASection />
-        </main>
-        
-        <Footer />
-        
-        {isMobile && <MobileNavigationBar />}
-      </div>
+          <Footer />
+          
+          {isMobile && <MobileNavigationBar />}
+        </div>
+      </OrientationStabilizer>
     </React.Fragment>
   );
 };

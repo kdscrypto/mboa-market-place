@@ -48,3 +48,27 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Orientation-specific styles */
+.portrait-mode {
+  /* Styles spécifiques au mode portrait */
+}
+
+.landscape-mode {
+  /* Styles spécifiques au mode paysage */
+}
+
+/* Prevent layout shift during orientation change */
+@media screen and (orientation: portrait) {
+  body {
+    width: 100vw;
+    height: 100vh;
+  }
+}
+
+@media screen and (orientation: landscape) {
+  body {
+    width: 100vw;
+    height: 100vh;
+  }
+}
