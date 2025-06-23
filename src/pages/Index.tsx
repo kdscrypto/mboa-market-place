@@ -15,6 +15,9 @@ import { categories } from "@/data/categoriesData";
 import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
 import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 import MobileNavigationBar from "@/components/mobile/MobileNavigationBar";
+import MobileDiagnostic from "@/components/mobile/MobileDiagnostic";
+import MobileDebugOverlay from "@/components/mobile/MobileDebugOverlay";
+import MobileTestComponent from "@/components/mobile/MobileTestComponent";
 
 const Index = () => {
   console.log("=== INDEX COMPONENT RENDER START ===");
@@ -97,14 +100,14 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      <main className={isMobile ? "pb-20" : ""}>
+      <main className={isMobile ? "pb-20" : ""} data-main-content>
         <HeroSection />
-        <SearchSection onSearch={handleSearch} />
+        <SearchSection onSearch={handleSearch} data-search-section />
         
         <div className="mboa-container">
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="flex-1">
-              <CategoriesSection categories={featuredCategories} />
+              <CategoriesSection categories={featuredCategories} data-categories-section />
               
               {!isMobile && (
                 <div className="mb-6">
@@ -118,7 +121,8 @@ const Index = () => {
               <AdsSection 
                 recentAds={recentAds} 
                 isLoading={isLoading} 
-                error={error} 
+                error={error}
+                data-ads-section
               />
             </div>
             
@@ -137,7 +141,16 @@ const Index = () => {
         <CTASection />
       </main>
       <Footer />
-      {isMobile && <MobileNavigationBar />}
+      {isMobile && <MobileNavigationBar data-mobile-nav />}
+      
+      {/* Composants de diagnostic pour mobile uniquement */}
+      {isMobile && (
+        <>
+          <MobileDiagnostic />
+          <MobileDebugOverlay />
+          <MobileTestComponent />
+        </>
+      )}
     </div>
   );
 };
