@@ -25,7 +25,7 @@ const UltraBasicMobileDebug: React.FC = () => {
           height: 25px !important;
           background: #ff0000 !important;
           z-index: 999999 !important;
-          pointer-events: none !important;
+          pointer-events: all !important;
           font-family: monospace !important;
           font-size: 10px !important;
           color: white !important;
@@ -35,9 +35,10 @@ const UltraBasicMobileDebug: React.FC = () => {
           align-items: center !important;
           justify-content: center !important;
           padding: 0 5px !important;
+          cursor: pointer !important;
         `;
         
-        indicator.textContent = 'DEBUG ACTIF - Diagnostic en cours...';
+        indicator.textContent = 'DEBUG ACTIF - Cliquez pour diagnostic';
         document.body.appendChild(indicator);
         console.log("Visual indicator created successfully");
 
@@ -55,51 +56,52 @@ const UltraBasicMobileDebug: React.FC = () => {
           console.log("Header Element:", headerElement ? 'TROUVÉ' : 'MANQUANT');
           console.log("Main Element:", mainElement ? 'TROUVÉ' : 'MANQUANT');
           
-          // Vérifier la structure DOM complète
-          if (reactRootElement) {
-            console.log("Structure du Root:", reactRootElement.innerHTML.substring(0, 200) + '...');
-          }
+          // Vérifier les erreurs React dans la console
+          const errors = (window as any).__REACT_ERROR_LOGS || [];
+          console.log("React errors found:", errors.length);
           
           // Mettre à jour l'indicateur avec des infos plus précises
-          let status = 'ERREUR INCONNUE';
+          let status = 'ERREUR REACT DÉTECTÉE';
           let bgColor = '#ff0000';
           
           if (!reactRootElement) {
             status = 'React Root manquant';
           } else if (reactRootElement.children.length === 0) {
-            status = 'React Root vide';
+            status = 'React Root vide - Erreur de rendu';
+            bgColor = '#ff0000';
           } else if (!mainAppElement) {
             status = 'App principale manquante';
           } else if (!headerElement && !mainElement) {
             status = 'Composants principaux manquants';
           } else {
-            status = 'Problème de rendu CSS';
-            bgColor = '#ff8800';
+            status = 'Diagnostic OK';
+            bgColor = '#00aa00';
           }
           
           indicator.style.background = bgColor;
-          indicator.textContent = `DEBUG: ${status} (${window.innerWidth}x${window.innerHeight})`;
-          
-          // Essayer d'identifier les erreurs React
-          const checkReactErrors = () => {
-            const errors = window.console.error;
-            if (typeof errors === 'function') {
-              console.log("Console error handler détecté");
-            }
-          };
-          
-          checkReactErrors();
+          indicator.textContent = `DEBUG: ${status} - Cliquez pour plus`;
           
         }, 2000);
 
-        // Rendre l'indicateur cliquable pour diagnostic complet
-        indicator.style.pointerEvents = 'all';
-        indicator.onclick = () => {
-          console.log("=== DIAGNOSTIC COMPLET DEMANDÉ ===");
+        // Gestionnaire de clic pour ouvrir l'outil avancé
+        const handleDebugClick = () => {
+          console.log("=== OUVERTURE OUTIL DIAGNOSTIC AVANCÉ ===");
+          
+          // Déclencher l'ouverture de l'outil de diagnostic avancé
+          const advancedDebugEvent = new CustomEvent('openAdvancedDebug', {
+            detail: { 
+              source: 'ultra-basic-debug',
+              timestamp: new Date().toISOString()
+            }
+          });
+          window.dispatchEvent(advancedDebugEvent);
+          
+          // Afficher aussi les infos de diagnostic complet
+          console.log("=== DIAGNOSTIC COMPLET ===");
           
           // Analyser tous les éléments DOM
           const allElements = document.querySelectorAll('*');
-          const elementsByTag = {};
+          const elementsByTag: { [key: string]: number } = {};
           allElements.forEach(el => {
             const tag = el.tagName.toLowerCase();
             elementsByTag[tag] = (elementsByTag[tag] || 0) + 1;
@@ -121,9 +123,15 @@ const UltraBasicMobileDebug: React.FC = () => {
           const stylesheets = document.querySelectorAll('link[rel="stylesheet"], style');
           console.log("Feuilles de style:", stylesheets.length);
           
-          // Afficher les infos dans l'indicateur
-          indicator.textContent = `DEBUG: ${allElements.length} éléments DOM, ${scripts.length} scripts, ${stylesheets.length} CSS`;
+          // Vérifier l'état de React
+          const reactVersion = (window as any).React?.version;
+          console.log("React version:", reactVersion || 'Non détectée');
+          
+          // Mettre à jour l'indicateur
+          indicator.textContent = `DEBUG: ${allElements.length} éléments, ${scripts.length} scripts - Outil avancé ouvert`;
         };
+
+        indicator.addEventListener('click', handleDebugClick);
 
       } catch (error) {
         console.error("Failed to create visual indicator:", error);
@@ -142,7 +150,7 @@ const UltraBasicMobileDebug: React.FC = () => {
       const indicator = document.getElementById('ultra-debug-indicator');
       if (indicator) {
         indicator.style.background = '#ff0000';
-        indicator.textContent = `ERREUR JS: ${message}`;
+        indicator.textContent = `ERREUR JS: ${String(message).substring(0, 50)}...`;
       }
       
       if (originalError) {
@@ -160,7 +168,7 @@ const UltraBasicMobileDebug: React.FC = () => {
       const indicator = document.getElementById('ultra-debug-indicator');
       if (indicator) {
         indicator.style.background = '#ff8800';
-        indicator.textContent = `PROMESSE REJETÉE: ${event.reason}`;
+        indicator.textContent = `PROMESSE REJETÉE: ${String(event.reason).substring(0, 40)}...`;
       }
     };
 

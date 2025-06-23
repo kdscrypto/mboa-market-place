@@ -75,14 +75,22 @@ const MobileDebugger: React.FC = () => {
       }));
     };
 
+    // Écouter l'événement d'ouverture depuis UltraBasicMobileDebug
+    const openAdvancedDebugHandler = (event: CustomEvent) => {
+      console.log("Advanced debug requested from:", event.detail);
+      setIsVisible(true);
+    };
+
     window.addEventListener('error', errorHandler);
     window.addEventListener('unhandledrejection', unhandledRejectionHandler);
     window.addEventListener('resize', updateDebugInfo);
+    window.addEventListener('openAdvancedDebug', openAdvancedDebugHandler as EventListener);
 
     return () => {
       window.removeEventListener('error', errorHandler);
       window.removeEventListener('unhandledrejection', unhandledRejectionHandler);
       window.removeEventListener('resize', updateDebugInfo);
+      window.removeEventListener('openAdvancedDebug', openAdvancedDebugHandler as EventListener);
     };
   }, []);
 
@@ -148,6 +156,26 @@ const MobileDebugger: React.FC = () => {
           <h3 className="font-bold text-sm text-blue-600">🔧 Debug Avancé</h3>
           <div className="flex gap-2">
             <button 
+              onClick={() => {
+                console.log("=== DIAGNOSTIC REACT APPROFONDI ===");
+                // Forcer un re-render de React
+                const rootElement = document.getElementById('root');
+                if (rootElement && (window as any).React) {
+                  console.log("Tentative de récupération React...");
+                  try {
+                    // Essayer de récupérer les erreurs React
+                    const reactFiber = (rootElement as any)._reactInternalFiber || (rootElement as any)._reactInternalInstance;
+                    console.log("React Fiber found:", !!reactFiber);
+                  } catch (e) {
+                    console.log("React Fiber analysis failed:", e);
+                  }
+                }
+              }}
+              className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs"
+            >
+              🩺 Diag React
+            </button>
+            <button 
               onClick={() => window.location.reload()}
               className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"
             >
@@ -176,16 +204,26 @@ const MobileDebugger: React.FC = () => {
             <h4 className="font-semibold mb-1 text-blue-600 text-xs">⚙️ System</h4>
             <div className="text-[10px]">CSS: {debugInfo.cssLoaded ? '✅' : '❌'}</div>
             <div className="text-[10px]">JavaScript: {debugInfo.jsLoaded ? '✅' : '❌'}</div>
+            <div className="text-[10px]">React: {(window as any).React ? '✅' : '❌'}</div>
           </div>
 
           {/* DOM Analysis */}
           <div className="border p-2 rounded bg-purple-50">
             <h4 className="font-semibold mb-1 text-purple-600 text-xs">🏗️ DOM</h4>
             <div className="text-[10px]">React Root: {document.getElementById('root') ? '✅' : '❌'}</div>
+            <div className="text-[10px]">Root Children: {document.getElementById('root')?.children.length || 0}</div>
             <div className="text-[10px]">Main App: {document.querySelector('[data-main-app]') ? '✅' : '❌'}</div>
             <div className="text-[10px]">Header: {document.querySelector('header') ? '✅' : '❌'}</div>
             <div className="text-[10px]">Main: {document.querySelector('main') ? '✅' : '❌'}</div>
-            <div className="text-[10px]">Elements: {document.body.children.length}</div>
+            <div className="text-[10px]">Total Elements: {document.body.children.length}</div>
+          </div>
+
+          {/* React Analysis */}
+          <div className="border p-2 rounded bg-yellow-50">
+            <h4 className="font-semibold mb-1 text-yellow-600 text-xs">⚛️ React</h4>
+            <div className="text-[10px]">Version: {(window as any).React?.version || 'Non détectée'}</div>
+            <div className="text-[10px]">DevTools: {(window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ ? '✅' : '❌'}</div>
+            <div className="text-[10px]">Root Mount: {document.getElementById('root')?._reactInternalInstance ? '✅' : '❌'}</div>
           </div>
 
           {/* Errors */}

@@ -22,6 +22,36 @@ import UltraBasicMobileDebug from "@/components/mobile/UltraBasicMobileDebug";
 const Index = () => {
   console.log("=== INDEX COMPONENT RENDER START ===");
   
+  // Capturer immédiatement les erreurs React
+  useEffect(() => {
+    const captureReactError = (error: any, errorInfo: any) => {
+      console.error("REACT ERROR CAPTURED:", error, errorInfo);
+      
+      // Stocker l'erreur pour le diagnostic
+      (window as any).__REACT_ERROR_LOGS = (window as any).__REACT_ERROR_LOGS || [];
+      (window as any).__REACT_ERROR_LOGS.push({
+        error: error.toString(),
+        errorInfo,
+        timestamp: new Date().toISOString(),
+        stack: error.stack
+      });
+    };
+
+    // Hook pour capturer les erreurs React
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      if (args[0] && args[0].toString().includes('Minified React error')) {
+        console.log("MINIFIED REACT ERROR DETECTED:", args);
+        captureReactError(args[0], { additional: args.slice(1) });
+      }
+      originalConsoleError.apply(console, args);
+    };
+
+    return () => {
+      console.error = originalConsoleError;
+    };
+  }, []);
+  
   // État du composant
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -167,7 +197,14 @@ const Index = () => {
   } catch (err) {
     console.error("Index: ERREUR CRITIQUE DANS LE RENDU JSX:", err);
     
-    // Rendu de secours ultra-simple
+    // Log plus détaillé de l'erreur
+    if (err instanceof Error) {
+      console.error("Error name:", err.name);
+      console.error("Error message:", err.message);
+      console.error("Error stack:", err.stack);
+    }
+    
+    // Rendu de secours ultra-simple avec diagnostic
     return (
       <div style={{ 
         position: 'fixed', 
@@ -186,12 +223,21 @@ const Index = () => {
         flexDirection: 'column',
         padding: '20px'
       }}>
-        <h1 style={{ marginBottom: '20px' }}>ERREUR DE RENDU</h1>
+        <h1 style={{ marginBottom: '20px' }}>ERREUR DE RENDU REACT</h1>
         <p style={{ marginBottom: '20px' }}>
           Erreur: {err instanceof Error ? err.message : 'Erreur inconnue'}
         </p>
+        <p style={{ marginBottom: '20px', fontSize: '12px' }}>
+          Type: {err instanceof Error ? err.name : typeof err}<br/>
+          React: {(window as any).React ? 'Détecté' : 'Non détecté'}<br/>
+          Root: {document.getElementById('root') ? 'Présent' : 'Manquant'}
+        </p>
         <button 
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            console.log("=== EMERGENCY RELOAD ===");
+            console.log("React errors:", (window as any).__REACT_ERROR_LOGS);
+            window.location.reload();
+          }}
           style={{ 
             background: 'white', 
             color: 'red', 
