@@ -121,7 +121,7 @@ const UltraBasicMobileDebug: React.FC = () => {
             
             // Essayer d'afficher les infos
             try {
-              const infoText = `DIAGNOSTIC COMPLET:\n${JSON.stringify(debugInfo, null, 2)}`;
+              const diagnosticText = `DIAGNOSTIC COMPLET:\n${JSON.stringify(debugInfo, null, 2)}`;
               
               // Créer une div overlay avec les infos
               const overlay = document.createElement('div');
@@ -141,7 +141,7 @@ const UltraBasicMobileDebug: React.FC = () => {
                 overflow-y: auto !important;
                 white-space: pre-wrap !important;
               `;
-              overlay.textContent = infoText;
+              overlay.textContent = diagnosticText;
               
               const closeBtn = document.createElement('button');
               closeBtn.textContent = '✕ FERMER';
@@ -163,7 +163,7 @@ const UltraBasicMobileDebug: React.FC = () => {
               setTimeout(() => overlay.remove(), 10000); // Auto-remove après 10s
             } catch (e) {
               console.error('Failed to show diagnostic overlay:', e);
-              alert(infoText.substring(0, 1000) + '...'); // Fallback
+              alert(diagnosticText.substring(0, 1000) + '...'); // Fallback
             }
           }
         };

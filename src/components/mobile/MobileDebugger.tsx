@@ -295,7 +295,7 @@ const MobileDebugger: React.FC = () => {
               </button>
               <button 
                 onClick={() => {
-                  const mainApp = document.querySelector('[data-main-app]');
+                  const mainApp = document.querySelector('[data-main-app]') as HTMLElement;
                   if (mainApp) {
                     mainApp.style.display = mainApp.style.display === 'none' ? '' : 'none';
                   }
