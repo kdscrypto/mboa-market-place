@@ -6,26 +6,17 @@ import { categories } from "@/data/categoriesData";
 import UltraBasicMobileDebug from "@/components/mobile/UltraBasicMobileDebug";
 import MobileEmergencyMode from "@/components/mobile/MobileEmergencyMode";
 import MobileDebugger from "@/components/mobile/MobileDebugger";
-
-// Import des composants avec gestion d'erreur
-let Header, Footer, HeroSection, SearchSection, CategoriesSection, FeaturesSections, AdsSection, CTASection, GoogleAdBanner, GoogleAdSidebar, MobileNavigationBar;
-
-try {
-  Header = require("@/components/Header").default;
-  Footer = require("@/components/Footer").default;
-  HeroSection = require("@/components/home/HeroSection").default;
-  SearchSection = require("@/components/home/SearchSection").default;
-  CategoriesSection = require("@/components/home/CategoriesSection").default;
-  FeaturesSections = require("@/components/home/FeaturesSections").default;
-  AdsSection = require("@/components/home/AdsSection").default;
-  CTASection = require("@/components/home/CTASection").default;
-  GoogleAdBanner = require("@/components/ads/GoogleAdBanner").default;
-  GoogleAdSidebar = require("@/components/ads/GoogleAdSidebar").default;
-  MobileNavigationBar = require("@/components/mobile/MobileNavigationBar").default;
-} catch (importError) {
-  console.error("CRITICAL: Import error detected:", importError);
-  (window as any).__IMPORT_ERROR = importError;
-}
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import HeroSection from "@/components/home/HeroSection";
+import SearchSection from "@/components/home/SearchSection";
+import CategoriesSection from "@/components/home/CategoriesSection";
+import FeaturesSections from "@/components/home/FeaturesSections";
+import AdsSection from "@/components/home/AdsSection";
+import CTASection from "@/components/home/CTASection";
+import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
+import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
+import MobileNavigationBar from "@/components/mobile/MobileNavigationBar";
 
 const Index = () => {
   console.log("=== INDEX COMPONENT RENDER START ===");
@@ -35,30 +26,9 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [componentError, setComponentError] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const featuredCategories = categories.slice(0, 12);
-
-  // Vérification des imports
-  useEffect(() => {
-    const missingComponents = [];
-    if (!Header) missingComponents.push('Header');
-    if (!Footer) missingComponents.push('Footer');
-    if (!HeroSection) missingComponents.push('HeroSection');
-    if (!SearchSection) missingComponents.push('SearchSection');
-    if (!CategoriesSection) missingComponents.push('CategoriesSection');
-    if (!FeaturesSections) missingComponents.push('FeaturesSections');
-    if (!AdsSection) missingComponents.push('AdsSection');
-    if (!CTASection) missingComponents.push('CTASection');
-    if (!MobileNavigationBar) missingComponents.push('MobileNavigationBar');
-
-    if (missingComponents.length > 0) {
-      const errorMsg = `Missing components: ${missingComponents.join(', ')}`;
-      console.error("COMPONENT IMPORT ERROR:", errorMsg);
-      setComponentError(errorMsg);
-    }
-  }, []);
 
   // Détection mobile sécurisée
   useEffect(() => {
@@ -138,63 +108,11 @@ const Index = () => {
     }
   };
 
-  console.log('Index: Rendering with:', { isMobile, recentAds: recentAds.length, isLoading, error, componentError });
+  console.log('Index: Rendering with:', { isMobile, recentAds: recentAds.length, isLoading, error });
 
-  // Si erreur d'import de composants, afficher un écran de diagnostic
-  if (componentError) {
-    return (
-      <>
-        <UltraBasicMobileDebug />
-        <MobileEmergencyMode />
-        <MobileDebugger />
-        <div style={{ 
-          position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          width: '100vw', 
-          height: '100vh', 
-          background: '#ff6600', 
-          color: 'white', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          fontSize: '16px',
-          textAlign: 'center',
-          zIndex: 999999,
-          flexDirection: 'column',
-          padding: '20px'
-        }}>
-          <h1 style={{ marginBottom: '20px' }}>ERREUR D'IMPORT DE COMPOSANTS</h1>
-          <p style={{ marginBottom: '20px' }}>
-            {componentError}
-          </p>
-          <p style={{ marginBottom: '20px', fontSize: '12px' }}>
-            Import Error: {(window as any).__IMPORT_ERROR?.message || 'Détails non disponibles'}<br/>
-            React: {(window as any).React ? 'Détecté' : 'Non détecté'}<br/>
-            Root: {document.getElementById('root') ? 'Présent' : 'Manquant'}
-          </p>
-          <button 
-            onClick={() => window.location.reload()}
-            style={{ 
-              background: 'white', 
-              color: '#ff6600', 
-              padding: '15px 30px', 
-              border: 'none', 
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px'
-            }}
-          >
-            Recharger la page
-          </button>
-        </div>
-      </>
-    );
-  }
-
-  // Rendu sécurisé avec fallbacks
+  // Rendu principal avec gestion d'erreur React
   try {
-    console.log("Index: Début rendu JSX sécurisé");
+    console.log("Index: Début rendu JSX");
     
     return (
       <>
@@ -202,19 +120,18 @@ const Index = () => {
         <MobileEmergencyMode />
         <MobileDebugger />
         <div className="min-h-screen bg-white" data-main-app="true">
-          {Header ? <Header /> : <div style={{height: '60px', background: '#ff6600', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Header manquant</div>}
+          <Header />
           
           <main className={isMobile ? "pb-20" : ""}>
-            {HeroSection ? <HeroSection /> : <div style={{height: '200px', background: '#ff6600', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Hero manquant</div>}
-            
-            {SearchSection ? <SearchSection onSearch={handleSearch} /> : <div style={{height: '100px', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Search manquant</div>}
+            <HeroSection />
+            <SearchSection onSearch={handleSearch} />
             
             <div className="mboa-container">
               <div className="flex flex-col lg:flex-row gap-8">
                 <div className="flex-1">
-                  {CategoriesSection ? <CategoriesSection categories={featuredCategories} /> : <div>Categories manquant</div>}
+                  <CategoriesSection categories={featuredCategories} />
                   
-                  {!isMobile && GoogleAdBanner && (
+                  {!isMobile && (
                     <div className="mb-6">
                       <GoogleAdBanner
                         adSlot="9876543210"
@@ -223,14 +140,14 @@ const Index = () => {
                     </div>
                   )}
                   
-                  {AdsSection ? <AdsSection 
+                  <AdsSection 
                     recentAds={recentAds} 
                     isLoading={isLoading} 
                     error={error} 
-                  /> : <div>AdsSection manquant</div>}
+                  />
                 </div>
                 
-                {!isMobile && GoogleAdSidebar && (
+                {!isMobile && (
                   <div className="hidden lg:block lg:w-80">
                     <GoogleAdSidebar
                       adSlot="1234567890"
@@ -241,13 +158,13 @@ const Index = () => {
               </div>
             </div>
             
-            {FeaturesSections ? <FeaturesSections /> : <div>Features manquant</div>}
-            {CTASection ? <CTASection /> : <div>CTA manquant</div>}
+            <FeaturesSections />
+            <CTASection />
           </main>
           
-          {Footer ? <Footer /> : <div style={{height: '60px', background: '#333', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Footer manquant</div>}
+          <Footer />
           
-          {isMobile && MobileNavigationBar && <MobileNavigationBar />}
+          {isMobile && <MobileNavigationBar />}
         </div>
       </>
     );
@@ -257,7 +174,7 @@ const Index = () => {
     // Stocker l'erreur pour diagnostic
     (window as any).__RENDER_ERROR = renderError;
     
-    // Rendu de secours ultra-simple avec diagnostic détaillé
+    // Rendu de secours ultra-simple
     return (
       <>
         <UltraBasicMobileDebug />
@@ -285,20 +202,11 @@ const Index = () => {
             Erreur: {renderError instanceof Error ? renderError.message : 'Erreur inconnue'}
           </p>
           <p style={{ marginBottom: '20px', fontSize: '12px' }}>
-            Type: {renderError instanceof Error ? renderError.name : typeof renderError}<br/>
-            Stack: {renderError instanceof Error ? renderError.stack?.substring(0, 200) + '...' : 'Non disponible'}<br/>
             React: {(window as any).React ? 'Détecté' : 'Non détecté'}<br/>
-            Root: {document.getElementById('root') ? 'Présent' : 'Manquant'}<br/>
-            Import Error: {(window as any).__IMPORT_ERROR ? 'Oui' : 'Non'}
+            Root: {document.getElementById('root') ? 'Présent' : 'Manquant'}
           </p>
           <button 
-            onClick={() => {
-              console.log("=== EMERGENCY RELOAD ===");
-              console.log("Render error:", (window as any).__RENDER_ERROR);
-              console.log("Import error:", (window as any).__IMPORT_ERROR);
-              console.log("React errors:", (window as any).__REACT_ERROR_LOGS);
-              window.location.reload();
-            }}
+            onClick={() => window.location.reload()}
             style={{ 
               background: 'white', 
               color: '#dc2626', 
