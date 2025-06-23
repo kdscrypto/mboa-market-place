@@ -15,6 +15,8 @@ import { categories } from "@/data/categoriesData";
 import GoogleAdBanner from "@/components/ads/GoogleAdBanner";
 import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 import MobileNavigationBar from "@/components/mobile/MobileNavigationBar";
+import MobileDebugger from "@/components/mobile/MobileDebugger";
+import MobileEmergencyMode from "@/components/mobile/MobileEmergencyMode";
 
 const Index = () => {
   console.log("=== INDEX COMPONENT RENDER START ===");
@@ -95,50 +97,54 @@ const Index = () => {
   console.log('Rendering Index with isMobile:', isMobile);
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      <main className={isMobile ? "pb-20" : ""}>
-        <HeroSection />
-        <SearchSection onSearch={handleSearch} />
-        
-        <div className="mboa-container">
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="flex-1">
-              <CategoriesSection categories={featuredCategories} />
+    <>
+      <MobileEmergencyMode />
+      <MobileDebugger />
+      <div className="min-h-screen bg-white" data-main-app="true">
+        <Header />
+        <main className={isMobile ? "pb-20" : ""}>
+          <HeroSection />
+          <SearchSection onSearch={handleSearch} />
+          
+          <div className="mboa-container">
+            <div className="flex flex-col lg:flex-row gap-8">
+              <div className="flex-1">
+                <CategoriesSection categories={featuredCategories} />
+                
+                {!isMobile && (
+                  <div className="mb-6">
+                    <GoogleAdBanner
+                      adSlot="9876543210"
+                      style={{ width: "100%", height: "120px" }}
+                    />
+                  </div>
+                )}
+                
+                <AdsSection 
+                  recentAds={recentAds} 
+                  isLoading={isLoading} 
+                  error={error} 
+                />
+              </div>
               
               {!isMobile && (
-                <div className="mb-6">
-                  <GoogleAdBanner
-                    adSlot="9876543210"
-                    style={{ width: "100%", height: "120px" }}
+                <div className="hidden lg:block lg:w-80">
+                  <GoogleAdSidebar
+                    adSlot="1234567890"
+                    style={{ width: "300px", height: "600px" }}
                   />
                 </div>
               )}
-              
-              <AdsSection 
-                recentAds={recentAds} 
-                isLoading={isLoading} 
-                error={error} 
-              />
             </div>
-            
-            {!isMobile && (
-              <div className="hidden lg:block lg:w-80">
-                <GoogleAdSidebar
-                  adSlot="1234567890"
-                  style={{ width: "300px", height: "600px" }}
-                />
-              </div>
-            )}
           </div>
-        </div>
-        
-        <FeaturesSections />
-        <CTASection />
-      </main>
-      <Footer />
-      {isMobile && <MobileNavigationBar />}
-    </div>
+          
+          <FeaturesSections />
+          <CTASection />
+        </main>
+        <Footer />
+        {isMobile && <MobileNavigationBar />}
+      </div>
+    </>
   );
 };
 
