@@ -1,34 +1,34 @@
 
 import React from 'react';
 
-// Composant de debug ultra-minimal pour mobile
 const MinimalMobileDebug: React.FC = () => {
-  // Ne pas utiliser useEffect qui pourrait causer des problèmes
-  // Utiliser une approche purement déclarative
-  
   React.useLayoutEffect(() => {
-    // Diagnostic simple sans interférence
+    // Diagnostic ultra-simple
     const isMobile = window.innerWidth < 768;
     const userAgent = navigator.userAgent;
     const isAndroid = /Android/i.test(userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
     
-    console.log('=== DIAGNOSTIC MINIMAL ===');
-    console.log('Mobile détecté:', isMobile);
+    console.log('=== DIAGNOSTIC ULTRA-SIMPLE ===');
+    console.log('Mobile:', isMobile);
     console.log('Android:', isAndroid);
     console.log('iOS:', isIOS);
     console.log('Viewport:', window.innerWidth, 'x', window.innerHeight);
+    console.log('User Agent:', userAgent);
     
-    // Vérifier si React fonctionne
-    const reactWorks = !!(window as any).React;
-    console.log('React fonctionne:', reactWorks);
+    // Vérifications React essentielles
+    const reactExists = !!(window as any).React;
+    const rootElement = document.getElementById('root');
+    const rootChildren = rootElement?.children.length || 0;
     
-    // Créer un indicateur visuel simple seulement si erreur détectée
-    const hasError = !(window as any).React || document.getElementById('root')?.children.length === 0;
+    console.log('React existe:', reactExists);
+    console.log('Root element:', !!rootElement);
+    console.log('Root children:', rootChildren);
     
-    if (hasError) {
+    // Indicateur visuel simplifié seulement si erreur majeure
+    if (!reactExists || !rootElement || rootChildren === 0) {
       const indicator = document.createElement('div');
-      indicator.id = 'minimal-debug-indicator';
+      indicator.id = 'ultra-simple-debug';
       indicator.style.cssText = `
         position: fixed !important;
         top: 0 !important;
@@ -43,21 +43,23 @@ const MinimalMobileDebug: React.FC = () => {
         font-size: 14px !important;
         font-family: monospace !important;
       `;
-      indicator.textContent = 'ERREUR DÉTECTÉE - Diagnostic en cours...';
+      
+      let message = 'ERREUR: ';
+      if (!reactExists) message += 'React manquant';
+      else if (!rootElement) message += 'Root manquant';
+      else if (rootChildren === 0) message += 'Root vide';
+      message += ' | Cliquez pour recharger';
+      
+      indicator.textContent = message;
+      indicator.onclick = () => window.location.reload();
+      
       document.body?.appendChild(indicator);
       
-      // Diagnostic approfondi après 1 seconde
-      setTimeout(() => {
-        const rootEl = document.getElementById('root');
-        const rootChildren = rootEl?.children.length || 0;
-        
-        indicator.textContent = `React: ${reactWorks ? 'OK' : 'KO'} | Root: ${rootChildren} enfants | Reload pour réparer`;
-        indicator.onclick = () => window.location.reload();
-      }, 1000);
+      console.error('ERREUR CRITIQUE DÉTECTÉE:', message);
     }
   }, []);
 
-  return null; // Ne rend rien dans React
+  return null;
 };
 
 export default MinimalMobileDebug;

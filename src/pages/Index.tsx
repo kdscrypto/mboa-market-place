@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { Ad } from "@/types/adTypes";
 import { categories } from "@/data/categoriesData";
 import MinimalMobileDebug from "@/components/mobile/MinimalMobileDebug";
-import OrientationStabilizer from "@/components/mobile/OrientationStabilizer";
+import SimpleMobileWrapper from "@/components/mobile/SimpleMobileWrapper";
+import { useSimpleMobileDetection } from "@/hooks/useSimpleMobileDetection";
 
-// Import des composants principaux seulement
+// Import des composants principaux
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HeroSection from "@/components/home/HeroSection";
@@ -20,133 +21,74 @@ import GoogleAdSidebar from "@/components/ads/GoogleAdSidebar";
 import MobileNavigationBar from "@/components/mobile/MobileNavigationBar";
 
 const Index: React.FC = () => {
-  console.log("Index: Début du rendu");
+  console.log("Index: Rendu simplifié");
   
-  // États simplifiés
-  const [recentAds, setRecentAds] = useState<Ad[]>([]);
+  // États ultra-simplifiés
+  const [recentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [isReady, setIsReady] = useState<boolean>(false);
+  const [error] = useState<boolean>(false);
+  const isMobile = useSimpleMobileDetection();
 
   const navigate = useNavigate();
   const featuredCategories = categories.slice(0, 12);
 
-  // Détection mobile simplifiée et sécurisée
+  // Effet ultra-simple pour le chargement
   useEffect(() => {
-    try {
-      console.log("Index: Détection mobile et initialisation");
-      
-      const detectMobile = () => {
-        const mobile = window.innerWidth < 768;
-        console.log("Index: isMobile =", mobile, "dimensions:", window.innerWidth, "x", window.innerHeight);
-        setIsMobile(mobile);
-        
-        // Marquer comme prêt après la détection
-        if (!isReady) {
-          setTimeout(() => {
-            setIsReady(true);
-            console.log("Index: Application prête");
-          }, 100);
-        }
-      };
-      
-      detectMobile();
-      
-      // Délai pour éviter les événements de resize trop fréquents
-      let resizeTimer: NodeJS.Timeout;
-      const handleResize = () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(detectMobile, 150);
-      };
-      
-      window.addEventListener('resize', handleResize);
-      
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        if (resizeTimer) clearTimeout(resizeTimer);
-      };
-    } catch (err) {
-      console.error("Index: Erreur détection mobile:", err);
-      setIsMobile(false);
-      setIsReady(true);
+    console.log("Index: Initialisation simple");
+    
+    // Vérification de récupération de mot de passe
+    const urlFragment = window.location.hash;
+    if (urlFragment.includes('type=recovery')) {
+      navigate('/reset-password' + urlFragment);
+      return;
     }
-  }, [isReady]);
 
-  // Gestion des données simplifiée
-  useEffect(() => {
-    if (!isReady) return;
-    
-    console.log("Index: Chargement des données");
-    
-    try {
-      // Vérification de récupération de mot de passe
-      const urlFragment = window.location.hash;
-      if (urlFragment.includes('type=recovery')) {
-        console.log("Index: Redirection recovery");
-        navigate('/reset-password' + urlFragment);
-        return;
-      }
-
-      // Simulation de chargement des annonces
-      setIsLoading(true);
-      setError(false);
-      
-      const timer = setTimeout(() => {
-        console.log("Index: Données chargées");
-        setRecentAds([]);
-        setIsLoading(false);
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    } catch (err) {
-      console.error("Index: Erreur chargement:", err);
-      setError(true);
+    // Chargement simple sans promesses complexes
+    const timer = setTimeout(() => {
       setIsLoading(false);
-    }
-  }, [navigate, isReady]);
+      console.log("Index: Chargement terminé");
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
-  // Gestionnaire de recherche simplifié
+  // Gestionnaire de recherche ultra-simple
   const handleSearch = (filters: any) => {
-    try {
-      console.log("Index: Recherche avec filtres:", filters);
-      
-      const searchParams = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== '') {
-          searchParams.set(key, String(value));
-        }
-      });
-      
-      navigate(`/recherche?${searchParams.toString()}`);
-    } catch (err) {
-      console.error("Index: Erreur recherche:", err);
-    }
+    console.log("Index: Recherche simple:", filters);
+    
+    const searchParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== '') {
+        searchParams.set(key, String(value));
+      }
+    });
+    
+    navigate(`/recherche?${searchParams.toString()}`);
   };
 
-  console.log("Index: Rendu JSX", { isMobile, isLoading, error, isReady });
+  console.log("Index: Rendu JSX simple", { isMobile, isLoading });
 
-  // Attendre que l'application soit prête
-  if (!isReady) {
+  // Écran de chargement ultra-simple
+  if (isLoading) {
     return (
       <React.Fragment>
         <MinimalMobileDebug />
         <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Chargement...</p>
+            <p className="text-gray-600">Initialisation...</p>
           </div>
         </div>
       </React.Fragment>
     );
   }
 
-  // Rendu principal sécurisé avec stabilisateur d'orientation
+  // Rendu principal ultra-simplifié
   return (
     <React.Fragment>
       <MinimalMobileDebug />
       
-      <OrientationStabilizer>
+      <SimpleMobileWrapper>
         <div className="min-h-screen bg-white" data-main-app="true">
           <Header />
           
@@ -171,7 +113,7 @@ const Index: React.FC = () => {
                   
                   <AdsSection 
                     recentAds={recentAds} 
-                    isLoading={isLoading} 
+                    isLoading={false} 
                     error={error} 
                   />
                 </div>
@@ -195,7 +137,7 @@ const Index: React.FC = () => {
           
           {isMobile && <MobileNavigationBar />}
         </div>
-      </OrientationStabilizer>
+      </SimpleMobileWrapper>
     </React.Fragment>
   );
 };
