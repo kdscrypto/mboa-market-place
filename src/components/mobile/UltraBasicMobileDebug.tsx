@@ -119,10 +119,11 @@ const UltraBasicMobileDebug: React.FC = () => {
               debugComponents: Array.from(document.querySelectorAll('[id*="debug"], [class*="debug"]')).map(el => el.id || el.className)
             };
             
+            // Déclarer diagnosticText dans la portée appropriée
+            const diagnosticText = `DIAGNOSTIC COMPLET:\n${JSON.stringify(debugInfo, null, 2)}`;
+            
             // Essayer d'afficher les infos
             try {
-              const diagnosticText = `DIAGNOSTIC COMPLET:\n${JSON.stringify(debugInfo, null, 2)}`;
-              
               // Créer une div overlay avec les infos
               const overlay = document.createElement('div');
               overlay.style.cssText = `
