@@ -5,7 +5,7 @@ const UltraBasicMobileDebug: React.FC = () => {
   useEffect(() => {
     console.log("=== ULTRA BASIC DEBUG INITIALIZING ===");
     
-    // Créer immédiatement un indicateur visuel
+    // Créer immédiatement un indicateur visuel simplifié
     const createVisualIndicator = () => {
       try {
         // Supprimer l'ancien indicateur s'il existe
@@ -14,7 +14,7 @@ const UltraBasicMobileDebug: React.FC = () => {
           existing.remove();
         }
 
-        // Créer un nouvel indicateur très visible
+        // Créer un nouvel indicateur plus simple
         const indicator = document.createElement('div');
         indicator.id = 'ultra-debug-indicator';
         indicator.style.cssText = `
@@ -22,151 +22,107 @@ const UltraBasicMobileDebug: React.FC = () => {
           top: 0 !important;
           left: 0 !important;
           width: 100vw !important;
-          height: 30px !important;
-          background: linear-gradient(90deg, #ff0000, #00ff00, #0000ff) !important;
+          height: 25px !important;
+          background: #ff0000 !important;
           z-index: 999999 !important;
           pointer-events: none !important;
           font-family: monospace !important;
-          font-size: 11px !important;
+          font-size: 10px !important;
           color: white !important;
           text-align: center !important;
-          line-height: 30px !important;
-          animation: pulse 1s infinite !important;
+          line-height: 25px !important;
           display: flex !important;
           align-items: center !important;
-          justify-content: space-between !important;
-          padding: 0 10px !important;
+          justify-content: center !important;
+          padding: 0 5px !important;
         `;
         
-        // Contenu principal de l'indicateur
-        const mainText = document.createElement('span');
-        mainText.textContent = 'DEBUG ACTIF - React chargé';
-        
-        // Bouton pour ouvrir le debug avancé
-        const debugButton = document.createElement('button');
-        debugButton.textContent = 'DEBUG AVANCÉ';
-        debugButton.style.cssText = `
-          background: rgba(255,255,255,0.2) !important;
-          border: 1px solid white !important;
-          color: white !important;
-          padding: 2px 6px !important;
-          border-radius: 3px !important;
-          font-size: 10px !important;
-          cursor: pointer !important;
-          pointer-events: all !important;
-        `;
-        
-        debugButton.onclick = () => {
-          console.log("Debug avancé demandé");
-          // Forcer l'ouverture du panneau de debug avancé
-          const event = new CustomEvent('forceOpenDebugPanel');
-          window.dispatchEvent(event);
-        };
-        
-        indicator.appendChild(mainText);
-        indicator.appendChild(debugButton);
-        
+        indicator.textContent = 'DEBUG ACTIF - Diagnostic en cours...';
         document.body.appendChild(indicator);
         console.log("Visual indicator created successfully");
 
-        // Test des capacités détaillé
+        // Diagnostic approfondi après un délai
         setTimeout(() => {
-          const debugInfo = {
-            time: new Date().toISOString(),
-            viewport: `${window.innerWidth}x${window.innerHeight}`,
-            userAgent: navigator.userAgent,
-            touchSupport: 'ontouchstart' in window,
-            bodyChildren: document.body.children.length,
-            reactRoot: !!document.getElementById('root'),
-            cssLoaded: document.styleSheets.length > 0,
-            mainApp: !!document.querySelector('[data-main-app]'),
-            debugComponents: {
-              ultraBasic: !!document.getElementById('ultra-debug-indicator'),
-              emergency: !!document.querySelector('[data-emergency-mode]'),
-              advanced: !!document.querySelector('[data-advanced-debug]')
+          const reactRootElement = document.getElementById('root');
+          const mainAppElement = document.querySelector('[data-main-app]');
+          const headerElement = document.querySelector('header');
+          const mainElement = document.querySelector('main');
+          
+          console.log("=== DIAGNOSTIC DÉTAILLÉ ===");
+          console.log("React Root:", reactRootElement ? 'TROUVÉ' : 'MANQUANT');
+          console.log("React Root children:", reactRootElement?.children.length || 0);
+          console.log("Main App Element:", mainAppElement ? 'TROUVÉ' : 'MANQUANT');
+          console.log("Header Element:", headerElement ? 'TROUVÉ' : 'MANQUANT');
+          console.log("Main Element:", mainElement ? 'TROUVÉ' : 'MANQUANT');
+          
+          // Vérifier la structure DOM complète
+          if (reactRootElement) {
+            console.log("Structure du Root:", reactRootElement.innerHTML.substring(0, 200) + '...');
+          }
+          
+          // Mettre à jour l'indicateur avec des infos plus précises
+          let status = 'ERREUR INCONNUE';
+          let bgColor = '#ff0000';
+          
+          if (!reactRootElement) {
+            status = 'React Root manquant';
+          } else if (reactRootElement.children.length === 0) {
+            status = 'React Root vide';
+          } else if (!mainAppElement) {
+            status = 'App principale manquante';
+          } else if (!headerElement && !mainElement) {
+            status = 'Composants principaux manquants';
+          } else {
+            status = 'Problème de rendu CSS';
+            bgColor = '#ff8800';
+          }
+          
+          indicator.style.background = bgColor;
+          indicator.textContent = `DEBUG: ${status} (${window.innerWidth}x${window.innerHeight})`;
+          
+          // Essayer d'identifier les erreurs React
+          const checkReactErrors = () => {
+            const errors = window.console.error;
+            if (typeof errors === 'function') {
+              console.log("Console error handler détecté");
             }
           };
           
-          mainText.textContent = `DEBUG: ${debugInfo.viewport} - App: ${debugInfo.mainApp ? 'OUI' : 'NON'} - Touch: ${debugInfo.touchSupport ? 'OUI' : 'NON'}`;
-          console.log("Diagnostic complet:", debugInfo);
+          checkReactErrors();
           
-          // Vérifier si les autres composants de debug sont présents
-          if (!debugInfo.debugComponents.advanced) {
-            console.warn("Le composant de debug avancé n'est pas détecté dans le DOM");
-          }
-        }, 1000);
+        }, 2000);
 
-        // Rendre l'indicateur principal cliquable pour plus d'infos
+        // Rendre l'indicateur cliquable pour diagnostic complet
         indicator.style.pointerEvents = 'all';
-        indicator.onclick = (e) => {
-          if (e.target === indicator || e.target === mainText) {
-            const debugInfo = {
-              timestamp: new Date().toISOString(),
-              viewport: `${window.innerWidth}x${window.innerHeight}`,
-              userAgent: navigator.userAgent,
-              touchSupport: 'ontouchstart' in window,
-              bodyChildren: document.body.children.length,
-              reactRoot: !!document.getElementById('root'),
-              cssLoaded: document.styleSheets.length > 0,
-              jsErrors: window.onerror ? 'Handler installé' : 'Pas de handler',
-              mainAppVisible: !!document.querySelector('[data-main-app]'),
-              components: {
-                header: !!document.querySelector('header'),
-                main: !!document.querySelector('main'),
-                footer: !!document.querySelector('footer'),
-                mobileNav: !!document.querySelector('[data-mobile-nav]')
-              },
-              debugComponents: Array.from(document.querySelectorAll('[id*="debug"], [class*="debug"]')).map(el => el.id || el.className)
-            };
-            
-            // Déclarer diagnosticText dans la portée appropriée
-            const diagnosticText = `DIAGNOSTIC COMPLET:\n${JSON.stringify(debugInfo, null, 2)}`;
-            
-            // Essayer d'afficher les infos
-            try {
-              // Créer une div overlay avec les infos
-              const overlay = document.createElement('div');
-              overlay.style.cssText = `
-                position: fixed !important;
-                top: 40px !important;
-                left: 10px !important;
-                right: 10px !important;
-                background: rgba(0,0,0,0.9) !important;
-                color: white !important;
-                padding: 15px !important;
-                border-radius: 5px !important;
-                font-family: monospace !important;
-                font-size: 10px !important;
-                z-index: 1000000 !important;
-                max-height: 80vh !important;
-                overflow-y: auto !important;
-                white-space: pre-wrap !important;
-              `;
-              overlay.textContent = diagnosticText;
-              
-              const closeBtn = document.createElement('button');
-              closeBtn.textContent = '✕ FERMER';
-              closeBtn.style.cssText = `
-                position: absolute !important;
-                top: 5px !important;
-                right: 5px !important;
-                background: red !important;
-                color: white !important;
-                border: none !important;
-                padding: 5px !important;
-                cursor: pointer !important;
-              `;
-              closeBtn.onclick = () => overlay.remove();
-              
-              overlay.appendChild(closeBtn);
-              document.body.appendChild(overlay);
-              
-              setTimeout(() => overlay.remove(), 10000); // Auto-remove après 10s
-            } catch (e) {
-              console.error('Failed to show diagnostic overlay:', e);
-              alert(diagnosticText.substring(0, 1000) + '...'); // Fallback
+        indicator.onclick = () => {
+          console.log("=== DIAGNOSTIC COMPLET DEMANDÉ ===");
+          
+          // Analyser tous les éléments DOM
+          const allElements = document.querySelectorAll('*');
+          const elementsByTag = {};
+          allElements.forEach(el => {
+            const tag = el.tagName.toLowerCase();
+            elementsByTag[tag] = (elementsByTag[tag] || 0) + 1;
+          });
+          
+          console.log("Éléments DOM par type:", elementsByTag);
+          console.log("Nombre total d'éléments:", allElements.length);
+          
+          // Vérifier les scripts
+          const scripts = document.querySelectorAll('script');
+          console.log("Scripts chargés:", scripts.length);
+          scripts.forEach((script, i) => {
+            if (script.src) {
+              console.log(`Script ${i}:`, script.src);
             }
-          }
+          });
+          
+          // Vérifier les CSS
+          const stylesheets = document.querySelectorAll('link[rel="stylesheet"], style');
+          console.log("Feuilles de style:", stylesheets.length);
+          
+          // Afficher les infos dans l'indicateur
+          indicator.textContent = `DEBUG: ${allElements.length} éléments DOM, ${scripts.length} scripts, ${stylesheets.length} CSS`;
         };
 
       } catch (error) {
@@ -177,26 +133,6 @@ const UltraBasicMobileDebug: React.FC = () => {
     // Créer l'indicateur immédiatement
     createVisualIndicator();
 
-    // Écouter l'événement personnalisé pour forcer l'ouverture du debug
-    const handleForceDebugOpen = () => {
-      console.log("Tentative d'ouverture forcée du debug avancé");
-      
-      // Essayer de déclencher l'ouverture du MobileDebugger
-      const debuggerElement = document.querySelector('[data-mobile-debugger]');
-      if (debuggerElement) {
-        // Simuler un triple clic
-        const clickEvent = new MouseEvent('click', { bubbles: true });
-        debuggerElement.dispatchEvent(clickEvent);
-        debuggerElement.dispatchEvent(clickEvent);
-        debuggerElement.dispatchEvent(clickEvent);
-      } else {
-        console.warn("MobileDebugger element not found");
-        alert("Le panneau de debug avancé n'est pas accessible. Vérifiez que le composant MobileDebugger est bien chargé.");
-      }
-    };
-
-    window.addEventListener('forceOpenDebugPanel', handleForceDebugOpen);
-
     // Capturer toutes les erreurs possibles
     const originalError = window.onerror;
     const errorHandler: OnErrorEventHandler = (message, source, lineno, colno, error) => {
@@ -205,11 +141,8 @@ const UltraBasicMobileDebug: React.FC = () => {
       // Mettre à jour l'indicateur avec l'erreur
       const indicator = document.getElementById('ultra-debug-indicator');
       if (indicator) {
-        const mainText = indicator.querySelector('span');
-        if (mainText) {
-          indicator.style.background = '#ff0000';
-          mainText.textContent = `ERREUR: ${message}`;
-        }
+        indicator.style.background = '#ff0000';
+        indicator.textContent = `ERREUR JS: ${message}`;
       }
       
       if (originalError) {
@@ -226,11 +159,8 @@ const UltraBasicMobileDebug: React.FC = () => {
       
       const indicator = document.getElementById('ultra-debug-indicator');
       if (indicator) {
-        const mainText = indicator.querySelector('span');
-        if (mainText) {
-          indicator.style.background = '#ff8800';
-          mainText.textContent = `PROMESSE REJETÉE: ${event.reason}`;
-        }
+        indicator.style.background = '#ff8800';
+        indicator.textContent = `PROMESSE REJETÉE: ${event.reason}`;
       }
     };
 
@@ -240,7 +170,6 @@ const UltraBasicMobileDebug: React.FC = () => {
       // Nettoyer les handlers
       window.onerror = originalError;
       window.removeEventListener('unhandledrejection', rejectionHandler);
-      window.removeEventListener('forceOpenDebugPanel', handleForceDebugOpen);
     };
   }, []);
 

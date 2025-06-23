@@ -22,101 +22,63 @@ import UltraBasicMobileDebug from "@/components/mobile/UltraBasicMobileDebug";
 const Index = () => {
   console.log("=== INDEX COMPONENT RENDER START ===");
   
-  // Diagnostic détaillé du rendu
-  const updateRenderStatus = (step: string, success: boolean = true) => {
-    console.log(`RENDER STEP: ${step} - ${success ? 'SUCCESS' : 'FAILED'}`);
-    const indicator = document.getElementById('early-debug-indicator');
-    if (indicator) {
-      if (success) {
-        indicator.style.background = '#00aa00';
-        indicator.textContent = `RENDER: ${step}`;
-      } else {
-        indicator.style.background = '#aa0000';
-        indicator.textContent = `ERREUR: ${step}`;
-      }
-    }
-  };
-
-  // État du composant avec diagnostic
+  // État du composant
   const [recentAds, setRecentAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [renderStep, setRenderStep] = useState("INIT");
 
   const navigate = useNavigate();
   const featuredCategories = categories.slice(0, 12);
 
-  // Mettre à jour l'indicateur HTML pour montrer que React fonctionne
+  // Détection mobile
   useEffect(() => {
     try {
-      updateRenderStatus("React useEffect démarré");
-      const indicator = document.getElementById('early-debug-indicator');
-      if (indicator) {
-        indicator.style.background = '#0000ff';
-        indicator.textContent = 'REACT DÉMARRÉ - Index render';
-      }
-      setRenderStep("REACT_READY");
-    } catch (err) {
-      console.error("Erreur dans useEffect initial:", err);
-      updateRenderStatus("useEffect initial", false);
-    }
-  }, []);
-
-  // Détection mobile simplifiée avec diagnostic
-  useEffect(() => {
-    try {
-      updateRenderStatus("Début détection mobile");
+      console.log("Index: Début détection mobile");
       const checkIfMobile = () => {
         const mobile = window.innerWidth < 768;
-        console.log("Mobile check - width:", window.innerWidth, "isMobile:", mobile);
+        console.log("Index: Mobile check - width:", window.innerWidth, "isMobile:", mobile);
         setIsMobile(mobile);
-        updateRenderStatus(`Mobile détecté: ${mobile ? 'OUI' : 'NON'}`);
-        setRenderStep("MOBILE_DETECTED");
       };
       
       checkIfMobile();
+      window.addEventListener('resize', checkIfMobile);
+      
+      return () => window.removeEventListener('resize', checkIfMobile);
     } catch (err) {
-      console.error("Erreur détection mobile:", err);
-      updateRenderStatus("Détection mobile", false);
+      console.error("Index: Erreur détection mobile:", err);
       setIsMobile(false);
     }
   }, []);
 
-  // Chargement des données avec diagnostic
+  // Chargement des données
   useEffect(() => {
-    console.log('Index useEffect - loading ads and checking recovery');
+    console.log('Index: useEffect - loading ads and checking recovery');
     
     try {
-      updateRenderStatus("Début chargement données");
-      
-      // Vérification de récupération simplifiée
+      // Vérification de récupération
       const urlFragment = window.location.hash;
       if (urlFragment.includes('type=recovery')) {
-        console.log("Recovery detected, redirecting");
+        console.log("Index: Recovery detected, redirecting");
         navigate('/reset-password' + urlFragment);
         return;
       }
 
       // Chargement des annonces
       const loadAds = async () => {
-        console.log('Loading approved ads...');
+        console.log('Index: Loading approved ads...');
         try {
-          updateRenderStatus("Chargement annonces en cours");
           setIsLoading(true);
           setError(false);
           
           const ads = await fetchApprovedAds(12);
-          console.log("Ads loaded successfully:", ads.length);
+          console.log("Index: Ads loaded successfully:", ads.length);
           setRecentAds(ads);
-          updateRenderStatus(`${ads.length} annonces chargées`);
-          setRenderStep("DATA_LOADED");
           
         } catch (err) {
-          console.error("Error loading ads:", err);
+          console.error("Index: Error loading ads:", err);
           setError(true);
           setRecentAds([]);
-          updateRenderStatus("Erreur chargement annonces", false);
         } finally {
           setIsLoading(false);
         }
@@ -124,15 +86,13 @@ const Index = () => {
 
       loadAds();
     } catch (err) {
-      console.error("Erreur dans useEffect de chargement:", err);
-      updateRenderStatus("useEffect chargement", false);
+      console.error("Index: Erreur dans useEffect de chargement:", err);
     }
   }, [navigate]);
 
   const handleSearch = (filters: any) => {
     try {
-      console.log("Search filters:", filters);
-      updateRenderStatus("Recherche initiée");
+      console.log("Index: Search filters:", filters);
       
       const searchParams = new URLSearchParams();
       
@@ -144,16 +104,14 @@ const Index = () => {
       
       navigate(`/recherche?${searchParams.toString()}`);
     } catch (err) {
-      console.error("Erreur lors de la recherche:", err);
-      updateRenderStatus("Erreur recherche", false);
+      console.error("Index: Erreur lors de la recherche:", err);
     }
   };
 
-  console.log('Rendering Index with:', { isMobile, renderStep, recentAds: recentAds.length, isLoading, error });
+  console.log('Index: Rendering with:', { isMobile, recentAds: recentAds.length, isLoading, error });
 
-  // Diagnostic du rendu
   try {
-    updateRenderStatus("Début rendu JSX");
+    console.log("Index: Début rendu JSX");
     
     return (
       <>
@@ -207,10 +165,9 @@ const Index = () => {
       </>
     );
   } catch (err) {
-    console.error("ERREUR CRITIQUE DANS LE RENDU JSX:", err);
-    updateRenderStatus("Erreur rendu JSX", false);
+    console.error("Index: ERREUR CRITIQUE DANS LE RENDU JSX:", err);
     
-    // Rendu de secours
+    // Rendu de secours ultra-simple
     return (
       <div style={{ 
         position: 'fixed', 
@@ -223,28 +180,30 @@ const Index = () => {
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        fontSize: '18px',
+        fontSize: '16px',
         textAlign: 'center',
-        zIndex: 999999
+        zIndex: 999999,
+        flexDirection: 'column',
+        padding: '20px'
       }}>
-        <div>
-          <h1>ERREUR DE RENDU DÉTECTÉE</h1>
-          <p>Erreur: {err instanceof Error ? err.message : 'Erreur inconnue'}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            style={{ 
-              background: 'white', 
-              color: 'red', 
-              padding: '10px 20px', 
-              border: 'none', 
-              borderRadius: '5px', 
-              marginTop: '20px',
-              cursor: 'pointer'
-            }}
-          >
-            Recharger la page
-          </button>
-        </div>
+        <h1 style={{ marginBottom: '20px' }}>ERREUR DE RENDU</h1>
+        <p style={{ marginBottom: '20px' }}>
+          Erreur: {err instanceof Error ? err.message : 'Erreur inconnue'}
+        </p>
+        <button 
+          onClick={() => window.location.reload()}
+          style={{ 
+            background: 'white', 
+            color: 'red', 
+            padding: '15px 30px', 
+            border: 'none', 
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '16px'
+          }}
+        >
+          Recharger la page
+        </button>
       </div>
     );
   }
