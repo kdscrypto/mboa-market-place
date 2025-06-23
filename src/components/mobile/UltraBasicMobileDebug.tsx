@@ -75,7 +75,7 @@ const UltraBasicMobileDebug: React.FC = () => {
 
     // Capturer toutes les erreurs possibles
     const originalError = window.onerror;
-    window.onerror = (message, source, lineno, colno, error) => {
+    const errorHandler: OnErrorEventHandler = (message, source, lineno, colno, error) => {
       console.error("CAPTURED ERROR:", { message, source, lineno, colno, error });
       
       // Mettre à jour l'indicateur avec l'erreur
@@ -86,14 +86,15 @@ const UltraBasicMobileDebug: React.FC = () => {
       }
       
       if (originalError) {
-        originalError(message, source, lineno, colno, error);
+        return originalError.call(window, message, source, lineno, colno, error);
       }
       return true;
     };
+    
+    window.onerror = errorHandler;
 
     // Capturer les rejets de promesses
-    const originalRejection = window.onunhandledrejection;
-    window.onunhandledrejection = (event) => {
+    const rejectionHandler = (event: PromiseRejectionEvent) => {
       console.error("UNHANDLED REJECTION:", event.reason);
       
       const indicator = document.getElementById('ultra-debug-indicator');
@@ -101,16 +102,14 @@ const UltraBasicMobileDebug: React.FC = () => {
         indicator.style.background = '#ff8800';
         indicator.textContent = `PROMESSE REJETÉE: ${event.reason}`;
       }
-      
-      if (originalRejection) {
-        originalRejection(event);
-      }
     };
+
+    window.addEventListener('unhandledrejection', rejectionHandler);
 
     return () => {
       // Nettoyer les handlers
       window.onerror = originalError;
-      window.onunhandledrejection = originalRejection;
+      window.removeEventListener('unhandledrejection', rejectionHandler);
     };
   }, []);
 
