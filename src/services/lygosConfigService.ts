@@ -14,7 +14,7 @@ export interface LygosConfig {
 
 export const getLygosConfig = async (): Promise<LygosConfig | null> => {
   try {
-    const { data, error } = await supabase.rpc('get_active_lygos_config');
+    const { data, error } = await supabase.rpc('get_lygos_client_config');
     
     if (error) {
       console.error('Error fetching Lygos configuration:', error);
