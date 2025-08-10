@@ -1,0 +1,16 @@
+/* Mobile viewport and 100vh fixes */
+:root {
+  --vh: 1vh;
+}
+
+/* Prefer modern dynamic viewport units when available */
+@supports (height: 100dvh) {
+  .min-h-screen { min-height: 100dvh; }
+  .h-screen { height: 100dvh; }
+}
+
+/* Fallback using JS-updated --vh var */
+.min-h-viewport { min-height: calc(var(--vh, 1vh) * 100); }
+.h-screen-fix { height: calc(var(--vh, 1vh) * 100); }
+
+html, body, #root { min-height: 100%; }

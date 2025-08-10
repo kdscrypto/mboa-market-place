@@ -14,8 +14,8 @@ export const useForgotPasswordForm = () => {
     try {
       console.log("Envoi de l'email de réinitialisation pour:", values.email);
       
-      // Use the exact URL that matches the domain in the Supabase-generated link
-      const redirectUrl = "https://mboa-market-place.lovable.app/reset-password";
+      // Construire l'URL de redirection qui correspond à la route de l'app
+      const redirectUrl = `${window.location.origin}/reinitialiser-mot-de-passe`;
       
       console.log("URL de redirection configurée:", redirectUrl);
         

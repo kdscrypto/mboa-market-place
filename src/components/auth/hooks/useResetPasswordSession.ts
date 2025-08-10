@@ -36,10 +36,10 @@ export const useResetPasswordSession = () => {
     const isRecoveryUrl = recoveryType === 'recovery' || hasAccessToken || hasRefreshToken || urlHash.includes('type=recovery');
     
     // If this is clearly not a recovery URL, redirect after a longer delay
-    if (!urlHash && !window.location.href.includes('reset-password')) {
-      console.log("[RESET_PASSWORD_SESSION] Not on reset password page, this hook shouldn't run");
-      setIsChecking(false);
-      return;
+      if (!urlHash && !window.location.href.includes('reinitialiser-mot-de-passe')) {
+        console.log("[RESET_PASSWORD_SESSION] Not on reset password page, this hook shouldn't run");
+        setIsChecking(false);
+        return;
     }
 
     // If we have some recovery indicators, proceed with session validation
