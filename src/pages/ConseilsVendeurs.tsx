@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -90,9 +91,9 @@ const ConseilsVendeurs = () => {
                 Pour maximiser vos chances de vendre rapidement, n'hésitez pas à utiliser nos options d'annonces premium qui 
                 permettent une meilleure visibilité de vos produits sur notre plateforme.
               </p>
-              <a href="/premium" className="text-mboa-orange font-medium hover:underline">
+              <Link to="/annonces-premium" className="text-mboa-orange font-medium hover:underline">
                 En savoir plus sur nos offres premium
-              </a>
+              </Link>
             </section>
           </div>
         </div>

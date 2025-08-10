@@ -34,7 +34,7 @@ const Index = () => {
     if (recoveryType === 'recovery') {
       console.log("Recovery type detected, redirecting to reset-password page");
       // Redirect to the reset password page with the hash intact
-      navigate('/reset-password' + window.location.hash);
+      navigate('/reinitialiser-mot-de-passe' + window.location.hash);
       return; // Don't load ads if redirecting
     }
 

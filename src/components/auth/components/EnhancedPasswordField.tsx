@@ -8,6 +8,7 @@ import { UseFormReturn } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import PasswordStrengthMeter from "./PasswordStrengthMeter";
 import { validatePasswordStrength } from "@/services/securityService";
+import { useNavigate } from "react-router-dom";
 
 interface EnhancedPasswordFieldProps {
   form: UseFormReturn<any>;
@@ -32,6 +33,7 @@ const EnhancedPasswordField: React.FC<EnhancedPasswordFieldProps> = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const passwordValue = form.watch(name);
   const passwordValidation = passwordValue ? validatePasswordStrength(passwordValue) : null;
@@ -104,7 +106,7 @@ const EnhancedPasswordField: React.FC<EnhancedPasswordFieldProps> = ({
                 className="h-auto p-0 text-xs text-mboa-orange hover:text-mboa-orange/80"
                 onClick={() => {
                   // Navigate to forgot password
-                  window.location.href = '/forgot-password';
+                  navigate('/mot-de-passe-oublie');
                 }}
               >
                 Mot de passe oublié ?
