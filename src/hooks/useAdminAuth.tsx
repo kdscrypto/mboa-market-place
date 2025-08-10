@@ -27,7 +27,7 @@ export const useAdminAuth = () => {
         if (authenticated) {
           console.log("User is authenticated, checking admin status...");
           // Vérifier si l'utilisateur a des droits d'administrateur ou de modérateur
-          const { data, error } = await supabase.rpc('is_admin_or_mod');
+          const { data, error } = await supabase.rpc('is_admin_or_moderator');
           
           if (error) throw error;
           

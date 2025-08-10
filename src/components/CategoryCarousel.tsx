@@ -1,8 +1,7 @@
+
 import React from "react";
 import { Category } from "@/data/categoriesData";
 import CategoryCard from "@/components/CategoryCard";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
@@ -13,60 +12,7 @@ interface CategoryCarouselProps {
 }
 
 const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }) => {
-  const isMobile = useIsMobile();
-
-  // Mobile: Use native scrolling for better performance
-  if (isMobile) {
-    return (
-      <div className="w-full">
-        <div 
-          className={cn(
-            "flex gap-3 overflow-x-auto pb-2",
-            "mobile-scroll mobile-carousel",
-            "scrollbar-hide"
-          )}
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
-          {categories.map((category) => (
-            <div 
-              key={category.id} 
-              className={cn(
-                "flex-shrink-0 w-[140px] sm:w-[160px]",
-                "mobile-carousel-item"
-              )}
-            >
-              <CategoryCard
-                name={category.name}
-                slug={category.slug}
-                icon={category.icon}
-                coverImage={category.coverImage}
-                className="h-32 sm:h-36 hover-scale touch-manipulation"
-              />
-            </div>
-          ))}
-        </div>
-        
-        {/* Mobile pagination dots */}
-        <div className="flex justify-center mt-3">
-          {categories.slice(0, Math.min(5, categories.length)).map((_, index) => (
-            <div
-              key={index}
-              className={cn(
-                "mx-1 w-2 h-2 rounded-full transition-colors",
-                index === 0 ? "bg-mboa-orange" : "bg-gray-300"
-              )}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Desktop: Keep existing Embla carousel
+  // Configuration du plugin autoplay avec un délai plus long (5 secondes)
   const autoplayPlugin = React.useRef(
     Autoplay({
       delay: 5000,
@@ -74,6 +20,7 @@ const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }
     })
   );
 
+  // Initialisation du carousel avec direction horizontale et plugin d'autoplay
   const [emblaRef] = useEmblaCarousel(
     { 
       axis: "x",

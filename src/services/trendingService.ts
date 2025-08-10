@@ -21,47 +21,28 @@ export const isValidImageUrl = (url: string): boolean => {
 
 export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
   try {
-    console.log("Fetching featured ads with new RLS system...");
+    console.log("Fetching featured ads (formerly premium)...");
     
-    // Use optimized query that works with new RLS policies
+    // Récupérer toutes les annonces approuvées qui ne sont pas de type "standard"
+    // Ceci inclut toutes les anciennes annonces premium, même celles avec des transactions obsolètes
     const { data: ads, error } = await supabase
       .from('ads')
-      .select(`
-        id,
-        title,
-        description,
-        category,
-        region,
-        city,
-        price,
-        phone,
-        whatsapp,
-        status,
-        ad_type,
-        premium_expires_at,
-        created_at,
-        updated_at,
-        user_id
-      `)
+      .select('*')
       .eq('status', 'approved')
-      .neq('ad_type', 'standard')
+      .neq('ad_type', 'standard') // Toutes les annonces non-standard sont maintenant considérées comme mises en avant
       .order('created_at', { ascending: false })
       .limit(limit);
     
     if (error) {
       console.error("Error retrieving featured ads:", error);
-      return [];
+      throw error;
     }
 
-    console.log(`Retrieved ${ads?.length || 0} featured ads with new RLS`);
+    console.log(`Retrieved ${ads?.length || 0} featured ads`);
     
-    if (!ads || ads.length === 0) {
-      return [];
-    }
-    
-    // Process images with proper error handling
+    // Pour chaque annonce, récupérer l'image principale
     const adsWithImages = await Promise.all(
-      ads.map(async (ad) => {
+      (ads || []).map(async (ad) => {
         try {
           const { data: images, error: imageError } = await supabase
             .from('ad_images')
@@ -74,26 +55,15 @@ export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
             console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
           }
           
-          let imageUrl = '/placeholder.svg';
-          
-          if (images && images.length > 0 && images[0].image_url) {
-            const originalUrl = images[0].image_url.trim();
-            if (isValidImageUrl(originalUrl)) {
-              imageUrl = originalUrl;
-            }
-          }
-          
           return {
             ...ad,
-            imageUrl,
-            is_premium: true // All non-standard ads are premium
+            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
           return {
             ...ad,
-            imageUrl: '/placeholder.svg',
-            is_premium: true
+            imageUrl: '/placeholder.svg'
           };
         }
       })
@@ -106,49 +76,29 @@ export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
   }
 };
 
-// Function to fetch trending ads (mix of recent and popular ads)
+// Fonction pour récupérer les annonces tendances (mix d'annonces récentes et populaires)
 export const fetchTrendingAds = async (limit: number = 10): Promise<Ad[]> => {
   try {
-    console.log("Fetching trending ads with new RLS system...");
+    console.log("Fetching trending ads...");
     
-    // Use optimized query for trending ads
+    // Récupérer un mélange d'annonces récentes et d'annonces mises en avant
     const { data: ads, error } = await supabase
       .from('ads')
-      .select(`
-        id,
-        title,
-        description,
-        category,
-        region,
-        city,
-        price,
-        phone,
-        whatsapp,
-        status,
-        ad_type,
-        premium_expires_at,
-        created_at,
-        updated_at,
-        user_id
-      `)
+      .select('*')
       .eq('status', 'approved')
       .order('created_at', { ascending: false })
       .limit(limit);
     
     if (error) {
       console.error("Error retrieving trending ads:", error);
-      return [];
+      throw error;
     }
 
-    console.log(`Retrieved ${ads?.length || 0} trending ads with new RLS`);
+    console.log(`Retrieved ${ads?.length || 0} trending ads`);
     
-    if (!ads || ads.length === 0) {
-      return [];
-    }
-    
-    // Add images with proper error handling
+    // Ajouter les images
     const adsWithImages = await Promise.all(
-      ads.map(async (ad) => {
+      (ads || []).map(async (ad) => {
         try {
           const { data: images, error: imageError } = await supabase
             .from('ad_images')
@@ -161,26 +111,15 @@ export const fetchTrendingAds = async (limit: number = 10): Promise<Ad[]> => {
             console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
           }
           
-          let imageUrl = '/placeholder.svg';
-          
-          if (images && images.length > 0 && images[0].image_url) {
-            const originalUrl = images[0].image_url.trim();
-            if (isValidImageUrl(originalUrl)) {
-              imageUrl = originalUrl;
-            }
-          }
-          
           return {
             ...ad,
-            imageUrl,
-            is_premium: ad.ad_type !== 'standard'
+            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
           return {
             ...ad,
-            imageUrl: '/placeholder.svg',
-            is_premium: ad.ad_type !== 'standard'
+            imageUrl: '/placeholder.svg'
           };
         }
       })

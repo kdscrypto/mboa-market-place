@@ -2,47 +2,35 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
 import { toast } from "@/components/ui/use-toast";
+import { isValidImageUrl } from "@/services/trendingService";
 
-// Function to retrieve approved ads with optimized handling
+// Function to retrieve approved ads
 export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
   try {
     console.log("Fetching approved ads for homepage");
     
-    // Simple query to fetch approved ads
+    // Retrieve the most recent approved ads without checking authentication
     const { data: ads, error } = await supabase
       .from('ads')
-      .select(`
-        id,
-        title,
-        description,
-        category,
-        region,
-        city,
-        price,
-        phone,
-        whatsapp,
-        status,
-        ad_type,
-        premium_expires_at,
-        created_at,
-        updated_at,
-        user_id
-      `)
+      .select('*')
       .eq('status', 'approved')
       .order('created_at', { ascending: false })
       .limit(limit);
     
     if (error) {
       console.error("Error retrieving approved ads:", error);
-      throw error;
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les annonces récentes",
+        variant: "destructive",
+      });
+      return []; // Return empty array on error
     }
     
     if (!ads || ads.length === 0) {
       console.log("No approved ads found");
       return [];
     }
-    
-    console.log(`Found ${ads.length} approved ads`);
     
     // For each ad, retrieve the main image
     const adsWithImages = await Promise.all(
@@ -55,16 +43,45 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             .order('position', { ascending: true })
             .limit(1);
           
+          if (imageError) {
+            console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
+            return {
+              ...ad,
+              imageUrl: '/placeholder.svg',
+              is_premium: ad.ad_type !== 'standard' // Consider all types except standard as premium
+            };
+          }
+          
+          // Check if image URL is valid
           let imageUrl = '/placeholder.svg';
           
-          if (!imageError && images && images.length > 0 && images[0].image_url) {
-            imageUrl = images[0].image_url.trim();
+          if (images && images.length > 0 && images[0].image_url) {
+            const originalUrl = images[0].image_url.trim();
+            
+            if (isValidImageUrl(originalUrl)) {
+              imageUrl = originalUrl;
+              
+              // Test if the image can be loaded
+              try {
+                const response = await fetch(originalUrl, { method: 'HEAD' });
+                if (!response.ok) {
+                  console.warn(`Image URL returns ${response.status} for ad ${ad.id}:`, originalUrl);
+                  imageUrl = '/placeholder.svg';
+                }
+              } catch (err) {
+                console.warn(`Failed to validate image URL for ad ${ad.id}:`, err);
+              }
+            } else {
+              console.warn(`Invalid image URL format for ad ${ad.id}:`, originalUrl);
+            }
+          } else {
+            console.warn(`No image found for ad ${ad.id}`);
           }
           
           return {
             ...ad,
             imageUrl,
-            is_premium: ad.ad_type !== 'standard'
+            is_premium: ad.ad_type !== 'standard' // Consider all types except standard as premium
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
@@ -77,49 +94,15 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
       })
     );
     
-    console.log(`Successfully loaded ${adsWithImages.length} approved ads with images`);
+    console.log(`Successfully loaded ${adsWithImages.length} approved ads`);
     return adsWithImages;
   } catch (error) {
     console.error("Error fetching approved ads:", error);
-    
     toast({
       title: "Erreur",
       description: "Impossible de charger les annonces récentes",
       variant: "destructive",
     });
-    
-    return [];
-  }
-};
-
-// Simple health check function
-export const checkRLSHealth = async (): Promise<any> => {
-  try {
-    const { data, error } = await supabase
-      .from('ads')
-      .select('count(*)')
-      .eq('status', 'approved')
-      .limit(1);
-    
-    if (error) {
-      console.error("Error checking RLS health:", error);
-      return {
-        rls_status: 'error',
-        error_message: error.message,
-        last_check: new Date().toISOString()
-      };
-    }
-    
-    return {
-      rls_status: 'healthy',
-      last_check: new Date().toISOString()
-    };
-  } catch (error) {
-    console.error("Failed to check RLS health:", error);
-    return {
-      rls_status: 'error',
-      error_message: error instanceof Error ? error.message : 'Unknown error',
-      last_check: new Date().toISOString()
-    };
+    return []; // Return empty array on error
   }
 };

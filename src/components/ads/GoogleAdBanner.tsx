@@ -1,5 +1,5 @@
 
-import React, { memo } from "react";
+import React from "react";
 import { useGoogleAds } from "@/hooks/useGoogleAds";
 import AdContainer from "./AdContainer";
 
@@ -14,10 +14,10 @@ interface GoogleAdBannerProps {
   fullWidthResponsive?: boolean;
 }
 
-const GoogleAdBanner: React.FC<GoogleAdBannerProps> = memo(({
+const GoogleAdBanner: React.FC<GoogleAdBannerProps> = ({
   adSlot,
   className,
-  style = { width: "100%", height: "120px" },
+  style = { width: "100%", height: "200px" },
   adFormat = "auto",
   fullWidthResponsive = true
 }) => {
@@ -32,8 +32,8 @@ const GoogleAdBanner: React.FC<GoogleAdBannerProps> = memo(({
       onImpression={handleImpressionTrack}
       className={className}
     >
-      <div className="google-ad-banner bg-gradient-to-r from-mboa-orange/5 to-mboa-orange/10 border border-mboa-orange/20 rounded-lg p-3">
-        <div className="text-xs text-gray-500 mb-1 text-center">Publicité</div>
+      <div className="google-ad-banner bg-gradient-to-r from-mboa-orange/5 to-mboa-orange/10 border border-mboa-orange/20 rounded-lg p-4">
+        <div className="text-xs text-gray-500 mb-2 text-center">Publicité</div>
         <ins
           ref={adRef}
           className="adsbygoogle block"
@@ -49,8 +49,6 @@ const GoogleAdBanner: React.FC<GoogleAdBannerProps> = memo(({
       </div>
     </AdContainer>
   );
-});
-
-GoogleAdBanner.displayName = 'GoogleAdBanner';
+};
 
 export default GoogleAdBanner;

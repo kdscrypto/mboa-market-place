@@ -22,7 +22,7 @@ export const useUserRoleManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingRole, setPendingRole] = useState<UserRole>('user');
 
-  // Mutation pour changer le rôle d'un utilisateur avec logging optimisé
+  // Mutation pour changer le rôle d'un utilisateur avec logging
   const changeRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole, reason }: { 
       userId: string; 
@@ -45,7 +45,7 @@ export const useUserRoleManager = () => {
 
       if (fetchError) throw fetchError;
 
-      // Mettre à jour le rôle (utilise la nouvelle politique RLS)
+      // Mettre à jour le rôle
       const { error: updateError } = await supabase
         .from('user_profiles')
         .update({ role: newRole })
@@ -64,8 +64,7 @@ export const useUserRoleManager = () => {
           reason: reason || `Changement de rôle de ${oldUserData.role} vers ${newRole}`,
           metadata: {
             timestamp: new Date().toISOString(),
-            changed_by_email: currentUser.email,
-            rls_version: 'optimized'
+            changed_by_email: currentUser.email
           }
         });
 
@@ -119,7 +118,7 @@ export const useUserRoleManager = () => {
     changeRoleMutation.mutate({
       userId: selectedUser.id,
       newRole: pendingRole,
-      reason: `Changement de rôle effectué via l'interface d'administration (RLS optimisé)`
+      reason: `Changement de rôle effectué via l'interface d'administration`
     });
   };
 

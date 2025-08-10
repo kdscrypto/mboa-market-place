@@ -74,56 +74,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ad_reports: {
-        Row: {
-          ad_id: string
-          created_at: string | null
-          description: string | null
-          id: string
-          reason: string
-          reported_by: string | null
-          resolution_notes: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: string
-          updated_at: string | null
-        }
-        Insert: {
-          ad_id: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          reason: string
-          reported_by?: string | null
-          resolution_notes?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string
-          updated_at?: string | null
-        }
-        Update: {
-          ad_id?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          reason?: string
-          reported_by?: string | null
-          resolution_notes?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ad_reports_ad_id_fkey"
-            columns: ["ad_id"]
-            isOneToOne: false
-            referencedRelation: "ads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ads: {
         Row: {
           ad_type: string
@@ -1001,159 +951,6 @@ export type Database = {
         }
         Relationships: []
       }
-      security_alerts: {
-        Row: {
-          affected_user_id: string | null
-          alert_type: string
-          created_at: string
-          description: string | null
-          id: string
-          resolution_notes: string | null
-          resolved_at: string | null
-          resolved_by: string | null
-          risk_score: number
-          severity: string
-          source_identifier: string
-          source_type: string
-          status: string
-          threat_data: Json
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          affected_user_id?: string | null
-          alert_type: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          resolution_notes?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          risk_score?: number
-          severity: string
-          source_identifier: string
-          source_type: string
-          status?: string
-          threat_data?: Json
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          affected_user_id?: string | null
-          alert_type?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          resolution_notes?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          risk_score?: number
-          severity?: string
-          source_identifier?: string
-          source_type?: string
-          status?: string
-          threat_data?: Json
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      security_metrics: {
-        Row: {
-          created_at: string
-          id: string
-          labels: Json
-          metric_name: string
-          metric_type: string
-          time_bucket: string
-          value: number
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          labels?: Json
-          metric_name: string
-          metric_type: string
-          time_bucket: string
-          value: number
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          labels?: Json
-          metric_name?: string
-          metric_type?: string
-          time_bucket?: string
-          value?: number
-        }
-        Relationships: []
-      }
-      security_performance_logs: {
-        Row: {
-          created_at: string
-          error_details: string | null
-          execution_time_ms: number
-          function_name: string
-          id: string
-          parameters: Json | null
-          result_summary: Json | null
-        }
-        Insert: {
-          created_at?: string
-          error_details?: string | null
-          execution_time_ms: number
-          function_name: string
-          id?: string
-          parameters?: Json | null
-          result_summary?: Json | null
-        }
-        Update: {
-          created_at?: string
-          error_details?: string | null
-          execution_time_ms?: number
-          function_name?: string
-          id?: string
-          parameters?: Json | null
-          result_summary?: Json | null
-        }
-        Relationships: []
-      }
-      security_threat_patterns: {
-        Row: {
-          auto_block_threshold: number
-          created_at: string
-          id: string
-          is_active: boolean
-          pattern_name: string
-          pattern_type: string
-          risk_weight: number
-          threat_indicators: Json
-          updated_at: string
-        }
-        Insert: {
-          auto_block_threshold?: number
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          pattern_name: string
-          pattern_type: string
-          risk_weight?: number
-          threat_indicators?: Json
-          updated_at?: string
-        }
-        Update: {
-          auto_block_threshold?: number
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          pattern_name?: string
-          pattern_type?: string
-          risk_weight?: number
-          threat_indicators?: Json
-          updated_at?: string
-        }
-        Relationships: []
-      }
       system_messages: {
         Row: {
           content: string
@@ -1321,10 +1118,6 @@ export type Database = {
         }
         Returns: Json
       }
-      check_rls_health: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       check_user_permissions: {
         Args: { required_role?: string }
         Returns: boolean
@@ -1344,10 +1137,6 @@ export type Database = {
       cleanup_security_logs: {
         Args: Record<PropertyKey, never>
         Returns: number
-      }
-      collect_security_metrics: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
       create_lygos_transaction: {
         Args: {
@@ -1380,15 +1169,6 @@ export type Database = {
         }
         Returns: string
       }
-      detect_advanced_threats: {
-        Args: {
-          p_identifier: string
-          p_identifier_type: string
-          p_event_data: Json
-          p_context?: Json
-        }
-        Returns: Json
-      }
       detect_suspicious_activity: {
         Args: {
           p_identifier: string
@@ -1409,10 +1189,6 @@ export type Database = {
         Args: { p_email: string; p_ip_address?: unknown }
         Returns: Json
       }
-      diagnose_rls_system: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       generate_affiliate_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1420,15 +1196,6 @@ export type Database = {
       get_active_lygos_config: {
         Args: Record<PropertyKey, never>
         Returns: Json
-      }
-      get_ad_reports_stats: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          total_reports: number
-          pending_reports: number
-          resolved_reports: number
-          top_reasons: Json
-        }[]
       }
       get_affiliate_stats: {
         Args: { user_uuid: string }
@@ -1457,15 +1224,11 @@ export type Database = {
           metadata: Json
         }[]
       }
-      get_user_role_safe: {
-        Args: { user_uuid?: string }
-        Returns: string
-      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
       }
-      is_admin_or_mod: {
+      is_admin_or_moderator: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
@@ -1514,14 +1277,6 @@ export type Database = {
       }
       release_transaction_lock: {
         Args: { transaction_uuid: string; lock_identifier: string }
-        Returns: boolean
-      }
-      resolve_security_alert: {
-        Args: {
-          p_alert_id: string
-          p_status: string
-          p_resolution_notes?: string
-        }
         Returns: boolean
       }
       search_users_paginated: {

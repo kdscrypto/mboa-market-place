@@ -19,7 +19,7 @@ export const validateAdServiceAuth = async (): Promise<void> => {
   }
   
   // Check if user has admin/moderator privileges
-  const { data: hasAccess, error: accessError } = await supabase.rpc('is_admin_or_mod');
+  const { data: hasAccess, error: accessError } = await supabase.rpc('is_admin_or_moderator');
   
   if (accessError) {
     console.error("Error checking access privileges:", accessError);

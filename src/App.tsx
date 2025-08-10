@@ -5,10 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import ErrorBoundary from "@/components/system/ErrorBoundary";
-import OrientationGuard from "@/components/mobile/OrientationGuard";
-
-// Import des pages
 import Index from "./pages/Index";
 import CreateAd from "./pages/CreateAd";
 import AdDetail from "./pages/AdDetail";
@@ -40,18 +36,9 @@ import VerificationDashboard from "./pages/VerificationDashboard";
 import PaymentStatus from "./pages/PaymentStatus";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 function App() {
-  console.log("App: Initialisation simplifiée");
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -59,9 +46,7 @@ function App() {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <ErrorBoundary>
-              <OrientationGuard>
-                <Routes>
+            <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/publier-annonce" element={<CreateAd />} />
               <Route path="/annonce/:id" element={<AdDetail />} />
@@ -93,9 +78,7 @@ function App() {
               <Route path="/verification" element={<VerificationDashboard />} />
               <Route path="/payment-status" element={<PaymentStatus />} />
               <Route path="*" element={<NotFound />} />
-                </Routes>
-              </OrientationGuard>
-            </ErrorBoundary>
+            </Routes>
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
