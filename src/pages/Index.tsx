@@ -39,7 +39,7 @@ const Index: React.FC = () => {
     // Vérification de récupération de mot de passe
     const urlFragment = window.location.hash;
     if (urlFragment.includes('type=recovery')) {
-      navigate('/reset-password' + urlFragment);
+      navigate('/reinitialiser-mot-de-passe' + urlFragment);
       return;
     }
 
@@ -73,7 +73,7 @@ const Index: React.FC = () => {
     return (
       <div>
         <MinimalMobileDebug />
-        <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="min-h-viewport bg-white flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Chargement...</p>
@@ -89,7 +89,7 @@ const Index: React.FC = () => {
       <MinimalMobileDebug />
       
       <SimpleMobileWrapper>
-        <div className="min-h-screen bg-white" data-main-app="true">
+        <div className="min-h-viewport bg-white" data-main-app="true">
           <Header />
           
           <main className={isMobile ? "pb-20" : ""}>

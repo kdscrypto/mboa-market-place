@@ -45,3 +45,12 @@ html, body, #root {
   height: 100%;
   width: 100%;
 }
+
+/* Viewport unit fix */
+:root {
+  --vh: 1vh;
+}
+
+.min-h-viewport {
+  min-height: calc(var(--vh, 1vh) * 100);
+}

@@ -20,7 +20,7 @@ const AuthCallback = () => {
           if (event === 'PASSWORD_RECOVERY') {
             console.log("[AUTH_CALLBACK] PASSWORD_RECOVERY event detected, redirecting to reset password");
             subscription.unsubscribe();
-            navigate("/reset-password", { replace: true });
+            navigate("/reinitialiser-mot-de-passe", { replace: true });
           } else if (event === 'SIGNED_IN' && session) {
             console.log("[AUTH_CALLBACK] Normal sign in detected, redirecting to home");
             subscription.unsubscribe();

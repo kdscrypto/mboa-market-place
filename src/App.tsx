@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import ErrorBoundary from "@/components/system/ErrorBoundary";
+import OrientationGuard from "@/components/mobile/OrientationGuard";
 
 // Import des pages
 import Index from "./pages/Index";
@@ -57,7 +59,9 @@ function App() {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
+            <ErrorBoundary>
+              <OrientationGuard>
+                <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/publier-annonce" element={<CreateAd />} />
               <Route path="/annonce/:id" element={<AdDetail />} />
@@ -89,7 +93,9 @@ function App() {
               <Route path="/verification" element={<VerificationDashboard />} />
               <Route path="/payment-status" element={<PaymentStatus />} />
               <Route path="*" element={<NotFound />} />
-            </Routes>
+                </Routes>
+              </OrientationGuard>
+            </ErrorBoundary>
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
