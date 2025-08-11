@@ -9,7 +9,7 @@ interface AdDetailLayoutProps {
 
 const AdDetailLayout: React.FC<AdDetailLayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-viewport flex flex-col">
       <Header />
       <main className="flex-grow container mx-auto py-8 px-4 md:px-0">
         <div className="bg-white rounded-lg shadow-md overflow-hidden">

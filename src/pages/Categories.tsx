@@ -7,7 +7,7 @@ import CategoryCard from "@/components/CategoryCard";
 
 const Categories = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-viewport flex flex-col">
       <Header />
       
       <main className="flex-grow bg-mboa-gray py-12">

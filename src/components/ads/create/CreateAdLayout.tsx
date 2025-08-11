@@ -9,7 +9,7 @@ interface CreateAdLayoutProps {
 
 const CreateAdLayout = ({ children }: CreateAdLayoutProps) => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-viewport flex flex-col">
       <Header />
       
       <main className="flex-grow py-8 bg-mboa-gray">

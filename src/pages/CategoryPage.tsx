@@ -27,7 +27,7 @@ const CategoryPage = () => {
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-viewport flex flex-col">
       <Header />
 
       <main className="flex-grow">
