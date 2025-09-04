@@ -104,16 +104,43 @@ export const markMessagesAsRead = async (conversationId: string): Promise<{ succ
       return { success: false, error: "Utilisateur non authentifié" };
     }
 
-    const { error } = await supabase
+    // Get unread messages in the conversation for this user
+    const { data: messages, error: fetchError } = await supabase
       .from('messages')
-      .update({ read: true })
+      .select('id')
       .eq('conversation_id', conversationId)
       .not('sender_id', 'eq', data.user.id)
       .eq('read', false);
 
-    if (error) {
-      console.error("Erreur lors du marquage des messages comme lus:", error);
-      return { success: false, error: "Erreur lors du marquage des messages comme lus" };
+    if (fetchError) {
+      console.error("Erreur lors de la récupération des messages:", fetchError);
+      return { success: false, error: "Erreur lors de la récupération des messages" };
+    }
+
+    // Mark each message as read using secure function
+    const results = await Promise.allSettled(
+      (messages || []).map(async (message) => {
+        const { data: result, error } = await supabase.rpc('mark_message_read_secure', {
+          p_message_id: message.id
+        });
+        
+        if (error) {
+          console.error(`Erreur marquage message ${message.id}:`, error);
+          return false;
+        }
+        
+        return result || false;
+      })
+    );
+
+    // Check if any failed
+    const failed = results.filter(result => 
+      result.status === 'rejected' || 
+      (result.status === 'fulfilled' && !result.value)
+    );
+
+    if (failed.length > 0) {
+      console.warn(`${failed.length} messages failed to be marked as read`);
     }
 
     return { success: true, error: null };

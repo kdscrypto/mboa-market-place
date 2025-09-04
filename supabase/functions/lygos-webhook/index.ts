@@ -129,23 +129,19 @@ serve(async (req) => {
         newStatus = 'pending';
     }
 
-    // Update the transaction
-    const { error: updateError } = await supabase
-      .from('payment_transactions')
-      .update({
-        status: newStatus,
-        lygos_status: status,
-        completed_at: completedAt,
-        callback_data: {
-          ...transaction.callback_data,
-          lygos_webhook: payload,
-          webhook_received_at: new Date().toISOString()
-        },
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', transaction.id);
+    // Update the transaction using secure function
+    const { data: updateResult, error: updateError } = await supabase.rpc('update_transaction_status_secure', {
+      p_transaction_id: transaction.id,
+      p_new_status: newStatus,
+      p_lygos_status: status,
+      p_callback_data: {
+        ...transaction.callback_data,
+        lygos_webhook: payload,
+        webhook_received_at: new Date().toISOString()
+      }
+    });
 
-    if (updateError) {
+    if (updateError || !updateResult) {
       console.error('Error updating transaction:', updateError);
       throw new Error('Erreur lors de la mise à jour de la transaction');
     }

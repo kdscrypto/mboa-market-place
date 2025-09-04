@@ -24,16 +24,14 @@ export const useResetPasswordSession = () => {
     const hasAccessToken = urlParams.has('access_token');
     const hasRefreshToken = urlParams.has('refresh_token');
 
-    console.log("[RESET_PASSWORD_SESSION] URL analysis:", {
-      hash: urlHash,
-      type: recoveryType,
-      hasAccessToken,
-      hasRefreshToken,
-      fullUrl: window.location.href
-    });
-
     // More lenient validation - check for recovery indicators
     const isRecoveryUrl = recoveryType === 'recovery' || hasAccessToken || hasRefreshToken || urlHash.includes('type=recovery');
+
+    console.log("[RESET_PASSWORD_SESSION] URL analysis:", {
+      hasRecoveryType: recoveryType === 'recovery',
+      hasTokens: hasAccessToken || hasRefreshToken,
+      isRecoveryContext: isRecoveryUrl
+    });
     
     // If this is clearly not a recovery URL, redirect after a longer delay
       if (!urlHash && !window.location.href.includes('reinitialiser-mot-de-passe')) {
@@ -68,11 +66,7 @@ export const useResetPasswordSession = () => {
         event, 
         hasSession: !!session, 
         hasUser: !!session?.user,
-        sessionDetails: session ? {
-          accessToken: !!session.access_token,
-          refreshToken: !!session.refresh_token,
-          expiresAt: session.expires_at
-        } : null
+        isRecoveryContext: isRecoveryUrl
       });
       
       if (event === 'PASSWORD_RECOVERY' && session && session.user) {
@@ -134,11 +128,7 @@ export const useResetPasswordSession = () => {
           hasSession: !!session,
           hasUser: !!session?.user,
           isRecoveryUrl,
-          sessionDetails: session ? {
-            accessToken: !!session.access_token,
-            refreshToken: !!session.refresh_token,
-            expiresAt: session.expires_at
-          } : null
+          hasValidTokens: !!(session?.access_token && session?.refresh_token)
         });
 
         if (session && session.user && isRecoveryUrl) {
@@ -147,6 +137,12 @@ export const useResetPasswordSession = () => {
           if (mounted.current) {
             setIsReady(true);
             setIsChecking(false);
+            
+            // Clear recovery hash from URL for security
+            if (window.location.hash) {
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+            
             toast({
               title: "Lien valide",
               description: "Vous pouvez maintenant définir votre nouveau mot de passe.",

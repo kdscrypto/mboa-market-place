@@ -1306,6 +1306,10 @@ export type Database = {
         Args: { created_at: string; plan_id: string }
         Returns: string
       }
+      can_view_contact_info: {
+        Args: { p_ad_id: string; p_user_id: string }
+        Returns: boolean
+      }
       check_auth_rate_limit: {
         Args: {
           p_action_type: string
@@ -1478,6 +1482,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      log_auth_security_event_secure: {
+        Args: {
+          p_event_data?: Json
+          p_event_type: string
+          p_identifier: string
+          p_identifier_type: string
+          p_severity: string
+        }
+        Returns: string
+      }
       log_input_validation: {
         Args: {
           p_input_field: string
@@ -1512,6 +1526,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      mark_message_read_secure: {
+        Args: { p_message_id: string }
+        Returns: boolean
       }
       mark_messages_as_delivered: {
         Args: { conversation_uuid: string }
@@ -1550,6 +1568,15 @@ export type Database = {
           p_lygos_data?: Json
           p_lygos_payment_id: string
           p_status: string
+        }
+        Returns: boolean
+      }
+      update_transaction_status_secure: {
+        Args: {
+          p_callback_data?: Json
+          p_lygos_status?: string
+          p_new_status: string
+          p_transaction_id: string
         }
         Returns: boolean
       }

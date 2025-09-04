@@ -23,17 +23,14 @@ export const logSecurityEvent = async (
       security_version: '2.0'
     };
 
-    await supabase
-      .from('auth_security_events')
-      .insert({
-        event_type: eventType,
-        severity,
-        identifier: identifier || clientIP,
-        identifier_type: identifierType || 'ip',
-        event_data: enhancedEventData,
-        risk_score: severity === 'critical' ? 100 : severity === 'high' ? 75 : severity === 'medium' ? 50 : 25,
-        auto_blocked: severity === 'critical'
-      });
+    // Use secure function to log security events
+    await supabase.rpc('log_auth_security_event_secure', {
+      p_event_type: eventType,
+      p_severity: severity,
+      p_identifier: identifier || clientIP,
+      p_identifier_type: identifierType || 'ip',
+      p_event_data: enhancedEventData
+    });
 
   } catch (error) {
     console.error('Error logging security event:', error);

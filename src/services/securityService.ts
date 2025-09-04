@@ -70,6 +70,12 @@ export {
   hashInputValue
 };
 
+// Export secure messaging functions
+export { 
+  markMessageAsRead,
+  updateMessageContent
+} from './security/messageSecurityService';
+
 // Export types
 export type {
   LoginAttemptData,
