@@ -15,6 +15,7 @@ import { scheduleTask } from "@/utils/scheduler";
 const AdsSection = lazy(() => import("@/components/home/AdsSection"));
 const FeaturesSections = lazy(() => import("@/components/home/FeaturesSections"));
 const CTASection = lazy(() => import("@/components/home/CTASection"));
+const AdsterraNativeBanner = lazy(() => import("@/components/ads/AdsterraNativeBanner"));
 const GoogleAdBanner = lazy(() => import("@/components/ads/GoogleAdBanner"));
 
 const Index = () => {
@@ -112,6 +113,16 @@ const Index = () => {
               error={error} 
             />
           )}
+        </Suspense>
+        
+        {/* Adsterra Native Banner Placement */}
+        <Suspense fallback={<div className="h-48 bg-gray-50 animate-pulse rounded-lg mx-4 mb-8" />}>
+          <div className="mboa-container mb-8">
+            <AdsterraNativeBanner
+              zoneId="723f32db77c60f4499146c57ce5844c2"
+              title="Recommandé pour vous"
+            />
+          </div>
         </Suspense>
         
         <Suspense fallback={<div className="h-64 bg-gray-50 animate-pulse rounded-lg mx-4 mb-8" />}>
