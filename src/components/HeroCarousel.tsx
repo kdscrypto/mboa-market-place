@@ -109,11 +109,9 @@ const HeroCarousel = () => {
               src={img}
               alt={`Mboa Market Featured ${index + 1}`}
               {...(index === 0 ? { 
-                fetchPriority: "high",
                 decoding: "sync"
               } : { 
                 loading: "lazy",
-                fetchPriority: "low",
                 decoding: "async" 
               })}
               className={cn(

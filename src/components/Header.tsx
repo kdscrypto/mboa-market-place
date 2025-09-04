@@ -36,17 +36,7 @@ const Header = () => {
 
   return (
     <>
-      {/* Optional header banner ad */}
-      <div className="hidden lg:block">
-        <AdsterraBanner 
-          zoneId="header-banner-1" 
-          format="leaderboard"
-          style={{ width: "100%", height: "90px" }}
-          className="border-b"
-        />
-      </div>
-      
-      <header 
+      <header
         className="shadow-sm border-b sticky top-0 z-50 transition-colors duration-200"
         style={{ 
           backgroundColor: 'var(--color-header-bg)', 
