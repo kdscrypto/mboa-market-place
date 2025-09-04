@@ -39,51 +39,22 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             .order('position', { ascending: true })
             .limit(1);
           
-          if (imageError) {
-            console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
-          return {
-            ...ad,
-            imageUrl: '/placeholder.svg',
-            is_premium: ad.ad_type !== 'standard', // Consider all types except standard as premium
-            phone: '', // Not exposed in public API for security
-            user_id: '', // Not exposed in public API for security
-            whatsapp: '' // Not exposed in public API for security
-          };
-          }
-          
-          // Check if image URL is valid
           let imageUrl = '/placeholder.svg';
           
-          if (images && images.length > 0 && images[0].image_url) {
+          if (!imageError && images && images.length > 0 && images[0].image_url) {
             const originalUrl = images[0].image_url.trim();
-            
             if (isValidImageUrl(originalUrl)) {
               imageUrl = originalUrl;
-              
-              // Test if the image can be loaded
-              try {
-                const response = await fetch(originalUrl, { method: 'HEAD' });
-                if (!response.ok) {
-                  console.warn(`Image URL returns ${response.status} for ad ${ad.id}:`, originalUrl);
-                  imageUrl = '/placeholder.svg';
-                }
-              } catch (err) {
-                console.warn(`Failed to validate image URL for ad ${ad.id}:`, err);
-              }
-            } else {
-              console.warn(`Invalid image URL format for ad ${ad.id}:`, originalUrl);
             }
-          } else {
-            console.warn(`No image found for ad ${ad.id}`);
           }
           
           return {
             ...ad,
             imageUrl,
-            is_premium: ad.ad_type !== 'standard', // Consider all types except standard as premium
-            phone: '', // Not exposed in public API for security
-            user_id: '', // Not exposed in public API for security
-            whatsapp: '' // Not exposed in public API for security
+            is_premium: ad.ad_type !== 'standard',
+            phone: '',
+            user_id: '',
+            whatsapp: ''
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
@@ -91,9 +62,9 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             ...ad,
             imageUrl: '/placeholder.svg',
             is_premium: ad.ad_type !== 'standard',
-            phone: '', // Not exposed in public API for security
-            user_id: '', // Not exposed in public API for security
-            whatsapp: '' // Not exposed in public API for security
+            phone: '',
+            user_id: '',
+            whatsapp: ''
           };
         }
       })

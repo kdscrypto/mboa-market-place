@@ -77,11 +77,7 @@ export const fetchDoualaAds = async (limit: number = 12): Promise<Ad[]> => {
 
           let imageUrl = '/placeholder.svg'; // Default fallback
           
-          if (imageError) {
-            if (imageError.code !== 'PGRST116') { // Not a "no rows" error
-              console.warn(`Error fetching image for ad ${ad.id}:`, imageError);
-            }
-          } else if (imageData?.image_url && isValidImageUrl(imageData.image_url)) {
+          if (!imageError && imageData?.image_url && isValidImageUrl(imageData.image_url)) {
             imageUrl = imageData.image_url;
           }
 
