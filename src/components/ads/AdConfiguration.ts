@@ -8,13 +8,13 @@ export const ADSTERRA_ZONES = {
   SIDEBAR_BANNER: "sidebar-banner-1", // 300x250 rectangle
   CONTENT_BANNER: "content-banner-1", // 728x90 or 320x100
   
-  // Native Ads
-  SEARCH_NATIVE: "search-native-1", // In search results
-  PREMIUM_NATIVE: "premium-native-1", // In premium ads grid
-  CATEGORY_NATIVE: "category-native-1", // In category pages
+  // Native Ads - Real Zone ID
+  SEARCH_NATIVE: "723f32db77c60f4499146c57ce5844c2", // In search results
+  PREMIUM_NATIVE: "723f32db77c60f4499146c57ce5844c2", // In premium ads grid
+  CATEGORY_NATIVE: "723f32db77c60f4499146c57ce5844c2", // In category pages
   
-  // Mobile Ads
-  MOBILE_SOCIAL_BAR: "mobile-social-1", // Social bar for mobile
+  // Mobile Ads - Real Zone ID
+  MOBILE_SOCIAL_BAR: "fe10e69177de8cccddb46f67064b9c9b", // Social bar for mobile
   MOBILE_BANNER: "mobile-banner-1", // Mobile banner
   
   // Ad Detail Page

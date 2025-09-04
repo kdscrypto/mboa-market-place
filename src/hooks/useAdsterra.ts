@@ -54,35 +54,58 @@ export const useAdsterraBanner = (zoneId: string, format: string = 'banner') => 
 };
 
 export const useAdsterraNative = (zoneId: string) => {
-  const config = {
-    key: zoneId,
-    format: 'native',
-    native: {
-      settings: {
-        categories_exclude: [],
-        key: zoneId,
-        css: {
-          'text-color': 'inherit',
-          'color': 'inherit',
-          'font-family': 'inherit',
-          'font-size': 'inherit'
+  const adRef = useRef<HTMLDivElement>(null);
+  const isLoaded = useRef(false);
+
+  useEffect(() => {
+    if (!adRef.current || isLoaded.current) return;
+
+    try {
+      if (typeof window !== 'undefined') {
+        // Load the specific native banner script
+        if (!document.querySelector('script[src*="723f32db77c60f4499146c57ce5844c2"]')) {
+          const script = document.createElement('script');
+          script.async = true;
+          script.setAttribute('data-cfasync', 'false');
+          script.src = '//pl27571954.revenuecpmgate.com/723f32db77c60f4499146c57ce5844c2/invoke.js';
+          document.head.appendChild(script);
         }
+        
+        isLoaded.current = true;
+        console.log(`Adsterra Native Banner loaded for zone: ${zoneId}`);
       }
+    } catch (error) {
+      console.error('Error loading Adsterra Native Banner:', error);
     }
-  };
-  
-  return useAdsterra(config);
+  }, [zoneId]);
+
+  return { adRef };
 };
 
 export const useAdsterraSocialBar = (zoneId: string) => {
-  const config = {
-    key: zoneId,
-    format: 'socialbar',
-    socialbar: {
-      categories_exclude: [],
-      key: zoneId
+  const adRef = useRef<HTMLDivElement>(null);
+  const isLoaded = useRef(false);
+
+  useEffect(() => {
+    if (!adRef.current || isLoaded.current) return;
+
+    try {
+      if (typeof window !== 'undefined') {
+        // Load the specific social bar script
+        if (!document.querySelector('script[src*="fe10e69177de8cccddb46f67064b9c9b"]')) {
+          const script = document.createElement('script');
+          script.type = 'text/javascript';
+          script.src = '//pl27571971.revenuecpmgate.com/fe/10/e6/fe10e69177de8cccddb46f67064b9c9b.js';
+          document.head.appendChild(script);
+        }
+        
+        isLoaded.current = true;
+        console.log(`Adsterra Social Bar loaded for zone: ${zoneId}`);
+      }
+    } catch (error) {
+      console.error('Error loading Adsterra Social Bar:', error);
     }
-  };
-  
-  return useAdsterra(config);
+  }, [zoneId]);
+
+  return { adRef };
 };

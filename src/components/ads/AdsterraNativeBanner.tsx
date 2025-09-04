@@ -41,6 +41,7 @@ const AdsterraNativeBanner: React.FC<AdsterraNativeBannerProps> = ({
         <div className="text-xs text-gray-500 mb-3 font-medium">{title}</div>
         <div
           ref={adRef}
+          id={`container-${zoneId}`}
           className="adsterra-native-zone cursor-pointer"
           style={{
             minHeight: '200px',
