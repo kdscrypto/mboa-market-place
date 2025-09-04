@@ -23,15 +23,18 @@ export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
   try {
     console.log("Fetching featured ads (formerly premium)...");
     
-    // Récupérer toutes les annonces approuvées qui ne sont pas de type "standard"
-    // Ceci inclut toutes les anciennes annonces premium, même celles avec des transactions obsolètes
-    const { data: ads, error } = await supabase
-      .from('ads')
-      .select('*')
-      .eq('status', 'approved')
-      .neq('ad_type', 'standard') // Toutes les annonces non-standard sont maintenant considérées comme mises en avant
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    // Use secure function to get homepage ads and filter non-standard ones
+    const { data: allAds, error: homeError } = await supabase
+      .rpc('get_homepage_ads', { p_limit: limit * 2 }); // Get more to filter
+    
+    if (homeError) {
+      console.error("Error retrieving homepage ads:", homeError);
+      throw homeError;
+    }
+    
+    // Filter for non-standard ads (formerly premium)
+    const ads = (allAds || []).filter(ad => ad.ad_type !== 'standard').slice(0, limit);
+    const error = null;
     
     if (error) {
       console.error("Error retrieving featured ads:", error);
@@ -57,13 +60,19 @@ export const fetchPremiumAds = async (limit: number = 20): Promise<Ad[]> => {
           
           return {
             ...ad,
-            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
+            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg',
+            phone: '', // Not exposed in public API for security
+            user_id: '', // Not exposed in public API for security
+            whatsapp: '' // Not exposed in public API for security
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
           return {
             ...ad,
-            imageUrl: '/placeholder.svg'
+            imageUrl: '/placeholder.svg',
+            phone: '', // Not exposed in public API for security
+            user_id: '', // Not exposed in public API for security
+            whatsapp: '' // Not exposed in public API for security
           };
         }
       })
@@ -81,13 +90,9 @@ export const fetchTrendingAds = async (limit: number = 10): Promise<Ad[]> => {
   try {
     console.log("Fetching trending ads...");
     
-    // Récupérer un mélange d'annonces récentes et d'annonces mises en avant
+    // Use secure function to get trending ads (recent approved ads)
     const { data: ads, error } = await supabase
-      .from('ads')
-      .select('*')
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .rpc('get_homepage_ads', { p_limit: limit });
     
     if (error) {
       console.error("Error retrieving trending ads:", error);
@@ -113,13 +118,19 @@ export const fetchTrendingAds = async (limit: number = 10): Promise<Ad[]> => {
           
           return {
             ...ad,
-            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
+            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg',
+            phone: '', // Not exposed in public API for security
+            user_id: '', // Not exposed in public API for security
+            whatsapp: '' // Not exposed in public API for security
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
           return {
             ...ad,
-            imageUrl: '/placeholder.svg'
+            imageUrl: '/placeholder.svg',
+            phone: '', // Not exposed in public API for security
+            user_id: '', // Not exposed in public API for security
+            whatsapp: '' // Not exposed in public API for security
           };
         }
       })

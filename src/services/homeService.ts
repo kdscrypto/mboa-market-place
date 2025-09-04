@@ -9,13 +9,9 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
   try {
     console.log("Fetching approved ads for homepage");
     
-    // Retrieve the most recent approved ads without checking authentication
+    // Use secure function to get homepage ads (no sensitive data exposed)
     const { data: ads, error } = await supabase
-      .from('ads')
-      .select('*')
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .rpc('get_homepage_ads', { p_limit: limit });
     
     if (error) {
       console.error("Error retrieving approved ads:", error);
@@ -45,11 +41,14 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
           
           if (imageError) {
             console.error(`Error retrieving images for ad ${ad.id}:`, imageError);
-            return {
-              ...ad,
-              imageUrl: '/placeholder.svg',
-              is_premium: ad.ad_type !== 'standard' // Consider all types except standard as premium
-            };
+          return {
+            ...ad,
+            imageUrl: '/placeholder.svg',
+            is_premium: ad.ad_type !== 'standard', // Consider all types except standard as premium
+            phone: '', // Not exposed in public API for security
+            user_id: '', // Not exposed in public API for security
+            whatsapp: '' // Not exposed in public API for security
+          };
           }
           
           // Check if image URL is valid
@@ -81,14 +80,20 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
           return {
             ...ad,
             imageUrl,
-            is_premium: ad.ad_type !== 'standard' // Consider all types except standard as premium
+            is_premium: ad.ad_type !== 'standard', // Consider all types except standard as premium
+            phone: '', // Not exposed in public API for security
+            user_id: '', // Not exposed in public API for security
+            whatsapp: '' // Not exposed in public API for security
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
           return {
             ...ad,
             imageUrl: '/placeholder.svg',
-            is_premium: ad.ad_type !== 'standard'
+            is_premium: ad.ad_type !== 'standard',
+            phone: '', // Not exposed in public API for security
+            user_id: '', // Not exposed in public API for security
+            whatsapp: '' // Not exposed in public API for security
           };
         }
       })

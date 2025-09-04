@@ -14,14 +14,18 @@ export const fetchAllPremiumAds = async (): Promise<Ad[]> => {
   try {
     console.log("Fetching all featured ads (formerly premium)");
     
-    // Récupérer toutes les annonces approuvées qui ne sont pas de type standard
-    // Ceci garantit que toutes les anciennes annonces premium restent visibles
-    const { data: ads, error } = await supabase
-      .from('ads')
-      .select('*')
-      .eq('status', 'approved')
-      .neq('ad_type', 'standard') // Inclut premium_24h, premium_7d, premium_15d, premium_30d
-      .order('created_at', { ascending: false });
+    // Use secure function to get all ads and filter for non-standard ones
+    const { data: allAds, error: homeError } = await supabase
+      .rpc('get_homepage_ads', { p_limit: 100 }); // Get many ads to filter
+    
+    if (homeError) {
+      console.error("Error retrieving homepage ads:", homeError);
+      throw homeError;
+    }
+    
+    // Filter for non-standard ads (formerly premium)
+    const ads = (allAds || []).filter(ad => ad.ad_type !== 'standard');
+    const error = null;
     
     if (error) {
       console.error("Error retrieving featured ads:", error);
@@ -47,13 +51,19 @@ export const fetchAllPremiumAds = async (): Promise<Ad[]> => {
           
           return {
             ...ad,
-            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
+            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg',
+            phone: '', // Not exposed in public API for security
+            user_id: '', // Not exposed in public API for security
+            whatsapp: '' // Not exposed in public API for security
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
           return {
             ...ad,
-            imageUrl: '/placeholder.svg'
+            imageUrl: '/placeholder.svg',
+            phone: '', // Not exposed in public API for security
+            user_id: '', // Not exposed in public API for security
+            whatsapp: '' // Not exposed in public API for security
           };
         }
       })
