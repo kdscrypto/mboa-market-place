@@ -70,19 +70,49 @@ const Footer = () => {
           <div>
             <h3 className="text-base font-semibold mb-2 theme-text-primary">Suivez-nous</h3>
             <div className="flex gap-3">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+              <a 
+                href="https://facebook.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="theme-text-secondary hover:text-mboa-orange transition-colors"
+                aria-label="Suivez-nous sur Facebook"
+              >
                 <Facebook size={20} />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+              <a 
+                href="https://instagram.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="theme-text-secondary hover:text-mboa-orange transition-colors"
+                aria-label="Suivez-nous sur Instagram"
+              >
                 <Instagram size={20} />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+              <a 
+                href="https://twitter.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="theme-text-secondary hover:text-mboa-orange transition-colors"
+                aria-label="Suivez-nous sur Twitter"
+              >
                 <Twitter size={20} />
               </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+              <a 
+                href="https://linkedin.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="theme-text-secondary hover:text-mboa-orange transition-colors"
+                aria-label="Suivez-nous sur LinkedIn"
+              >
                 <Linkedin size={20} />
               </a>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="theme-text-secondary hover:text-mboa-orange transition-colors">
+              <a 
+                href="https://youtube.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="theme-text-secondary hover:text-mboa-orange transition-colors"
+                aria-label="Suivez-nous sur YouTube"
+              >
                 <Youtube size={20} />
               </a>
             </div>
