@@ -11,6 +11,18 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     sourcemap: true, // Enable source maps for production builds
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-dropdown-menu'],
+          query: ['@tanstack/react-query'],
+          supabase: ['@supabase/supabase-js']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000, // Increase warning limit for chunked builds
   },
   plugins: [
     react(),

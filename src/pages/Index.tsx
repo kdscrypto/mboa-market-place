@@ -9,6 +9,7 @@ import CategoriesSection from "@/components/home/CategoriesSection";
 import { fetchApprovedAds } from "@/services/homeService";
 import { Ad } from "@/types/adTypes";
 import { categories } from "@/data/categoriesData";
+import { scheduleTask } from "@/utils/scheduler";
 
 // Lazy load non-critical components
 const AdsSection = lazy(() => import("@/components/home/AdsSection"));
@@ -41,48 +42,26 @@ const Index = () => {
       return; // Don't load ads if redirecting
     }
 
-    // Load approved ads only if not redirecting - use requestIdleCallback to avoid blocking main thread
+    // Load approved ads only if not redirecting - use scheduler to avoid blocking main thread
     const loadApprovedAds = () => {
-      if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(async () => {
-          setIsLoading(true);
-          setError(false);
-          try {
-            console.log("Loading approved ads for homepage...");
-            const ads = await fetchApprovedAds(12);
-            console.log("Recent ads loaded for homepage:", ads.length);
-            setRecentAds(ads);
-            setAdsLoaded(true);
-          } catch (err) {
-            console.error("Error loading approved ads:", err);
-            setError(true);
-            setRecentAds([]);
-            setAdsLoaded(true);
-          } finally {
-            setIsLoading(false);
-          }
-        }, { timeout: 2000 });
-      } else {
-        // Fallback for browsers without requestIdleCallback
-        setTimeout(async () => {
-          setIsLoading(true);
-          setError(false);
-          try {
-            console.log("Loading approved ads for homepage...");
-            const ads = await fetchApprovedAds(12);
-            console.log("Recent ads loaded for homepage:", ads.length);
-            setRecentAds(ads);
-            setAdsLoaded(true);
-          } catch (err) {
-            console.error("Error loading approved ads:", err);
-            setError(true);
-            setRecentAds([]);
-            setAdsLoaded(true);
-          } finally {
-            setIsLoading(false);
-          }
-        }, 500);
-      }
+      scheduleTask(async () => {
+        setIsLoading(true);
+        setError(false);
+        try {
+          console.log("Loading approved ads for homepage...");
+          const ads = await fetchApprovedAds(12);
+          console.log("Recent ads loaded for homepage:", ads.length);
+          setRecentAds(ads);
+          setAdsLoaded(true);
+        } catch (err) {
+          console.error("Error loading approved ads:", err);
+          setError(true);
+          setRecentAds([]);
+          setAdsLoaded(true);
+        } finally {
+          setIsLoading(false);
+        }
+      }, 'low'); // Use low priority to avoid blocking critical rendering
     };
 
     // Defer ads loading to avoid blocking main thread
