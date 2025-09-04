@@ -40,6 +40,7 @@ const LygosCallback = lazy(() => import("./pages/LygosCallback"));
 const LygosTestDashboard = lazy(() => import("./pages/LygosTestDashboard"));
 const SecurityDashboard = lazy(() => import("./pages/SecurityDashboard"));
 const SecurityDocumentation = lazy(() => import("./pages/SecurityDocumentation"));
+const AdsterraCheck = lazy(() => import("./pages/AdsterraCheck"));
 const VerificationDashboard = lazy(() => import("./pages/VerificationDashboard"));
 const PaymentStatus = lazy(() => import("./pages/PaymentStatus"));
 
@@ -67,7 +68,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <AdsterraSocialBarProvider zoneId="mobile-social-1">
+          <AdsterraSocialBarProvider zoneId="fe10e69177de8cccddb46f67064b9c9b">
             <OrientationGuard>
             <BrowserRouter>
               <Routes>
@@ -209,6 +210,11 @@ function App() {
                 <Route path="/security/documentation" element={
                   <Suspense fallback={<PageLoader />}>
                     <SecurityDocumentation />
+                  </Suspense>
+                } />
+                <Route path="/adsterra-check" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <AdsterraCheck />
                   </Suspense>
                 } />
                 <Route path="/verification" element={
