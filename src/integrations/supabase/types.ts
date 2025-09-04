@@ -44,6 +44,13 @@ export type Database = {
             referencedRelation: "ads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ad_images_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads_public_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ad_plans: {
@@ -125,6 +132,13 @@ export type Database = {
             columns: ["ad_id"]
             isOneToOne: false
             referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_reports_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads_public_view"
             referencedColumns: ["id"]
           },
         ]
@@ -423,6 +437,13 @@ export type Database = {
             columns: ["ad_id"]
             isOneToOne: false
             referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads_public_view"
             referencedColumns: ["id"]
           },
         ]
@@ -911,6 +932,13 @@ export type Database = {
             referencedRelation: "ads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "payment_transactions_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads_public_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       payments: {
@@ -968,6 +996,13 @@ export type Database = {
             columns: ["ad_id"]
             isOneToOne: false
             referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads_public_view"
             referencedColumns: ["id"]
           },
           {
@@ -1295,7 +1330,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ads_public_view: {
+        Row: {
+          ad_type: string | null
+          category: string | null
+          city: string | null
+          contact_info_placeholder: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          phone_masked: string | null
+          premium_expires_at: string | null
+          price: number | null
+          region: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          user_id_masked: string | null
+          whatsapp_masked: string | null
+        }
+        Insert: {
+          ad_type?: string | null
+          category?: string | null
+          city?: string | null
+          contact_info_placeholder?: never
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          phone_masked?: never
+          premium_expires_at?: string | null
+          price?: number | null
+          region?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id_masked?: never
+          whatsapp_masked?: never
+        }
+        Update: {
+          ad_type?: string | null
+          category?: string | null
+          city?: string | null
+          contact_info_placeholder?: never
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          phone_masked?: never
+          premium_expires_at?: string | null
+          price?: number | null
+          region?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id_masked?: never
+          whatsapp_masked?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       acquire_transaction_lock: {
@@ -1450,6 +1541,23 @@ export type Database = {
       get_monetbil_migration_stats: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      get_public_ads: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          ad_type: string
+          category: string
+          city: string
+          created_at: string
+          description: string
+          id: string
+          premium_expires_at: string
+          price: number
+          region: string
+          status: string
+          title: string
+          updated_at: string
+        }[]
       }
       get_role_statistics: {
         Args: Record<PropertyKey, never>
