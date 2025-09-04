@@ -38,33 +38,34 @@ const HeroCarousel = () => {
     [autoplayPlugin.current]
   );
 
-  // Initialize first image as loaded immediately for LCP optimization
+  // Ensure first image is immediately ready for LCP optimization
   useEffect(() => {
-    // Mark first image as loaded immediately to avoid LCP delays
+    // Mark first image as loaded immediately to eliminate render delay
     setImagesLoaded(prev => {
       const newState = [...prev];
-      newState[0] = true; // First image is always considered loaded for LCP
-      
-      // Preload remaining images after initial render
-      setTimeout(() => {
-        images.slice(1).forEach((src, index) => {
-          const img = new Image();
-          img.src = src;
-          img.onload = () => {
-            setImagesLoaded(prev => {
-              const newState = [...prev];
-              newState[index + 1] = true;
-              if (newState.every(loaded => loaded)) {
-                setAllLoaded(true);
-              }
-              return newState;
-            });
-          };
-        });
-      }, 100);
-      
+      newState[0] = true; // First image is immediately available for LCP
       return newState;
     });
+    
+    // Preload remaining images after first image is rendered
+    const timer = setTimeout(() => {
+      images.slice(1).forEach((src, index) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+          setImagesLoaded(prev => {
+            const newState = [...prev];
+            newState[index + 1] = true;
+            if (newState.every(loaded => loaded)) {
+              setAllLoaded(true);
+            }
+            return newState;
+          });
+        };
+      });
+    }, 50); // Minimal delay to prioritize first image render
+    
+    return () => clearTimeout(timer);
   }, []);
 
   // Listen to carousel changes with throttling to reduce main thread work
@@ -98,7 +99,7 @@ const HeroCarousel = () => {
 
   return (
     <div className="w-full h-full relative" ref={emblaRef}>
-      <div className="flex h-full transition-transform duration-1000">
+      <div className="flex h-full">{/* Remove transition to eliminate render delay */}
         {images.map((img, index) => (
           <div 
             key={index} 
@@ -107,10 +108,18 @@ const HeroCarousel = () => {
             <img 
               src={img}
               alt={`Mboa Market Featured ${index + 1}`}
-              loading={index === 0 ? undefined : "lazy"}
-              fetchPriority={index === 0 ? "high" : "low"}
+              {...(index === 0 ? { 
+                fetchPriority: "high",
+                decoding: "sync"
+              } : { 
+                loading: "lazy",
+                fetchPriority: "low",
+                decoding: "async" 
+              })}
               className={cn(
-                "w-full h-full object-cover transition-opacity duration-500",
+                "w-full h-full object-cover",
+                // Remove transition for first image to eliminate render delay
+                index === 0 ? "" : "transition-opacity duration-500",
                 // First image always visible for LCP, others fade in when loaded
                 index === 0 ? "opacity-100" : (imagesLoaded[index] ? "opacity-100" : "opacity-0")
               )}
@@ -124,7 +133,6 @@ const HeroCarousel = () => {
                   return newState;
                 });
               }}
-              {...(index === 0 ? {} : { loading: "lazy" })}
             />
           </div>
         ))}
