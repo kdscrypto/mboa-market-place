@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import TrendingAdsSection from "@/components/TrendingAdsSection";
 import RecentAdsCarousel from "@/components/RecentAdsCarousel";
 import YaoundeTrendingSection from "@/components/home/YaoundeTrendingSection";
+import DoualaTrendingSection from "@/components/home/DoualaTrendingSection";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Ad } from "@/types/adTypes";
@@ -76,6 +77,11 @@ const AdsSection: React.FC<AdsSectionProps> = ({ recentAds, isLoading, error }) 
       {/* Yaoundé Trending Section */}
       <div className="mt-10">
         <YaoundeTrendingSection />
+      </div>
+      
+      {/* Douala Trending Section */}
+      <div className="mt-10">
+        <DoualaTrendingSection />
       </div>
     </div>
   );
