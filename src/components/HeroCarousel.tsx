@@ -36,24 +36,48 @@ const HeroCarousel = () => {
     [autoplayPlugin.current]
   );
 
-  // Preload images for better performance
+  // Prioritize first image preload for LCP optimization
   useEffect(() => {
-    // Preload all images
-    images.forEach((src, index) => {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => {
-        setImagesLoaded(prev => {
-          const newState = [...prev];
-          newState[index] = true;
-          // Check if all images are loaded
-          if (newState.every(loaded => loaded)) {
-            setAllLoaded(true);
-          }
-          return newState;
-        });
-      };
-    });
+    // Preload the first image immediately for LCP
+    const firstImg = new Image();
+    firstImg.src = images[0];
+    firstImg.fetchPriority = 'high';
+    firstImg.onload = () => {
+      setImagesLoaded(prev => {
+        const newState = [...prev];
+        newState[0] = true;
+        return newState;
+      });
+    };
+
+    // Preload remaining images after first one loads
+    firstImg.onload = () => {
+      setImagesLoaded(prev => {
+        const newState = [...prev];
+        newState[0] = true;
+        
+        // Load remaining images after a short delay
+        setTimeout(() => {
+          images.slice(1).forEach((src, index) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+              setImagesLoaded(prev => {
+                const newState = [...prev];
+                newState[index + 1] = true;
+                // Check if all images are loaded
+                if (newState.every(loaded => loaded)) {
+                  setAllLoaded(true);
+                }
+                return newState;
+              });
+            };
+          });
+        }, 100);
+        
+        return newState;
+      });
+    };
   }, []);
 
   // Listen to carousel changes
@@ -81,11 +105,11 @@ const HeroCarousel = () => {
             key={index} 
             className="min-w-full h-full flex-shrink-0 relative"
           >
-            {/* Add loading="lazy" and fade-in effect */}
             <img 
               src={img}
               alt={`Mboa Market Featured ${index + 1}`}
-              loading="lazy"
+              loading={index === 0 ? "eager" : "lazy"}
+              fetchPriority={index === 0 ? "high" : "low"}
               className={cn(
                 "w-full h-full object-cover transition-opacity duration-500",
                 allLoaded ? "opacity-100" : "opacity-0"
