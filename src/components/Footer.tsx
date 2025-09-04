@@ -2,11 +2,23 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Linkedin, Twitter, Youtube, Heart } from "lucide-react";
+import AdsterraBanner from "./ads/AdsterraBanner";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   return (
-    <footer className="theme-bg-surface theme-text-primary border-t theme-border mt-6">
+    <>
+      {/* Footer banner ad */}
+      <div className="border-t">
+        <AdsterraBanner 
+          zoneId="footer-banner-1" 
+          format="banner"
+          style={{ width: "100%", height: "250px" }}
+          className="my-4"
+        />
+      </div>
+      
+      <footer className="theme-bg-surface theme-text-primary border-t theme-border mt-6">
       <div className="mboa-container py-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Présentation */}
@@ -131,6 +143,7 @@ const Footer = () => {
         </div>
       </div>
     </footer>
+    </>
   );
 };
 

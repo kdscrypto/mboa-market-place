@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { lazy, Suspense } from "react";
 import OrientationGuard from "@/components/mobile/OrientationGuard";
+import AdsterraSocialBarProvider from "@/components/layout/AdsterraSocialBarProvider";
 
 // Eager load only critical pages
 import Index from "./pages/Index";
@@ -66,7 +67,8 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <OrientationGuard>
+          <AdsterraSocialBarProvider zoneId="mobile-social-1">
+            <OrientationGuard>
             <BrowserRouter>
               <Routes>
                 {/* Critical routes - loaded immediately */}
@@ -222,6 +224,7 @@ function App() {
               </Routes>
             </BrowserRouter>
           </OrientationGuard>
+          </AdsterraSocialBarProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

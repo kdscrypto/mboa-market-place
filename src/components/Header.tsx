@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import HeaderLogo from "./header/HeaderLogo";
 import HeaderDesktopNav from "./header/HeaderDesktopNav";
 import HeaderMobileNav from "./header/HeaderMobileNav";
+import AdsterraBanner from "./ads/AdsterraBanner";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,42 +35,54 @@ const Header = () => {
   };
 
   return (
-    <header 
-      className="shadow-sm border-b sticky top-0 z-50 transition-colors duration-200"
-      style={{ 
-        backgroundColor: 'var(--color-header-bg)', 
-        borderBottomColor: 'var(--color-header-border)' 
-      }}
-    >
-      <nav className="mboa-container py-2">
-        <div className="flex items-center justify-between">
-          <HeaderLogo />
+    <>
+      {/* Optional header banner ad */}
+      <div className="hidden lg:block">
+        <AdsterraBanner 
+          zoneId="header-banner-1" 
+          format="leaderboard"
+          style={{ width: "100%", height: "90px" }}
+          className="border-b"
+        />
+      </div>
+      
+      <header 
+        className="shadow-sm border-b sticky top-0 z-50 transition-colors duration-200"
+        style={{ 
+          backgroundColor: 'var(--color-header-bg)', 
+          borderBottomColor: 'var(--color-header-border)' 
+        }}
+      >
+        <nav className="mboa-container py-2">
+          <div className="flex items-center justify-between">
+            <HeaderLogo />
 
-          <HeaderDesktopNav 
+            <HeaderDesktopNav 
+              user={user}
+              onPublishAdClick={handlePublishAdClick}
+            />
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                style={{ color: 'var(--color-header-text)' }}
+              >
+                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
+            </div>
+          </div>
+
+          <HeaderMobileNav 
+            isMenuOpen={isMenuOpen}
             user={user}
             onPublishAdClick={handlePublishAdClick}
+            onCloseMenu={handleCloseMenu}
           />
-
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              style={{ color: 'var(--color-header-text)' }}
-            >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </Button>
-          </div>
-        </div>
-
-        <HeaderMobileNav 
-          isMenuOpen={isMenuOpen}
-          user={user}
-          onPublishAdClick={handlePublishAdClick}
-          onCloseMenu={handleCloseMenu}
-        />
-      </nav>
-    </header>
+        </nav>
+      </header>
+    </>
   );
 };
 
