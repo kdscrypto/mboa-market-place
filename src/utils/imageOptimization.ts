@@ -71,6 +71,11 @@ export function optimizeImage(
     return '/placeholder.svg';
   }
 
+  // Reject placeholder URLs
+  if (url.includes('placeholder') || url.startsWith('/placeholder')) {
+    return '/placeholder.svg';
+  }
+
   if (url.includes('supabase.co/storage/v1/object/public')) {
     return optimizeSupabaseImage(url, options);
   }

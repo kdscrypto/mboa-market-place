@@ -9,13 +9,22 @@ export const isValidImageUrl = (url: string): boolean => {
   const trimmedUrl = url.trim();
   if (!trimmedUrl) return false;
   
-  // Check if it's a valid URL format
-  try {
-    new URL(trimmedUrl);
+  // Reject placeholder URLs
+  if (trimmedUrl.includes('placeholder') || trimmedUrl.startsWith('/placeholder')) {
+    return false;
+  }
+  
+  // Check if it's a valid Supabase Storage URL
+  if (trimmedUrl.includes('supabase.co/storage/v1/object/public')) {
     return true;
+  }
+  
+  // Check if it's a valid external URL
+  try {
+    const urlObj = new URL(trimmedUrl);
+    return urlObj.protocol === 'https:' || urlObj.protocol === 'http:';
   } catch {
-    // If it's not a valid URL, check if it's a relative path
-    return trimmedUrl.startsWith('/') || trimmedUrl.startsWith('./') || trimmedUrl.startsWith('../');
+    return false;
   }
 };
 

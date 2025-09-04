@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { optimizeImage } from '@/utils/imageOptimization';
 
 interface AdCardProps {
   id: string;
@@ -41,21 +42,12 @@ const AdCard: React.FC<AdCardProps> = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   
-  // Process image URL to handle cache issues and ensure consistency across devices
-  const processImageUrl = (url: string): string => {
-    if (!url || url === '/placeholder.svg') return '/placeholder.svg';
-    
-    // For Supabase URLs, add cache busting and ensure proper formatting
-    if (url.includes('supabase.co/storage/v1/object/public')) {
-      const separator = url.includes('?') ? '&' : '?';
-      return `${url}${separator}t=${new Date().getTime()}`;
-    }
-    
-    return url;
-  };
-
-  // The processed image URL with cache busting
-  const finalImageUrl = imageError ? '/placeholder.svg' : processImageUrl(imageUrl);
+  // Optimize image URL for better performance
+  const optimizedImageUrl = imageError ? '/placeholder.svg' : optimizeImage(imageUrl, { 
+    width: 350, 
+    height: 350, 
+    quality: 80 
+  });
 
   return (
     <Link to={`/annonce/${id}`} className="block h-full">
@@ -71,7 +63,7 @@ const AdCard: React.FC<AdCardProps> = ({
             
             {/* Actual image */}
             <img
-              src={finalImageUrl}
+              src={optimizedImageUrl}
               alt={title}
               className={cn(
                 "object-cover w-full h-full transition-opacity duration-200",

@@ -50,20 +50,10 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             const originalUrl = images[0].image_url.trim();
             if (isValidImageUrl(originalUrl)) {
               imageUrl = originalUrl;
-              console.log(`Ad ${ad.id}: Using database image`);
+              console.log(`Ad ${ad.id}: Using database image: ${imageUrl}`);
             }
           } else {
-            // Use category-based fallback images from Unsplash
-            const categoryImages: Record<string, string> = {
-              '1': 'https://images.unsplash.com/photo-1493238792000-8113da705763?w=400&h=400&fit=crop&auto=format&q=75', // Véhicules
-              '4': 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=400&fit=crop&auto=format&q=75', // Mode & Beauté
-              '5': 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=400&fit=crop&auto=format&q=75', // Services
-              '15': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=400&fit=crop&auto=format&q=75', // High-tech
-              'default': 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop&auto=format&q=75'
-            };
-            
-            imageUrl = categoryImages[ad.category] || categoryImages['default'];
-            console.log(`Ad ${ad.id}: Using category fallback image for category ${ad.category}`);
+            console.log(`Ad ${ad.id}: No images found, using placeholder`);
           }
           
           return {
