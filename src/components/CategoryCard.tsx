@@ -32,7 +32,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
         <div className="absolute inset-0 w-full h-full z-0">
           <img 
             src={coverImage} 
-            alt={name} 
+            alt=""
             className="w-full h-full object-cover"
           />
           {/* Overlay gradient for better text visibility */}
