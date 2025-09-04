@@ -42,9 +42,19 @@
     <!-- Preload critical hero image for LCP optimization -->
     <link rel="preload" as="image" href="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1400&h=600&fit=crop&auto=format&q=75" fetchpriority="high">
     
-    <!-- Google Ads (AdSense) -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXXX"
-            crossorigin="anonymous"></script>
+    <!-- Defer Google Ads loading to reduce unused JavaScript -->
+    <script>
+      // Load Google Ads asynchronously after page load to reduce blocking
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          var script = document.createElement('script');
+          script.async = true;
+          script.crossOrigin = 'anonymous';
+          script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXXX';
+          document.head.appendChild(script);
+        }, 1000); // Delay 1 second after page load
+      });
+    </script>
   </head>
 
   <body>
