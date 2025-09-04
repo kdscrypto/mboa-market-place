@@ -71,8 +71,11 @@ const Carousel = React.forwardRef<
         return
       }
 
-      setCanScrollPrev(api.canScrollPrev())
-      setCanScrollNext(api.canScrollNext())
+      // Use requestAnimationFrame to avoid forced reflows
+      requestAnimationFrame(() => {
+        setCanScrollPrev(api.canScrollPrev())
+        setCanScrollNext(api.canScrollNext())
+      })
     }, [])
 
     const scrollPrev = React.useCallback(() => {

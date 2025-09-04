@@ -61,7 +61,10 @@ const HeroCarousel = () => {
     if (!emblaApi) return;
     
     const onSelect = () => {
-      setCurrentIndex(emblaApi.selectedScrollSnap());
+      // Use requestAnimationFrame to avoid forced reflows
+      requestAnimationFrame(() => {
+        setCurrentIndex(emblaApi.selectedScrollSnap());
+      });
     };
     
     emblaApi.on("select", onSelect);

@@ -58,7 +58,10 @@ const RecentAdsCarousel: React.FC<RecentAdsCarouselProps> = ({ ads }) => {
     if (!carouselApi) return;
     
     const onChange = () => {
-      setCurrentSlide(carouselApi.selectedScrollSnap());
+      // Use requestAnimationFrame to avoid forced reflows
+      requestAnimationFrame(() => {
+        setCurrentSlide(carouselApi.selectedScrollSnap());
+      });
     };
     
     carouselApi.on("select", onChange);
