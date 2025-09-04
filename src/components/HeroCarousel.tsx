@@ -66,20 +66,32 @@ const HeroCarousel = () => {
     });
   }, []);
 
-  // Listen to carousel changes
+  // Listen to carousel changes with throttling to reduce main thread work
   useEffect(() => {
     if (!emblaApi) return;
     
+    // Throttle carousel updates to reduce main thread pressure
+    let rafId: number;
     const onSelect = () => {
+      // Cancel previous frame request
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+      
       // Use requestAnimationFrame to avoid forced reflows
-      requestAnimationFrame(() => {
-        setCurrentIndex(emblaApi.selectedScrollSnap());
+      rafId = requestAnimationFrame(() => {
+        const newIndex = emblaApi.selectedScrollSnap();
+        // Only update if index actually changed
+        setCurrentIndex(prevIndex => prevIndex !== newIndex ? newIndex : prevIndex);
       });
     };
     
     emblaApi.on("select", onSelect);
     return () => {
       emblaApi.off("select", onSelect);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
     };
   }, [emblaApi]);
 

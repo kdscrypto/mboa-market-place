@@ -41,29 +41,52 @@ const Index = () => {
       return; // Don't load ads if redirecting
     }
 
-    // Load approved ads only if not redirecting - defer this to improve TTI
-    const loadApprovedAds = async () => {
-      setIsLoading(true);
-      setError(false);
-      try {
-        console.log("Loading approved ads for homepage...");
-        const ads = await fetchApprovedAds(12);
-        console.log("Recent ads loaded for homepage:", ads.length);
-        setRecentAds(ads);
-        setAdsLoaded(true);
-      } catch (err) {
-        console.error("Error loading approved ads:", err);
-        setError(true);
-        setRecentAds([]);
-        setAdsLoaded(true);
-      } finally {
-        setIsLoading(false);
+    // Load approved ads only if not redirecting - use requestIdleCallback to avoid blocking main thread
+    const loadApprovedAds = () => {
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(async () => {
+          setIsLoading(true);
+          setError(false);
+          try {
+            console.log("Loading approved ads for homepage...");
+            const ads = await fetchApprovedAds(12);
+            console.log("Recent ads loaded for homepage:", ads.length);
+            setRecentAds(ads);
+            setAdsLoaded(true);
+          } catch (err) {
+            console.error("Error loading approved ads:", err);
+            setError(true);
+            setRecentAds([]);
+            setAdsLoaded(true);
+          } finally {
+            setIsLoading(false);
+          }
+        }, { timeout: 2000 });
+      } else {
+        // Fallback for browsers without requestIdleCallback
+        setTimeout(async () => {
+          setIsLoading(true);
+          setError(false);
+          try {
+            console.log("Loading approved ads for homepage...");
+            const ads = await fetchApprovedAds(12);
+            console.log("Recent ads loaded for homepage:", ads.length);
+            setRecentAds(ads);
+            setAdsLoaded(true);
+          } catch (err) {
+            console.error("Error loading approved ads:", err);
+            setError(true);
+            setRecentAds([]);
+            setAdsLoaded(true);
+          } finally {
+            setIsLoading(false);
+          }
+        }, 500);
       }
     };
 
-    // Defer ads loading after initial render to improve TTI
-    const loadTimeout = setTimeout(loadApprovedAds, 100);
-    return () => clearTimeout(loadTimeout);
+    // Defer ads loading to avoid blocking main thread
+    loadApprovedAds();
   }, [navigate]);
 
   const handleSearch = (filters: any) => {

@@ -12,21 +12,24 @@ interface CategoryCarouselProps {
 }
 
 const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }) => {
-  // Configuration du plugin autoplay avec un délai plus long (5 secondes)
+  // Configuration du plugin autoplay avec un délai plus long pour réduire l'activité du main thread
   const autoplayPlugin = React.useRef(
     Autoplay({
-      delay: 5000,
+      delay: 8000, // Increased delay to reduce main thread work
       stopOnInteraction: true,
+      stopOnMouseEnter: true,
     })
   );
 
-  // Initialisation du carousel avec direction horizontale et plugin d'autoplay
+  // Initialisation du carousel avec direction horizontale et plugin d'autoplay optimisé
   const [emblaRef] = useEmblaCarousel(
     { 
       axis: "x",
-      loop: true,
+      loop: false, // Disable loop to reduce complexity
       dragFree: true,
-      direction: "ltr"
+      direction: "ltr",
+      skipSnaps: false,
+      duration: 30, // Faster transitions to reduce main thread blocking
     },
     [autoplayPlugin.current]
   );
