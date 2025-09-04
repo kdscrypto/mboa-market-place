@@ -16,6 +16,7 @@ export function optimizeSupabaseImage(
   url: string, 
   options: ImageOptimizationOptions = {}
 ): string {
+  // Vérifier si c'est une URL Supabase valide
   if (!url || !url.includes('supabase.co/storage/v1/object/public')) {
     return url;
   }
@@ -27,16 +28,21 @@ export function optimizeSupabaseImage(
     format = 'webp'
   } = options;
 
-  // Extract the bucket and path from the URL
-  const urlParts = url.split('/storage/v1/object/public/');
-  if (urlParts.length !== 2) return url;
+  try {
+    // Extraire le bucket et le chemin de l'URL
+    const urlParts = url.split('/storage/v1/object/public/');
+    if (urlParts.length !== 2) return url;
 
-  const [baseUrl, bucketAndPath] = urlParts;
-  
-  // Use Supabase's built-in image transformation
-  const transformationUrl = `${baseUrl}/storage/v1/render/image/public/${bucketAndPath}?width=${width}&height=${height}&quality=${quality}&format=${format}&resize=cover`;
-  
-  return transformationUrl;
+    const [baseUrl, bucketAndPath] = urlParts;
+    
+    // Utiliser la transformation d'image intégrée de Supabase
+    const transformationUrl = `${baseUrl}/storage/v1/render/image/public/${bucketAndPath}?width=${width}&height=${height}&quality=${quality}&format=${format}&resize=cover`;
+    
+    return transformationUrl;
+  } catch (error) {
+    console.error('Error optimizing Supabase image:', error);
+    return url; // Return original URL on error
+  }
 }
 
 /**
@@ -71,20 +77,25 @@ export function optimizeImage(
     return '/placeholder.svg';
   }
 
-  // Reject placeholder URLs
-  if (url.includes('placeholder') || url.startsWith('/placeholder')) {
+  const trimmedUrl = url.trim();
+
+  // Rejeter les URLs placeholder locales
+  if (trimmedUrl.includes('placeholder') && trimmedUrl.startsWith('/')) {
     return '/placeholder.svg';
   }
 
-  if (url.includes('supabase.co/storage/v1/object/public')) {
-    return optimizeSupabaseImage(url, options);
+  // Optimiser les images Supabase
+  if (trimmedUrl.includes('supabase.co/storage/v1/object/public')) {
+    return optimizeSupabaseImage(trimmedUrl, options);
   }
 
-  if (url.includes('images.unsplash.com')) {
-    return optimizeExternalImage(url, options);
+  // Optimiser les images Unsplash
+  if (trimmedUrl.includes('images.unsplash.com')) {
+    return optimizeExternalImage(trimmedUrl, options);
   }
 
-  return url;
+  // Retourner l'URL originale pour les autres cas
+  return trimmedUrl;
 }
 
 /**

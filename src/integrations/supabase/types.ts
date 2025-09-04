@@ -1368,6 +1368,10 @@ export type Database = {
         Args: { required_role?: string }
         Returns: boolean
       }
+      clean_image_url: {
+        Args: { url_input: string }
+        Returns: string
+      }
       cleanup_expired_lygos_transactions: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1480,6 +1484,10 @@ export type Database = {
           user_id: string
           whatsapp: string
         }[]
+      }
+      get_ad_primary_image: {
+        Args: { p_ad_id: string }
+        Returns: string
       }
       get_ad_reports_stats: {
         Args: Record<PropertyKey, never>

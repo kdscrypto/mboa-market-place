@@ -35,25 +35,17 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
       ads,
       async (ad) => {
         try {
-          const { data: images, error: imageError } = await supabase
-            .from('ad_images')
-            .select('image_url')
-            .eq('ad_id', ad.id)
-            .order('position', { ascending: true })
-            .limit(1);
-          
-          console.log(`Ad ${ad.id}: Found ${images?.length || 0} images`);
+          // Utiliser la nouvelle fonction sécurisée pour obtenir l'image primaire
+          const { data: imageUrlData, error: imageError } = await supabase
+            .rpc('get_ad_primary_image', { p_ad_id: ad.id });
           
           let imageUrl = '/placeholder.svg';
           
-          if (!imageError && images && images.length > 0 && images[0].image_url) {
-            const originalUrl = images[0].image_url.trim();
-            if (isValidImageUrl(originalUrl)) {
-              imageUrl = originalUrl;
-              console.log(`Ad ${ad.id}: Using database image: ${imageUrl}`);
-            }
+          if (!imageError && imageUrlData) {
+            imageUrl = imageUrlData;
+            console.log(`Ad ${ad.id}: Using database image: ${imageUrl}`);
           } else {
-            console.log(`Ad ${ad.id}: No images found, using placeholder`);
+            console.log(`Ad ${ad.id}: Error getting image:`, imageError);
           }
           
           return {

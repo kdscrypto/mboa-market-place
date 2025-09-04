@@ -42,12 +42,21 @@ const AdCard: React.FC<AdCardProps> = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   
-  // Optimize image URL for better performance
-  const optimizedImageUrl = imageError ? '/placeholder.svg' : optimizeImage(imageUrl, { 
-    width: 350, 
-    height: 350, 
-    quality: 80 
-  });
+  // Optimize image URL for better performance and handle edge cases
+  const optimizedImageUrl = React.useMemo(() => {
+    if (imageError) return '/placeholder.svg';
+    
+    try {
+      return optimizeImage(imageUrl, { 
+        width: 350, 
+        height: 350, 
+        quality: 80 
+      });
+    } catch (error) {
+      console.error(`Error optimizing image for ad ${id}:`, error);
+      return '/placeholder.svg';
+    }
+  }, [imageUrl, imageError, id]);
 
   return (
     <Link to={`/annonce/${id}`} className="block h-full">
@@ -74,6 +83,8 @@ const AdCard: React.FC<AdCardProps> = ({
               }}
               onError={(e) => {
                 console.error(`Image error for ad: ${id}, URL: ${imageUrl}`);
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder.svg';
                 setImageError(true);
                 setImageLoaded(true);
               }}

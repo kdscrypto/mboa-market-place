@@ -8,6 +8,7 @@ import {
   CarouselPrevious
 } from "@/components/ui/carousel";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { optimizeImage } from "@/utils/imageOptimization";
 
 interface AdImageCarouselProps {
   images: string[];
@@ -25,11 +26,12 @@ const AdImageCarousel: React.FC<AdImageCarouselProps> = ({ images, title }) => {
             <CarouselItem key={index}>
               <AspectRatio ratio={1/1}>
                 <img 
-                  src={image} 
+                  src={optimizeImage(image, { width: 600, height: 600, quality: 85 })} 
                   alt={`${title} - Photo ${index + 1}`} 
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder.svg';
                   }}
                 />
               </AspectRatio>
