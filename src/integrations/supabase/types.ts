@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1299,18 +1299,18 @@ export type Database = {
     }
     Functions: {
       acquire_transaction_lock: {
-        Args: { transaction_uuid: string; lock_identifier: string }
+        Args: { lock_identifier: string; transaction_uuid: string }
         Returns: boolean
       }
       calculate_premium_expiration: {
-        Args: { plan_id: string; created_at: string }
+        Args: { created_at: string; plan_id: string }
         Returns: string
       }
       check_auth_rate_limit: {
         Args: {
+          p_action_type: string
           p_identifier: string
           p_identifier_type: string
-          p_action_type: string
           p_max_requests?: number
           p_window_minutes?: number
         }
@@ -1318,9 +1318,9 @@ export type Database = {
       }
       check_rate_limit: {
         Args: {
+          p_action_type: string
           p_identifier: string
           p_identifier_type: string
-          p_action_type: string
           p_max_requests?: number
           p_window_minutes?: number
         }
@@ -1356,57 +1356,57 @@ export type Database = {
       }
       create_lygos_transaction: {
         Args: {
-          p_user_id: string
           p_ad_id: string
           p_amount: number
           p_currency?: string
           p_description?: string
           p_external_reference?: string
+          p_user_id: string
         }
         Returns: string
       }
       create_system_message: {
         Args: {
           conversation_uuid: string
-          msg_type: string
           msg_content: string
           msg_metadata?: Json
+          msg_type: string
         }
         Returns: string
       }
       create_user_session: {
         Args: {
-          p_user_id: string
-          p_session_token_hash: string
-          p_ip_address?: unknown
-          p_user_agent?: string
           p_device_fingerprint?: string
           p_expires_at?: string
+          p_ip_address?: unknown
+          p_session_token_hash: string
+          p_user_agent?: string
+          p_user_id: string
         }
         Returns: string
       }
       detect_advanced_threats: {
         Args: {
+          p_context?: Json
+          p_event_data: Json
           p_identifier: string
           p_identifier_type: string
-          p_event_data: Json
-          p_context?: Json
         }
         Returns: Json
       }
       detect_suspicious_activity: {
         Args: {
+          p_event_data: Json
           p_identifier: string
           p_identifier_type: string
-          p_event_data: Json
         }
         Returns: Json
       }
       detect_suspicious_auth_activity: {
         Args: {
+          p_event_data: Json
           p_identifier: string
           p_identifier_type: string
-          p_event_data: Json
         }
         Returns: Json
       }
@@ -1429,10 +1429,10 @@ export type Database = {
       get_ad_reports_stats: {
         Args: Record<PropertyKey, never>
         Returns: {
-          total_reports: number
           pending_reports: number
           resolved_reports: number
           top_reasons: Json
+          total_reports: number
         }[]
       }
       get_affiliate_stats: {
@@ -1450,20 +1450,20 @@ export type Database = {
       get_role_statistics: {
         Args: Record<PropertyKey, never>
         Returns: {
-          role: string
           count: number
+          role: string
         }[]
       }
       get_user_role_history: {
         Args: { target_user_id: string }
         Returns: {
-          id: string
-          old_role: string
-          new_role: string
           changed_by: string
-          reason: string
           created_at: string
+          id: string
           metadata: Json
+          new_role: string
+          old_role: string
+          reason: string
         }[]
       }
       get_user_role_safe: {
@@ -1480,36 +1480,36 @@ export type Database = {
       }
       log_input_validation: {
         Args: {
-          p_user_id: string
           p_input_field: string
           p_input_value_hash: string
-          p_validation_result: string
-          p_threat_indicators?: Json
-          p_severity?: string
           p_ip_address?: unknown
+          p_severity?: string
+          p_threat_indicators?: Json
           p_user_agent?: string
+          p_user_id: string
+          p_validation_result: string
         }
         Returns: string
       }
       log_login_attempt: {
         Args: {
           p_email: string
-          p_success: boolean
-          p_ip_address?: unknown
-          p_user_agent?: string
           p_failure_reason?: string
+          p_ip_address?: unknown
           p_session_fingerprint?: string
+          p_success: boolean
+          p_user_agent?: string
         }
         Returns: string
       }
       log_password_security_event: {
         Args: {
-          p_user_id: string
           p_event_type: string
-          p_security_score?: number
           p_ip_address?: unknown
-          p_user_agent?: string
           p_metadata?: Json
+          p_security_score?: number
+          p_user_agent?: string
+          p_user_id: string
         }
         Returns: string
       }
@@ -1518,38 +1518,38 @@ export type Database = {
         Returns: undefined
       }
       process_referral: {
-        Args: { referred_user_id: string; affiliate_code_param: string }
+        Args: { affiliate_code_param: string; referred_user_id: string }
         Returns: undefined
       }
       release_transaction_lock: {
-        Args: { transaction_uuid: string; lock_identifier: string }
+        Args: { lock_identifier: string; transaction_uuid: string }
         Returns: boolean
       }
       resolve_security_alert: {
         Args: {
           p_alert_id: string
-          p_status: string
           p_resolution_notes?: string
+          p_status: string
         }
         Returns: boolean
       }
       search_users_paginated: {
-        Args: { search_term?: string; page_size?: number; page_offset?: number }
+        Args: { page_offset?: number; page_size?: number; search_term?: string }
         Returns: {
-          id: string
-          email: string
-          username: string
-          role: string
           created_at: string
+          email: string
+          id: string
+          role: string
           total_count: number
+          username: string
         }[]
       }
       update_lygos_transaction_status: {
         Args: {
+          p_completed_at?: string
+          p_lygos_data?: Json
           p_lygos_payment_id: string
           p_status: string
-          p_lygos_data?: Json
-          p_completed_at?: string
         }
         Returns: boolean
       }
@@ -1562,7 +1562,7 @@ export type Database = {
         Returns: boolean
       }
       validate_input_security: {
-        Args: { p_input_value: string; p_input_type?: string }
+        Args: { p_input_type?: string; p_input_value: string }
         Returns: Json
       }
     }
