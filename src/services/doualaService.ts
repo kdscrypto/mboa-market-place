@@ -73,7 +73,7 @@ export const fetchDoualaAds = async (limit: number = 12): Promise<Ad[]> => {
             .select('image_url')
             .eq('ad_id', ad.id)
             .eq('position', 0)
-            .single();
+            .maybeSingle();
 
           let imageUrl = '/placeholder.svg'; // Default fallback
           
