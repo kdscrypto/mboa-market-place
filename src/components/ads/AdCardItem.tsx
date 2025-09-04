@@ -133,6 +133,8 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
                 description: "Fonctionnalité à venir",
               });
             }}
+            aria-label={`Ajouter ${ad.title} aux favoris`}
+            title={`Ajouter ${ad.title} aux favoris`}
           >
             <Heart className="h-4 w-4 text-gray-600" />
           </button>

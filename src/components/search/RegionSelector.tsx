@@ -23,7 +23,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({ value, onChange }) => {
   return (
     <div className="flex-grow">
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
+        <SelectTrigger aria-label="Sélectionner une région">
           <SelectValue placeholder="Région">
             {getRegionName(value)}
           </SelectValue>

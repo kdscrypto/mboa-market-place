@@ -23,7 +23,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({ value, onChange }) 
   return (
     <div className="flex-grow">
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
+        <SelectTrigger aria-label="Sélectionner une catégorie">
           <SelectValue placeholder="Catégorie">
             {getCategoryName(value)}
           </SelectValue>
