@@ -15,8 +15,10 @@ interface SystemCheck {
 const AdsterraSystemCheck: React.FC = () => {
   const [checks, setChecks] = useState<SystemCheck[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [hasRun, setHasRun] = useState(false);
 
-  const runSystemChecks = async () => {
+  const runSystemChecks = React.useCallback(async () => {
+    if (isRunning) return; // Prevent multiple simultaneous runs
     setIsRunning(true);
     const newChecks: SystemCheck[] = [];
 
@@ -206,7 +208,8 @@ const AdsterraSystemCheck: React.FC = () => {
     }
 
     setIsRunning(false);
-  };
+    setHasRun(true);
+  }, [isRunning]);
 
   const getStatusIcon = (status: SystemCheck['status']) => {
     switch (status) {
@@ -250,9 +253,12 @@ const AdsterraSystemCheck: React.FC = () => {
   } : null;
 
   useEffect(() => {
-    // Auto-run on mount
-    runSystemChecks();
-  }, []);
+    // Auto-run on mount only once
+    if (!hasRun && !isRunning) {
+      console.log('AdsterraSystemCheck: Starting initial check...');
+      runSystemChecks();
+    }
+  }, [hasRun, isRunning, runSystemChecks]);
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -272,7 +278,11 @@ const AdsterraSystemCheck: React.FC = () => {
           )}
         </CardTitle>
         <Button 
-          onClick={runSystemChecks} 
+          onClick={() => {
+            console.log('AdsterraSystemCheck: Manual recheck triggered...');
+            setHasRun(false);
+            runSystemChecks();
+          }} 
           disabled={isRunning}
           className="w-fit"
         >
