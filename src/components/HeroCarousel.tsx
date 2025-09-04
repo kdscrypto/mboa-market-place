@@ -107,7 +107,7 @@ const HeroCarousel = () => {
             <img 
               src={img}
               alt={`Mboa Market Featured ${index + 1}`}
-              loading={index === 0 ? "eager" : "lazy"}
+              loading={index === 0 ? undefined : "lazy"}
               fetchPriority={index === 0 ? "high" : "low"}
               className={cn(
                 "w-full h-full object-cover transition-opacity duration-500",
@@ -124,6 +124,7 @@ const HeroCarousel = () => {
                   return newState;
                 });
               }}
+              {...(index === 0 ? {} : { loading: "lazy" })}
             />
           </div>
         ))}
