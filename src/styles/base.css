@@ -29,10 +29,10 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Modern Mboa colors - Light mode */
-    --color-primary-accent: #FF6B35;
-    --color-green: #00C896;
-    --color-blue: #4A90E2;
+    /* Modern Mboa colors - Light mode - Improved contrast ratios for accessibility */
+    --color-primary-accent: #D73416; /* Darker orange for better contrast (4.5:1 ratio) */
+    --color-green: #137967; /* Darker green for better contrast (4.5:1 ratio) */
+    --color-blue: #2563EB; /* Darker blue for better contrast */
     --color-surface-elevated: #FAFBFC;
     --color-text-primary: #1A1D29;
     --color-background: #FFFFFF;
@@ -42,6 +42,13 @@
     --color-header-bg: #FFFFFF;
     --color-header-text: #1A1D29;
     --color-header-border: #E5E7EB;
+    
+    /* Button and interactive colors with proper contrast */
+    --color-primary-button-bg: #D73416; /* High contrast orange */
+    --color-primary-button-text: #FFFFFF; /* White text on dark orange */
+    --color-secondary-button-bg: #FFFFFF;
+    --color-secondary-button-text: #D73416;
+    --color-secondary-button-border: #D73416;
     
     /* Extended color palette */
     --color-accent-light: #FFF5F2;
@@ -61,10 +68,14 @@
     --color-neutral-800: #1F2937;
     --color-neutral-900: #111827;
     
+    /* CTA section colors with proper contrast */
+    --color-cta-bg: #D73416; /* High contrast orange background */
+    --color-cta-text: #FFFFFF; /* White text for proper contrast */
+    
     /* Gradient colors */
-    --color-gradient-start: #FF6B35;
-    --color-gradient-end: #4A90E2;
-    --color-gradient-accent: #00C896;
+    --color-gradient-start: #D73416;
+    --color-gradient-end: #2563EB;
+    --color-gradient-accent: #137967;
   }
 
   .dark {
@@ -94,8 +105,8 @@
     --chart-5: 340 75% 55%;
 
     /* Modern Mboa colors - Dark mode - Improved contrast */
-    --color-primary-accent: #FF8A65;
-    --color-green: #26D0CE;
+    --color-primary-accent: #FF8A65; /* Lighter orange for dark mode */
+    --color-green: #26D0CE; /* Lighter teal for dark mode */
     --color-blue: #64B5F6;
     --color-surface-elevated: #334155;
     --color-text-primary: #F1F5F9;
@@ -106,6 +117,13 @@
     --color-header-bg: #1E293B;
     --color-header-text: #F1F5F9;
     --color-header-border: #475569;
+    
+    /* Button and interactive colors for dark mode */
+    --color-primary-button-bg: #FF8A65; /* Lighter orange for dark mode */
+    --color-primary-button-text: #1A1D29; /* Dark text on light button */
+    --color-secondary-button-bg: #1E293B;
+    --color-secondary-button-text: #FF8A65;
+    --color-secondary-button-border: #FF8A65;
     
     /* Extended color palette - Dark mode - Better visibility */
     --color-accent-light: #334155;
@@ -124,6 +142,10 @@
     --color-neutral-700: #E2E8F0;
     --color-neutral-800: #F1F5F9;
     --color-neutral-900: #F8FAFC;
+    
+    /* CTA section colors for dark mode */
+    --color-cta-bg: #FF8A65; /* Lighter orange background */
+    --color-cta-text: #1A1D29; /* Dark text for contrast */
     
     /* Gradient colors - Dark mode */
     --color-gradient-start: #FF8A65;
