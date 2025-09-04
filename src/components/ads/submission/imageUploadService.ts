@@ -15,25 +15,45 @@ export const uploadAdImages = async (images: File[], adId: string): Promise<void
     const filePath = `ads/${adId}/${fileName}`;
     
     try {
-      // Upload to Supabase storage (if storage is configured)
-      // For now, we'll create a placeholder URL
-      const imageUrl = `/placeholder-${index + 1}.jpg`;
+      // Upload file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('ad-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Error uploading file to storage:', uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL for the uploaded image
+      const { data: { publicUrl } } = supabase.storage
+        .from('ad-images')
+        .getPublicUrl(filePath);
+
+      console.log(`File uploaded to storage: ${publicUrl}`);
       
-      // Insert image record
+      // Insert image record with the actual URL
       const { error: imageError } = await supabase
         .from('ad_images')
         .insert({
           ad_id: adId,
-          image_url: imageUrl,
+          image_url: publicUrl,
           position: index
         });
       
       if (imageError) {
         console.error('Error saving image record:', imageError);
+        // Clean up uploaded file if database insert fails
+        await supabase.storage
+          .from('ad-images')
+          .remove([filePath]);
         throw imageError;
       }
       
-      console.log(`Image ${index + 1} uploaded successfully`);
+      console.log(`Image ${index + 1} uploaded successfully: ${publicUrl}`);
       
     } catch (error) {
       console.error(`Error uploading image ${index + 1}:`, error);
