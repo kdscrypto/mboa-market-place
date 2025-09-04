@@ -5,12 +5,12 @@ import Autoplay from "embla-carousel-autoplay";
 import { cn } from "@/lib/utils";
 
 const HeroCarousel = () => {
-  // Real images for a more professional look
+  // Optimized images with proper sizing and modern formats
   const images = [
-    'https://images.unsplash.com/photo-1506744038136-46273834b3fb', // Landscape
-    'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b', // Tech
-    'https://images.unsplash.com/photo-1721322800607-8c38375eef04', // Living room
-    'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158', // Person with laptop
+    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1400&h=600&fit=crop&auto=format&q=75', // Landscape
+    'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=1400&h=600&fit=crop&auto=format&q=75', // Tech
+    'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=1400&h=600&fit=crop&auto=format&q=75', // Living room
+    'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1400&h=600&fit=crop&auto=format&q=75', // Person with laptop
   ];
 
   // Track loaded state of images

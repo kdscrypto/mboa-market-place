@@ -6,6 +6,7 @@ import { Ad } from '@/types/adTypes';
 import PremiumBadge from '@/components/PremiumBadge';
 import { toast } from '@/components/ui/use-toast';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { optimizeImage } from '@/utils/imageOptimization';
 
 interface AdCardItemProps {
   ad: Ad;
@@ -78,19 +79,28 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
     setImageError(false);
   };
   
-  // Process image URL before rendering
+  
+  // Process image URL with optimization before rendering
   const processImageUrl = (url: string | undefined): string => {
     if (!url || typeof url !== 'string' || url.trim() === '') {
       return defaultPlaceholder;
     }
     
+    // Optimize the image for card display (small size)
+    const optimizedUrl = optimizeImage(url, { 
+      width: 400, 
+      height: 400, 
+      quality: 80,
+      format: 'webp'
+    });
+    
     // If it's a Supabase URL, add cache busting parameter
-    if (url.includes('supabase.co/storage/v1/object/public')) {
-      const separator = url.includes('?') ? '&' : '?';
-      return `${url}${separator}t=${new Date().getTime()}`;
+    if (optimizedUrl.includes('supabase.co')) {
+      const separator = optimizedUrl.includes('?') ? '&' : '?';
+      return `${optimizedUrl}${separator}t=${Date.now()}`;
     }
     
-    return url;
+    return optimizedUrl;
   };
   
   // Determine the correct image URL to use
