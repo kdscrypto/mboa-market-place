@@ -38,46 +38,32 @@ const HeroCarousel = () => {
 
   // Prioritize first image preload for LCP optimization
   useEffect(() => {
-    // Preload the first image immediately for LCP
-    const firstImg = new Image();
-    firstImg.src = images[0];
-    firstImg.fetchPriority = 'high';
-    firstImg.onload = () => {
-      setImagesLoaded(prev => {
-        const newState = [...prev];
-        newState[0] = true;
-        return newState;
-      });
-    };
-
-    // Preload remaining images after first one loads
-    firstImg.onload = () => {
-      setImagesLoaded(prev => {
-        const newState = [...prev];
-        newState[0] = true;
-        
-        // Load remaining images after a short delay
-        setTimeout(() => {
-          images.slice(1).forEach((src, index) => {
-            const img = new Image();
-            img.src = src;
-            img.onload = () => {
-              setImagesLoaded(prev => {
-                const newState = [...prev];
-                newState[index + 1] = true;
-                // Check if all images are loaded
-                if (newState.every(loaded => loaded)) {
-                  setAllLoaded(true);
-                }
-                return newState;
-              });
-            };
-          });
-        }, 100);
-        
-        return newState;
-      });
-    };
+    // Skip preloading since the first image is already preloaded in index.html
+    // Just mark it as loaded when it actually loads
+    setImagesLoaded(prev => {
+      const newState = [...prev];
+      
+      // Preload remaining images after a short delay
+      setTimeout(() => {
+        images.slice(1).forEach((src, index) => {
+          const img = new Image();
+          img.src = src;
+          img.onload = () => {
+            setImagesLoaded(prev => {
+              const newState = [...prev];
+              newState[index + 1] = true;
+              // Check if all images are loaded
+              if (newState.every(loaded => loaded)) {
+                setAllLoaded(true);
+              }
+              return newState;
+            });
+          };
+        });
+      }, 100);
+      
+      return newState;
+    });
   }, []);
 
   // Listen to carousel changes
@@ -112,8 +98,18 @@ const HeroCarousel = () => {
               fetchPriority={index === 0 ? "high" : "low"}
               className={cn(
                 "w-full h-full object-cover transition-opacity duration-500",
-                allLoaded ? "opacity-100" : "opacity-0"
+                index === 0 ? "opacity-100" : (allLoaded ? "opacity-100" : "opacity-0")
               )}
+              onLoad={() => {
+                if (index === 0) {
+                  setImagesLoaded(prev => {
+                    const newState = [...prev];
+                    newState[0] = true;
+                    setAllLoaded(newState.every(loaded => loaded));
+                    return newState;
+                  });
+                }
+              }}
             />
           </div>
         ))}
