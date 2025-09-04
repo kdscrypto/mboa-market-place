@@ -31,20 +31,21 @@ const HeroCarousel = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { 
       loop: true,
-      duration: 80, // Smoother transition
+      duration: 80,
       skipSnaps: false,
+      startIndex: 0, // Always start with first image for LCP optimization
     },
     [autoplayPlugin.current]
   );
 
-  // Prioritize first image preload for LCP optimization
+  // Initialize first image as loaded immediately for LCP optimization
   useEffect(() => {
-    // Skip preloading since the first image is already preloaded in index.html
-    // Just mark it as loaded when it actually loads
+    // Mark first image as loaded immediately to avoid LCP delays
     setImagesLoaded(prev => {
       const newState = [...prev];
+      newState[0] = true; // First image is always considered loaded for LCP
       
-      // Preload remaining images after a short delay
+      // Preload remaining images after initial render
       setTimeout(() => {
         images.slice(1).forEach((src, index) => {
           const img = new Image();
@@ -53,7 +54,6 @@ const HeroCarousel = () => {
             setImagesLoaded(prev => {
               const newState = [...prev];
               newState[index + 1] = true;
-              // Check if all images are loaded
               if (newState.every(loaded => loaded)) {
                 setAllLoaded(true);
               }
@@ -111,17 +111,18 @@ const HeroCarousel = () => {
               fetchPriority={index === 0 ? "high" : "low"}
               className={cn(
                 "w-full h-full object-cover transition-opacity duration-500",
-                index === 0 ? "opacity-100" : (allLoaded ? "opacity-100" : "opacity-0")
+                // First image always visible for LCP, others fade in when loaded
+                index === 0 ? "opacity-100" : (imagesLoaded[index] ? "opacity-100" : "opacity-0")
               )}
               onLoad={() => {
-                if (index === 0) {
-                  setImagesLoaded(prev => {
-                    const newState = [...prev];
-                    newState[0] = true;
-                    setAllLoaded(newState.every(loaded => loaded));
-                    return newState;
-                  });
-                }
+                setImagesLoaded(prev => {
+                  const newState = [...prev];
+                  newState[index] = true;
+                  if (newState.every(loaded => loaded)) {
+                    setAllLoaded(true);
+                  }
+                  return newState;
+                });
               }}
             />
           </div>
