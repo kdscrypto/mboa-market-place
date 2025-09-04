@@ -1547,6 +1547,24 @@ export type Database = {
         Args: { user_uuid?: string }
         Returns: string
       }
+      get_visible_ads: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          ad_type: string
+          category: string
+          city: string
+          created_at: string
+          description: string
+          id: string
+          is_premium: boolean
+          premium_expires_at: string
+          price: number
+          region: string
+          status: string
+          title: string
+          updated_at: string
+        }[]
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
