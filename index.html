@@ -17,11 +17,27 @@
     <meta name="twitter:site" content="@mboa_market" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     
-    <!-- Google Fonts - Optimized for performance -->
+    <!-- Optimized Google Fonts - eliminate render blocking -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"></noscript>
+    
+    <!-- Inline critical CSS for font loading -->
+    <style>
+      /* Critical font loading CSS to prevent FOIT */
+      body { font-family: system-ui, -apple-system, sans-serif; }
+      .font-loaded body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    </style>
+    
+    <!-- Load fonts asynchronously to prevent render blocking -->
+    <script>
+      (function() {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
+        link.onload = function() { document.documentElement.classList.add('font-loaded'); };
+        document.head.appendChild(link);
+      })();
+    </script>
     
     <!-- Preload critical hero image for LCP optimization -->
     <link rel="preload" as="image" href="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1400&h=600&fit=crop&auto=format&q=75" fetchpriority="high">
