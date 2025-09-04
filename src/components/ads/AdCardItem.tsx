@@ -40,9 +40,8 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
       setIsRetrying(true);
       retryCount.current += 1;
       
-      // Try again with a cache-busting parameter
-      const timestamp = new Date().getTime();
-      const newUrl = ad.imageUrl ? `${ad.imageUrl}?t=${timestamp}` : defaultPlaceholder;
+      // Try again with a cache-busting parameter only on retry
+      const newUrl = ad.imageUrl ? `${ad.imageUrl}?retry=${retryCount.current}&t=${Date.now()}` : defaultPlaceholder;
       
       const img = new Image();
       img.src = newUrl;
@@ -93,12 +92,6 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
       quality: 80,
       format: 'webp'
     });
-    
-    // If it's a Supabase URL, add cache busting parameter
-    if (optimizedUrl.includes('supabase.co')) {
-      const separator = optimizedUrl.includes('?') ? '&' : '?';
-      return `${optimizedUrl}${separator}t=${Date.now()}`;
-    }
     
     return optimizedUrl;
   };
