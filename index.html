@@ -39,6 +39,55 @@
       })();
     </script>
     
+    <!-- Inline critical CSS for above-the-fold content -->
+    <style>
+      /* Critical CSS for initial render - Base styles and layout */
+      *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
+      ::before,::after{--tw-content:''}
+      html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;font-feature-settings:normal;font-variation-settings:normal}
+      body{margin:0;line-height:inherit}
+      .min-h-viewport{min-height:100vh}
+      .flex{display:flex}
+      .flex-col{flex-direction:column}
+      .items-center{align-items:center}
+      .justify-center{justify-content:center}
+      .bg-white{background-color:rgb(255 255 255)}
+      .bg-mboa-orange{background-color:rgb(255 102 0)}
+      .text-white{color:rgb(255 255 255)}
+      .p-4{padding:1rem}
+      .mb-4{margin-bottom:1rem}
+      .animate-spin{animation:spin 1s linear infinite}
+      .rounded-full{border-radius:9999px}
+      .h-8{height:2rem}
+      .w-8{width:2rem}
+      .border-b-2{border-bottom-width:2px}
+      @keyframes spin{to{transform:rotate(360deg)}}
+      /* Font loading fallback */
+      body{font-family:system-ui,-apple-system,sans-serif}
+      .font-loaded body{font-family:'Inter',system-ui,-apple-system,sans-serif}
+    </style>
+    
+    <!-- Load full CSS asynchronously to prevent render blocking -->
+    <script>
+      (function() {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '/assets/index-B21xtBGr.css';
+        link.media = 'print';
+        link.onload = function() { 
+          this.media = 'all'; 
+          document.documentElement.classList.add('css-loaded');
+        };
+        document.head.appendChild(link);
+      })();
+    </script>
+    
+    <!-- Fallback for no-JS users -->
+    <noscript>
+      <link rel="stylesheet" href="/assets/index-B21xtBGr.css">
+    </noscript>
+    
+    
     <!-- Preload critical hero image for LCP optimization -->
     <link rel="preload" as="image" href="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1400&h=600&fit=crop&auto=format&q=75" fetchpriority="high">
     
