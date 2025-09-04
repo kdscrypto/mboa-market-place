@@ -23,7 +23,8 @@ const TrendingAdsSection = () => {
         // First, check for expired premium ads and convert them
         await convertExpiredPremiumAds();
         
-        // Then load the current premium ads
+        // Then load the current premium ads - delay slightly to avoid blocking main content
+        await new Promise(resolve => setTimeout(resolve, 200));
         const ads = await fetchPremiumAds(8); // Limiter à 8 pour la section trending
         console.log("Featured ads loaded:", ads.length);
         setPremiumAds(ads);

@@ -40,6 +40,8 @@ const YaoundeTrendingSection: React.FC = () => {
       
       try {
         console.log("Loading Yaoundé trending ads...");
+        // Stagger API call to reduce network congestion
+        await new Promise(resolve => setTimeout(resolve, 400));
         const ads = await fetchYaoundeAds(12);
         console.log("Yaoundé ads loaded:", ads.length);
         setYaoundeAds(ads);

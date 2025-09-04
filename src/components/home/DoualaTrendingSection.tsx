@@ -32,6 +32,8 @@ const DoualaTrendingSection: React.FC = () => {
       
       try {
         console.log("Loading Douala trending ads...");
+        // Stagger API call to reduce network congestion  
+        await new Promise(resolve => setTimeout(resolve, 600));
         const ads = await fetchDoualaAds(12);
         console.log("Douala ads loaded:", ads.length);
         setDoualaAds(ads);
