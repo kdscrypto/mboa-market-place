@@ -1520,6 +1520,25 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_public_ad_safe: {
+        Args: { p_ad_id: string }
+        Returns: {
+          ad_type: string
+          category: string
+          city: string
+          created_at: string
+          description: string
+          id: string
+          is_premium: boolean
+          premium_expires_at: string
+          price: number
+          region: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_public_ads: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: {
@@ -1529,6 +1548,24 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          premium_expires_at: string
+          price: number
+          region: string
+          status: string
+          title: string
+          updated_at: string
+        }[]
+      }
+      get_public_ads_safe: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          ad_type: string
+          category: string
+          city: string
+          created_at: string
+          description: string
+          id: string
+          is_premium: boolean
           premium_expires_at: string
           price: number
           region: string

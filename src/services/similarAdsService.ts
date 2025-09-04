@@ -13,25 +13,34 @@ export const getSimilarAds = async (
   try {
     console.log(`Fetching similar ads for ad ${currentAdId}, category: ${category}, region: ${region}`);
     
-    // Récupérer les annonces similaires avec les critères de priorité
-    const { data, error } = await supabase
-      .from('ads')
-      .select('*')
-      .eq('status', 'approved')
-      .eq('category', category)
-      .neq('id', currentAdId)
-      .order('ad_type', { ascending: false }) // Premium d'abord
-      .order('created_at', { ascending: false }) // Plus récentes ensuite
-      .limit(limit);
-
+    // Use secure function for similar ads
+    const { data: allAds, error } = await supabase
+      .rpc('get_public_ads_safe', { p_limit: 100, p_offset: 0 });
+    
     if (error) {
       console.error('Error fetching similar ads:', error);
       return [];
     }
+    
+    // Filter for same category, excluding current ad
+    const similarAds = (allAds || [])
+      .filter(ad => ad.category === category && ad.id !== currentAdId)
+      .sort((a, b) => {
+        // Premium ads first
+        const aIsPremium = a.ad_type !== 'standard';
+        const bIsPremium = b.ad_type !== 'standard';
+        
+        if (aIsPremium && !bIsPremium) return -1;
+        if (!aIsPremium && bIsPremium) return 1;
+        
+        // Then by creation date
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      })
+      .slice(0, limit);
 
     // Ajouter l'image principale pour chaque annonce
     const adsWithImages = await Promise.all(
-      (data || []).map(async (ad) => {
+      similarAds.map(async (ad) => {
         try {
           const { data: images, error: imageError } = await supabase
             .from('ad_images')
@@ -46,13 +55,21 @@ export const getSimilarAds = async (
           
           return {
             ...ad,
-            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
+            imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg',
+            phone: '', // Hidden for public access
+            whatsapp: '', // Hidden for public access
+            user_id: '', // Hidden for public access
+            reject_reason: undefined // Hidden for public access
           };
         } catch (err) {
           console.error(`Error processing images for ad ${ad.id}:`, err);
           return {
             ...ad,
-            imageUrl: '/placeholder.svg'
+            imageUrl: '/placeholder.svg',
+            phone: '', // Hidden for public access
+            whatsapp: '', // Hidden for public access
+            user_id: '', // Hidden for public access
+            reject_reason: undefined // Hidden for public access
           };
         }
       })
@@ -83,24 +100,34 @@ export const getSimilarAdsWithFallback = async (
     if (similarAds.length < 3) {
       console.log(`Only ${similarAds.length} ads found, expanding search to all regions`);
       
-      const { data, error } = await supabase
-        .from('ads')
-        .select('*')
-        .eq('status', 'approved')
-        .eq('category', category)
-        .neq('id', currentAdId)
-        .order('ad_type', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
+      // Use secure function for region-based similar ads  
+      const { data: allAds, error } = await supabase
+        .rpc('get_public_ads_safe', { p_limit: 100, p_offset: 0 });
+      
       if (error) {
-        console.error('Error fetching similar ads with fallback:', error);
+        console.error('Error fetching similar ads by region:', error);
         return similarAds;
       }
+      
+      // Filter for same category, excluding current ad (all regions)
+      const expandedAds = (allAds || [])
+        .filter(ad => ad.category === category && ad.id !== currentAdId)
+        .sort((a, b) => {
+          // Premium ads first
+          const aIsPremium = a.ad_type !== 'standard';
+          const bIsPremium = b.ad_type !== 'standard';
+          
+          if (aIsPremium && !bIsPremium) return -1;
+          if (!aIsPremium && bIsPremium) return 1;
+          
+          // Then by creation date
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        })
+        .slice(0, limit);
 
       // Ajouter l'image principale pour chaque annonce
       const adsWithImages = await Promise.all(
-        (data || []).map(async (ad) => {
+        expandedAds.map(async (ad) => {
           try {
             const { data: images, error: imageError } = await supabase
               .from('ad_images')
@@ -115,13 +142,21 @@ export const getSimilarAdsWithFallback = async (
             
             return {
               ...ad,
-              imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg'
+              imageUrl: images && images.length > 0 ? images[0].image_url : '/placeholder.svg',
+              phone: '', // Hidden for public access
+              whatsapp: '', // Hidden for public access
+              user_id: '', // Hidden for public access
+              reject_reason: undefined // Hidden for public access
             };
           } catch (err) {
             console.error(`Error processing images for ad ${ad.id}:`, err);
             return {
               ...ad,
-              imageUrl: '/placeholder.svg'
+              imageUrl: '/placeholder.svg',
+              phone: '', // Hidden for public access
+              whatsapp: '', // Hidden for public access
+              user_id: '', // Hidden for public access
+              reject_reason: undefined // Hidden for public access
             };
           }
         })

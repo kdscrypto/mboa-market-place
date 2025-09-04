@@ -44,11 +44,9 @@ export const useAdDetail = (id: string | undefined) => {
         }
         setIsLoggedIn(!!session);
         
-        // Fetch ad details from Supabase using maybeSingle() instead of single()
+        // Use secure function to fetch ad details
         const { data, error } = await supabase
-          .from('ads')
-          .select('*')
-          .eq('id', sanitizedId)
+          .rpc('get_ad_details_secure', { p_ad_id: sanitizedId })
           .maybeSingle();
 
         console.log("Supabase query result:", { data, error });

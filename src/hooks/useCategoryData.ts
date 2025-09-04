@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Ad } from "@/types/adTypes";
@@ -38,12 +37,17 @@ export const useCategoryData = ({ slug, category, page, itemsPerPage }: UseCateg
 
         const offset = (page - 1) * itemsPerPage;
         
-        // First, let's check what category values exist in the database
-        console.log("3. Checking what category values exist in the database...");
-        const { data: allAds } = await supabase
-          .from('ads')
-          .select('category, status')
-          .limit(100);
+        // Use secure function for category data
+        console.log("3. Using secure function to fetch all ads...");
+        const { data: allAds, error: fetchError } = await supabase
+          .rpc('get_public_ads_safe', { p_limit: 1000, p_offset: 0 });
+        
+        if (fetchError) {
+          console.error("Error fetching ads:", fetchError);
+          setError("Une erreur s'est produite lors du chargement des annonces. Veuillez réessayer.");
+          setIsLoading(false);
+          return;
+        }
         
         console.log("4. Sample category values from database:", allAds?.map(ad => ad.category).slice(0, 10));
         
@@ -56,63 +60,43 @@ export const useCategoryData = ({ slug, category, page, itemsPerPage }: UseCateg
         
         console.log("5. Trying different category query values:", categoryQueries);
         
-        let ads = null;
-        let adsError = null;
-        let count = 0;
+        let matchedAds: any[] = [];
         let matchedQuery = null;
         
         for (const queryValue of categoryQueries) {
           console.log(`6. Trying category query with value: ${queryValue} (type: ${typeof queryValue})`);
           
-          const { data: testAds, error: testError, count: testCount } = await supabase
-            .from('ads')
-            .select('*', { count: 'exact' })
-            .eq('category', queryValue)
-            .eq('status', 'approved')
-            .range(offset, offset + itemsPerPage - 1)
-            .order('created_at', { ascending: false });
+          const filteredAds = (allAds || []).filter(ad => ad.category === queryValue);
           
-          console.log(`   Result: ${testAds?.length || 0} ads found, error:`, testError);
+          console.log(`   Result: ${filteredAds.length} ads found`);
           
-          if (testAds && testAds.length > 0) {
-            ads = testAds;
-            adsError = testError;
-            count = testCount || 0;
+          if (filteredAds.length > 0) {
+            matchedAds = filteredAds;
             matchedQuery = queryValue;
-            console.log(`7. SUCCESS! Found ${ads.length} ads using query value: ${queryValue}`);
+            console.log(`7. SUCCESS! Found ${matchedAds.length} ads using query value: ${queryValue}`);
             break;
           }
         }
         
         // If still no results, try a broader search
-        if (!ads || ads.length === 0) {
-          console.log("8. No ads found with specific category matching. Trying broader search...");
-          
-          const { data: broadAds, error: broadError, count: broadCount } = await supabase
-            .from('ads')
-            .select('*', { count: 'exact' })
-            .eq('status', 'approved')
-            .range(offset, offset + itemsPerPage - 1)
-            .order('created_at', { ascending: false });
-          
-          console.log("9. Broad search (all approved ads):", broadAds?.length || 0, "ads found");
-          console.log("10. Sample of all approved ads categories:", broadAds?.slice(0, 5).map(ad => ({ id: ad.id, category: ad.category, title: ad.title })));
+        if (matchedAds.length === 0) {
+          console.log("8. No ads found with specific category matching. Checking all approved ads...");
+          console.log("9. All approved ads count:", allAds?.length || 0);
+          console.log("10. Sample of all approved ads categories:", allAds?.slice(0, 5).map(ad => ({ id: ad.id, category: ad.category, title: ad.title })));
         }
 
-        if (adsError) {
-          console.error("Error fetching ads:", adsError);
-          setError("Une erreur s'est produite lors du chargement des annonces. Veuillez réessayer.");
-          setIsLoading(false);
-          return;
-        }
+        // Sort and paginate the matched ads
+        const sortedAds = matchedAds.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const totalCount = sortedAds.length;
+        const paginatedAds = sortedAds.slice(offset, offset + itemsPerPage);
 
         // Map the database results to include imageUrl and handle missing fields
         const mappedAds: Ad[] = [];
         
-        if (ads && ads.length > 0) {
-          console.log("11. Processing", ads.length, "ads to add imageUrl");
+        if (paginatedAds.length > 0) {
+          console.log("11. Processing", paginatedAds.length, "ads to add imageUrl");
           
-          for (const ad of ads) {
+          for (const ad of paginatedAds) {
             // Get the first image for this ad
             const { data: images } = await supabase
               .from('ad_images')
@@ -131,13 +115,13 @@ export const useCategoryData = ({ slug, category, page, itemsPerPage }: UseCateg
               category: ad.category,
               city: ad.city,
               region: ad.region,
-              phone: ad.phone,
-              whatsapp: ad.whatsapp,
+              phone: ad.phone || '', // Note: These will be empty for public access
+              whatsapp: ad.whatsapp || '', // Note: These will be empty for public access
               status: ad.status,
               created_at: ad.created_at,
               imageUrl: imageUrl,
               user_id: ad.user_id,
-              is_premium: false, // Default value since this field doesn't exist in the database
+              is_premium: ad.is_premium || false,
               ad_type: ad.ad_type,
               reject_reason: ad.reject_reason
             };
@@ -150,7 +134,7 @@ export const useCategoryData = ({ slug, category, page, itemsPerPage }: UseCateg
         console.log("13. Query that worked:", matchedQuery || "none");
         
         setResults(mappedAds);
-        setTotalCount(count || 0);
+        setTotalCount(totalCount);
         
         console.log(`Successfully loaded ${mappedAds.length} ads for category ${category.name} (ID: ${category.id}) using query: ${matchedQuery || 'none'}`);
         
