@@ -21,8 +21,8 @@ export function optimizeSupabaseImage(
   }
 
   const {
-    width = 400,
-    height = 400,
+    width = 350,
+    height = 350,
     quality = 80,
     format = 'webp'
   } = options;
@@ -33,7 +33,7 @@ export function optimizeSupabaseImage(
 
   const [baseUrl, bucketAndPath] = urlParts;
   
-  // Add transformation parameters to Supabase URL
+  // Use Supabase's built-in image transformation
   const transformationUrl = `${baseUrl}/storage/v1/render/image/public/${bucketAndPath}?width=${width}&height=${height}&quality=${quality}&format=${format}&resize=cover`;
   
   return transformationUrl;
@@ -50,7 +50,7 @@ export function optimizeExternalImage(
 
   // Handle Unsplash images
   if (url.includes('images.unsplash.com')) {
-    const { width = 400, height = 400, quality = 75 } = options;
+    const { width = 350, height = 350, quality = 75 } = options;
     
     // Remove existing query parameters to avoid conflicts
     const baseUrl = url.split('?')[0];
@@ -92,7 +92,7 @@ export function getResponsiveImageSizes(baseUrl: string): {
 } {
   return {
     small: optimizeImage(baseUrl, { width: 200, height: 200, quality: 75 }),
-    medium: optimizeImage(baseUrl, { width: 400, height: 400, quality: 80 }),
-    large: optimizeImage(baseUrl, { width: 800, height: 600, quality: 85 }),
+    medium: optimizeImage(baseUrl, { width: 350, height: 350, quality: 80 }),
+    large: optimizeImage(baseUrl, { width: 600, height: 450, quality: 85 }),
   };
 }
