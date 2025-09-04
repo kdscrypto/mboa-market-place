@@ -211,13 +211,15 @@ const DoualaTrendingSection: React.FC = () => {
               <button
                 key={index}
                 onClick={() => carouselApi?.scrollTo(index * 4)}
-                className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                className="p-2 transition-colors duration-200 flex items-center justify-center"
+                aria-label={`Go to slide group ${index + 1}`}
+              >
+                <div className={`w-2 h-2 rounded-full transition-colors duration-200 ${
                   Math.floor(currentSlide / 4) === index 
                     ? 'bg-mboa-orange' 
                     : 'bg-gray-300 hover:bg-gray-400'
-                }`}
-                aria-label={`Go to slide group ${index + 1}`}
-              />
+                }`} />
+              </button>
             ))}
           </div>
         )}

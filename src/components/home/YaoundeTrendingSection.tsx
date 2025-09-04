@@ -261,11 +261,13 @@ const YaoundeTrendingSection: React.FC = () => {
                   }, 3000);
                 }
               }}
-              className={`mx-1 w-2 h-2 rounded-full transition-all duration-300 hover:scale-125 ${
-                index === currentSlide ? "bg-mboa-orange scale-110" : "bg-gray-300"
-              }`}
+              className="p-2 transition-all duration-300 hover:scale-125 flex items-center justify-center"
               aria-label={`Aller à la diapositive ${index + 1}`}
-            />
+            >
+              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === currentSlide ? "bg-mboa-orange scale-110" : "bg-gray-300"
+              }`} />
+            </button>
           ))}
         </div>
       )}

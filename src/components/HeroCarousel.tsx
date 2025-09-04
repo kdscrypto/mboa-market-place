@@ -145,13 +145,18 @@ const HeroCarousel = () => {
             key={i}
             onClick={() => emblaApi?.scrollTo(i)}
             className={cn(
+              "p-2 transition-all duration-300", // Added padding for larger touch target
+              "flex items-center justify-center" // Center the visual dot
+            )}
+            aria-label={`Go to slide ${i + 1}`}
+          >
+            <div className={cn(
               "w-2 h-2 rounded-full transition-all duration-300",
               i === currentIndex 
                 ? "bg-white w-4" 
                 : "bg-white/50 hover:bg-white/80"
-            )}
-            aria-label={`Go to slide ${i + 1}`}
-          />
+            )} />
+          </button>
         ))}
       </div>
     </div>
