@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TrendingAdsSection from "@/components/TrendingAdsSection";
 import RecentAdsCarousel from "@/components/RecentAdsCarousel";
 import YaoundeTrendingSection from "@/components/home/YaoundeTrendingSection";
@@ -8,6 +8,7 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Ad } from "@/types/adTypes";
 import { toast } from "@/components/ui/use-toast";
+import { deferNonCriticalWork } from "@/utils/timeSlicing";
 
 interface AdsSectionProps {
   recentAds: Ad[];
@@ -17,6 +18,32 @@ interface AdsSectionProps {
 
 const AdsSection: React.FC<AdsSectionProps> = ({ recentAds, isLoading, error }) => {
   const [retrying, setRetrying] = useState(false);
+  const [sectionsLoaded, setSectionsLoaded] = useState({
+    trending: false,
+    yaunde: false,
+    douala: false
+  });
+
+  // Defer loading of heavy sections to improve FID
+  useEffect(() => {
+    // Load trending section first
+    deferNonCriticalWork(() => {
+      setSectionsLoaded(prev => ({ ...prev, trending: true }));
+    });
+
+    // Load city sections with more delay
+    setTimeout(() => {
+      deferNonCriticalWork(() => {
+        setSectionsLoaded(prev => ({ ...prev, yaunde: true }));
+      });
+    }, 100);
+
+    setTimeout(() => {
+      deferNonCriticalWork(() => {
+        setSectionsLoaded(prev => ({ ...prev, douala: true }));
+      });
+    }, 200);
+  }, []);
 
   const handleRetry = async () => {
     setRetrying(true);
@@ -37,8 +64,8 @@ const AdsSection: React.FC<AdsSectionProps> = ({ recentAds, isLoading, error }) 
 
   return (
     <div className="mboa-container mb-12">
-      {/* Trending Ads Section */}
-      <TrendingAdsSection />
+      {/* Trending Ads Section - loaded immediately for better LCP */}
+      {sectionsLoaded.trending && <TrendingAdsSection />}
       
       {/* Recent Ads Section */}
       <div className="mt-10">
@@ -74,15 +101,19 @@ const AdsSection: React.FC<AdsSectionProps> = ({ recentAds, isLoading, error }) 
         )}
       </div>
       
-      {/* Yaoundé Trending Section */}
-      <div className="mt-10">
-        <YaoundeTrendingSection />
-      </div>
+      {/* Yaoundé Trending Section - deferred to improve FID */}
+      {sectionsLoaded.yaunde && (
+        <div className="mt-10">
+          <YaoundeTrendingSection />
+        </div>
+      )}
       
-      {/* Douala Trending Section */}
-      <div className="mt-10">
-        <DoualaTrendingSection />
-      </div>
+      {/* Douala Trending Section - deferred to improve FID */}
+      {sectionsLoaded.douala && (
+        <div className="mt-10">
+          <DoualaTrendingSection />
+        </div>
+      )}
     </div>
   );
 };

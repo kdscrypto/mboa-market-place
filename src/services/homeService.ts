@@ -28,9 +28,12 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
       return [];
     }
     
-    // For each ad, retrieve the main image
-    const adsWithImages = await Promise.all(
-      ads.map(async (ad) => {
+    // For each ad, retrieve the main image with time slicing to avoid blocking
+    const { processWithYielding } = await import('@/utils/timeSlicing');
+    
+    const adsWithImages = await processWithYielding(
+      ads,
+      async (ad) => {
         try {
           const { data: images, error: imageError } = await supabase
             .from('ad_images')
@@ -67,7 +70,8 @@ export const fetchApprovedAds = async (limit: number = 6): Promise<Ad[]> => {
             whatsapp: ''
           };
         }
-      })
+      },
+      3 // Process 3 ads at a time to avoid long tasks
     );
     
     console.log(`Successfully loaded ${adsWithImages.length} approved ads`);

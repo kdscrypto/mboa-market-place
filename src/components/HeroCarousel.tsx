@@ -18,12 +18,13 @@ const HeroCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [allLoaded, setAllLoaded] = useState(false);
 
-  // Auto-play configuration with improved settings
+  // Auto-play configuration with improved settings for reduced main thread work
   const autoplayPlugin = React.useRef(
     Autoplay({
-      delay: 8000, // Longer delay for better user experience
+      delay: 10000, // Longer delay to reduce frequent updates
       stopOnInteraction: false,
-      stopOnMouseEnter: true, // Pause on mouse hover
+      stopOnMouseEnter: true,
+      stopOnFocusIn: true, // Stop on focus for accessibility
     })
   );
 
