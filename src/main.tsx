@@ -7,6 +7,13 @@ import ErrorBoundary from './components/system/ErrorBoundary'
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Root element not found');
+
+// Remove initial loading placeholder for faster render
+const initialLoading = rootElement.querySelector('.initial-loading');
+if (initialLoading) {
+  initialLoading.remove();
+}
+
 const root = createRoot(rootElement);
 
 // Initialize viewport unit corrections
