@@ -33,10 +33,21 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
     // If we're already retrying, don't trigger another retry
     if (isRetrying) return;
     
-    console.error(`Image error for ad: ${ad.id}, URL: ${ad.imageUrl || 'undefined'}`);
+    // Silently handle known invalid URLs to avoid console spam
+    if (ad.imageUrl && (
+      ad.imageUrl.startsWith('/placeholder-') || 
+      ad.imageUrl === '/placeholder.svg' ||
+      !ad.imageUrl.startsWith('http')
+    )) {
+      setImageError(true);
+      setImageLoaded(true);
+      return;
+    }
+    
+    console.warn(`Image failed to load for ad: ${ad.id}, URL: ${ad.imageUrl || 'undefined'}`);
     
     // Limit retries to prevent infinite loops
-    if (retryCount.current < 2) {
+    if (retryCount.current < 1) { // Reduced retry count to minimize console noise
       setIsRetrying(true);
       retryCount.current += 1;
       
@@ -45,7 +56,7 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
       
       const img = new Image();
       img.src = newUrl;
-      img.crossOrigin = "anonymous"; // Add CORS attribute to preload image
+      img.crossOrigin = "anonymous";
       
       img.onload = () => {
         setImageError(false);
@@ -60,13 +71,12 @@ const AdCardItem: React.FC<AdCardItemProps> = ({ ad }) => {
       };
       
       img.onerror = () => {
-        console.error(`Retry failed for ad: ${ad.id}, URL: ${newUrl}`);
+        console.warn(`Retry failed for ad: ${ad.id}, using placeholder`);
         setImageError(true);
         setImageLoaded(true);
         setIsRetrying(false);
       };
     } else {
-      console.warn(`Max retries reached for ad: ${ad.id}, using placeholder`);
       setImageError(true);
       setImageLoaded(true);
     }
