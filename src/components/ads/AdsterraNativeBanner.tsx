@@ -1,5 +1,6 @@
 import React from "react";
 import { useAdsterraNative } from "@/hooks/useAdsterra";
+import { useAdAnalytics } from "@/hooks/useAdAnalytics";
 import AdContainer from "./AdContainer";
 import { cn } from "@/lib/utils";
 
@@ -15,9 +16,15 @@ const AdsterraNativeBanner: React.FC<AdsterraNativeBannerProps> = ({
   title = "Sponsorisé"
 }) => {
   const { adRef } = useAdsterraNative(zoneId);
+  const { trackImpression, trackClick } = useAdAnalytics(zoneId, `native_${title}`);
 
   const handleImpressionTrack = () => {
+    trackImpression();
     console.log(`Adsterra Native Banner impression tracked for zone: ${zoneId}`);
+  };
+
+  const handleAdClick = () => {
+    trackClick();
   };
 
   return (
@@ -34,12 +41,13 @@ const AdsterraNativeBanner: React.FC<AdsterraNativeBannerProps> = ({
         <div className="text-xs text-gray-500 mb-3 font-medium">{title}</div>
         <div
           ref={adRef}
-          className="adsterra-native-zone"
+          className="adsterra-native-zone cursor-pointer"
           style={{
             minHeight: '200px',
             width: '100%'
           }}
           data-zone={zoneId}
+          onClick={handleAdClick}
         />
       </div>
     </AdContainer>

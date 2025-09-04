@@ -1,5 +1,6 @@
 import React from "react";
 import { useAdsterraBanner } from "@/hooks/useAdsterra";
+import { useAdAnalytics } from "@/hooks/useAdAnalytics";
 import AdContainer from "./AdContainer";
 
 interface AdsterraBannerProps {
@@ -19,9 +20,15 @@ const AdsterraBanner: React.FC<AdsterraBannerProps> = ({
   format = "banner"
 }) => {
   const { adRef } = useAdsterraBanner(zoneId, format);
+  const { trackImpression, trackClick } = useAdAnalytics(zoneId, `banner_${format}`);
 
   const handleImpressionTrack = () => {
+    trackImpression();
     console.log(`Adsterra Banner impression tracked for zone: ${zoneId}`);
+  };
+
+  const handleAdClick = () => {
+    trackClick();
   };
 
   return (
@@ -33,7 +40,7 @@ const AdsterraBanner: React.FC<AdsterraBannerProps> = ({
         <div className="text-xs text-gray-500 mb-2 text-center">Publicité</div>
         <div
           ref={adRef}
-          className="adsterra-zone"
+          className="adsterra-zone cursor-pointer"
           style={{
             ...style,
             minHeight: '250px',
@@ -42,6 +49,7 @@ const AdsterraBanner: React.FC<AdsterraBannerProps> = ({
             justifyContent: 'center'
           }}
           data-zone={zoneId}
+          onClick={handleAdClick}
         />
       </div>
     </AdContainer>
