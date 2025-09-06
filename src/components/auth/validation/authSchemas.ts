@@ -27,11 +27,17 @@ export const registerSchema = z.object({
     .max(30, "Le nom d'utilisateur ne peut pas dépasser 30 caractères")
     .regex(/^[a-zA-Z0-9_-]+$/, "Le nom d'utilisateur ne peut contenir que des lettres, chiffres, tirets et underscores"),
   phone: z.string()
-    .regex(/^[0-9+\-\s()]+$/, "Format de téléphone invalide")
-    .min(8, "Le numéro de téléphone doit contenir au moins 8 chiffres")
-    .max(15, "Le numéro de téléphone ne peut pas dépasser 15 caractères")
     .optional()
-    .or(z.literal("")),
+    .or(z.literal(""))
+    .refine((val) => {
+      if (!val || val === "") return true; // Optionnel
+      return /^[0-9+\-\s()]+$/.test(val);
+    }, "Format de téléphone invalide")
+    .refine((val) => {
+      if (!val || val === "") return true;
+      const cleanPhone = val.replace(/[^\d]/g, '');
+      return cleanPhone.length >= 8 && cleanPhone.length <= 15;
+    }, "Le numéro de téléphone doit contenir entre 8 et 15 chiffres"),
   acceptTerms: z.boolean()
     .refine(val => val === true, "Vous devez accepter les conditions d'utilisation"),
   affiliateCode: z.string()

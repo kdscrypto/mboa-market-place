@@ -75,24 +75,15 @@ const EnhancedEmailField: React.FC<EnhancedEmailFieldProps> = ({
                 </Alert>
               )}
               
-              {validation.errors.length > 0 && (
+              {!validation.isValid && validation.suggestions?.length > 0 && (
                 <Alert className="border-red-200 bg-red-50">
                   <AlertTriangle className="h-4 w-4 text-red-600" />
                   <AlertDescription className="text-red-800">
                     <ul className="list-disc list-inside">
-                      {validation.errors.map((error: string, index: number) => (
-                        <li key={index}>{error}</li>
+                      {validation.suggestions.map((suggestion: string, index: number) => (
+                        <li key={index}>{suggestion}</li>
                       ))}
                     </ul>
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              {validation.suggestions && validation.suggestions.length > 0 && (
-                <Alert className="border-blue-200 bg-blue-50">
-                  <Info className="h-4 w-4 text-blue-600" />
-                  <AlertDescription className="text-blue-800">
-                    {validation.suggestions[0]}
                   </AlertDescription>
                 </Alert>
               )}
