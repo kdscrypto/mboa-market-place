@@ -12,6 +12,8 @@ import AdsterraSocialBarProvider from "@/components/layout/AdsterraSocialBarProv
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { performanceMonitor } from "@/utils/performanceMonitor";
 import { resourceOptimizer } from "@/utils/resourceOptimizer";
+import { realTimeMonitor } from "@/utils/realTimeMonitoring";
+import { mobileOptimizer } from "@/hooks/useMobileOptimizations";
 
 // Eager load only critical pages
 import Index from "./pages/Index";
@@ -61,9 +63,6 @@ const PageLoader = () => (
 function App() {
   useEffect(() => {
     // Initialize performance monitoring
-    const { realTimeMonitor } = require('./utils/realTimeMonitoring');
-    const { mobileOptimizer } = require('./hooks/useMobileOptimizations');
-    
     resourceOptimizer.registerServiceWorker();
     resourceOptimizer.optimizeFonts();
     realTimeMonitor.startMonitoring();
