@@ -19,10 +19,11 @@ export default defineConfig(({ mode }) => ({
           // Routing
           router: ['react-router-dom'],
           // UI components - more granular splitting
+          // UI components - more granular splitting
           'ui-core': ['@radix-ui/react-dialog', '@radix-ui/react-select'],
           'ui-extended': ['@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-toast'],
-          // Data fetching
-          query: ['@tanstack/react-query'],
+          // Data fetching and performance
+          query: ['@tanstack/react-query', 'react-window'],
           // Backend
           supabase: ['@supabase/supabase-js'],
           // Dashboard components (lazy loaded)
@@ -30,6 +31,12 @@ export default defineConfig(({ mode }) => ({
             './src/components/dashboard/UserAdsTable',
             './src/components/dashboard/UserMessagesTab',
             './src/components/dashboard/PaymentTransactionsTab'
+          ],
+          // Performance utilities
+          performance: [
+            './src/utils/scheduler',
+            './src/utils/timeSlicing',
+            './src/utils/performanceOptimizer'
           ]
         }
       }

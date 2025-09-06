@@ -1,120 +1,88 @@
-
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Card, CardContent } from '@/components/ui/card';
-import { MapPin } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { optimizeImage } from '@/utils/imageOptimization';
+import React, { memo } from "react";
+import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { LazyImage } from "@/components/ui/LazyImage";
+import { optimizeImage } from "@/utils/imageOptimization";
+import { useOptimizedCallback } from "@/hooks/usePerformanceHooks";
 
 interface AdCardProps {
   id: string;
   title: string;
   price: number;
-  currency?: string;
   location: {
     city: string;
-    region?: string;
+    region: string;
   };
-  imageUrl: string;
+  imageUrl?: string;
+  isPremium?: boolean;
   createdAt: Date;
 }
 
-const AdCard: React.FC<AdCardProps> = ({
-  id,
-  title,
-  price,
-  currency = 'XAF',
-  location,
-  imageUrl,
-  createdAt
-}) => {
-  const timeAgo = formatDistanceToNow(createdAt, {
-    addSuffix: true,
-    locale: fr
-  });
+const AdCard = memo(({ id, title, price, location, imageUrl, isPremium, createdAt }: AdCardProps) => {
+  // Memoized image error handler
+  const handleImageError = useOptimizedCallback(() => {
+    console.log('Image failed to load for ad:', id);
+  }, [id]);
 
   // Format price with thousands separator
-  const formattedPrice = new Intl.NumberFormat('fr-FR').format(price);
-  
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  
-  // Optimize image URL for better performance and handle edge cases
-  const optimizedImageUrl = React.useMemo(() => {
-    if (imageError) return '/placeholder.svg';
-    
-    try {
-      return optimizeImage(imageUrl, { 
-        width: 350, 
-        height: 350, 
-        quality: 80 
-      });
-    } catch (error) {
-      console.error(`Error optimizing image for ad ${id}:`, error);
-      return '/placeholder.svg';
-    }
-  }, [imageUrl, imageError, id]);
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('fr-FR').format(price);
+  };
+
+  // Format date
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: 'numeric',
+      month: 'short'
+    }).format(date);
+  };
 
   return (
-    <Link to={`/annonce/${id}`} className="block h-full">
-      <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
+    <Link to={`/annonce/${id}`} className="block group">
+      <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 overflow-hidden">
         <div className="relative">
-          <AspectRatio ratio={1/1} className="bg-gray-100">
-            {/* Loading skeleton */}
-            {!imageLoaded && !imageError && (
-              <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
-                <span className="sr-only">Chargement de l'image...</span>
-              </div>
-            )}
-            
-            {/* Actual image */}
-            <img
-              src={optimizedImageUrl}
-              alt={title}
-              className={cn(
-                "object-cover w-full h-full transition-opacity duration-200",
-                imageLoaded && !imageError ? "opacity-100" : "opacity-0"
-              )}
-              style={{
-                objectFit: 'cover',
-              }}
-              onError={(e) => {
-                console.error(`Image error for ad: ${id}, URL: ${imageUrl}`);
-                const target = e.target as HTMLImageElement;
-                target.src = '/placeholder.svg';
-                setImageError(true);
-                setImageLoaded(true);
-              }}
-              onLoad={() => {
-                console.log(`Image loaded successfully for ad: ${id}`);
-                setImageLoaded(true);
-              }}
-              loading="lazy"
-              crossOrigin="anonymous"
-            />
-          </AspectRatio>
+          <LazyImage
+            src={optimizeImage(imageUrl || '/placeholder.svg', { 
+              width: 300, 
+              height: 200, 
+              quality: 80 
+            })}
+            alt={title}
+            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+            placeholder="/placeholder.svg"
+            onError={handleImageError}
+          />
+          {isPremium && (
+            <Badge className="absolute top-2 right-2 bg-mboa-orange text-white">
+              Premium
+            </Badge>
+          )}
         </div>
         
-        <CardContent className="p-2">
-          <h3 className="font-semibold text-xs sm:text-sm line-clamp-1">{title}</h3>
+        <div className="p-4">
+          <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-mboa-orange transition-colors">
+            {title}
+          </h3>
           
-          <div className="mt-1 font-bold text-mboa-orange text-xs sm:text-sm">
-            {formattedPrice} {currency}
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-2xl font-bold text-mboa-orange">
+              {formatPrice(price)} FCFA
+            </span>
+            <span className="text-sm text-gray-500">
+              {formatDate(createdAt)}
+            </span>
           </div>
           
-          <div className="flex items-center mt-0.5 text-xs text-gray-500">
-            <MapPin className="h-3 w-3 mr-1" />
-            <span className="truncate max-w-[90%]">{location.city}</span>
+          <div className="text-sm text-gray-600">
+            <span>{location.city}, {location.region}</span>
           </div>
-          
-          <div className="text-xs text-gray-400 mt-1">{timeAgo}</div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
-};
+});
+
+// Add display name for debugging
+AdCard.displayName = 'AdCard';
 
 export default AdCard;

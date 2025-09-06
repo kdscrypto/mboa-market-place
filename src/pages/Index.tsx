@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, lazy, Suspense } from "react";
+import React, { useState, useEffect, lazy, Suspense, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -10,6 +10,8 @@ import { fetchApprovedAds } from "@/services/homeService";
 import { Ad } from "@/types/adTypes";
 import { categories } from "@/data/categoriesData";
 import { scheduleTask } from "@/utils/scheduler";
+import { useCriticalResourcePreloader, useServiceWorkerRegistration } from "@/hooks/useResourcePreloader";
+import { useOptimizedCallback } from "@/hooks/usePerformanceHooks";
 
 // Lazy load non-critical components
 const AdsSection = lazy(() => import("@/components/home/AdsSection"));
@@ -25,8 +27,12 @@ const Index = () => {
   const [error, setError] = useState<boolean>(false);
   const [adsLoaded, setAdsLoaded] = useState<boolean>(false);
   
-  // Featured categories - select first 12 categories to display
-  const featuredCategories = categories.slice(0, 12);
+  // Use performance hooks
+  useCriticalResourcePreloader();
+  useServiceWorkerRegistration();
+  
+  // Memoized featured categories
+  const featuredCategories = useMemo(() => categories.slice(0, 12), []);
 
   useEffect(() => {
     // Check if this is a password recovery redirect from Supabase
@@ -69,7 +75,8 @@ const Index = () => {
     loadApprovedAds();
   }, [navigate]);
 
-  const handleSearch = (filters: any) => {
+  // Memoized search handler
+  const handleSearch = useOptimizedCallback((filters: any) => {
     console.log("Search filters:", filters);
     
     // Convert filters to URL search params
@@ -84,7 +91,7 @@ const Index = () => {
     
     // Navigate to search results page with the filters in the URL
     navigate(`/recherche?${searchParams.toString()}`);
-  };
+  }, [navigate]);
 
   return (
     <div className="min-h-viewport">
