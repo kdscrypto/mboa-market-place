@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => ({
           'ui-core': ['@radix-ui/react-dialog', '@radix-ui/react-select'],
           'ui-extended': ['@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-toast'],
           // Data fetching and performance
-          query: ['@tanstack/react-query', 'react-window'],
+          query: ['@tanstack/react-query'],
           // Backend
           supabase: ['@supabase/supabase-js'],
           // Dashboard components (lazy loaded)
