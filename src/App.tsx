@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,9 @@ import { QueryProvider } from "./providers/QueryProvider";
 import { lazy, Suspense } from "react";
 import OrientationGuard from "@/components/mobile/OrientationGuard";
 import AdsterraSocialBarProvider from "@/components/layout/AdsterraSocialBarProvider";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { performanceMonitor } from "@/utils/performanceMonitor";
+import { resourceOptimizer } from "@/utils/resourceOptimizer";
 
 // Eager load only critical pages
 import Index from "./pages/Index";
@@ -43,6 +47,7 @@ const SecurityDocumentation = lazy(() => import("./pages/SecurityDocumentation")
 const AdsterraCheck = lazy(() => import("./pages/AdsterraCheck"));
 const VerificationDashboard = lazy(() => import("./pages/VerificationDashboard"));
 const PaymentStatus = lazy(() => import("./pages/PaymentStatus"));
+const PerformanceDashboard = lazy(() => import("./components/PerformanceDashboard"));
 
 // Loading component for lazy routes
 const PageLoader = () => (
@@ -54,12 +59,27 @@ const PageLoader = () => (
 // Query client now managed in QueryProvider
 
 function App() {
+  useEffect(() => {
+    // Initialize performance monitoring
+    resourceOptimizer.registerServiceWorker();
+    resourceOptimizer.optimizeFonts();
+    
+    // DNS prefetch for external resources
+    resourceOptimizer.dnsPrefetch('supabase.co');
+    resourceOptimizer.dnsPrefetch('googleapis.com');
+    
+    // Preconnect to critical services
+    resourceOptimizer.preconnect('https://fonts.googleapis.com');
+    resourceOptimizer.preconnect('https://fonts.gstatic.com', true);
+  }, []);
+
   return (
-    <QueryProvider>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+    <ErrorBoundary>
+      <QueryProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
           <AdsterraSocialBarProvider zoneId="fe10e69177de8cccddb46f67064b9c9b">
             <OrientationGuard>
             <BrowserRouter>
@@ -219,6 +239,11 @@ function App() {
                     <PaymentStatus />
                   </Suspense>
                 } />
+                <Route path="/performance" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <PerformanceDashboard />
+                  </Suspense>
+                } />
               </Routes>
             </BrowserRouter>
           </OrientationGuard>
@@ -226,6 +251,7 @@ function App() {
         </TooltipProvider>
       </ThemeProvider>
     </QueryProvider>
+    </ErrorBoundary>
   );
 }
 
