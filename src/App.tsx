@@ -61,8 +61,12 @@ const PageLoader = () => (
 function App() {
   useEffect(() => {
     // Initialize performance monitoring
+    const { realTimeMonitor } = require('./utils/realTimeMonitoring');
+    const { mobileOptimizer } = require('./hooks/useMobileOptimizations');
+    
     resourceOptimizer.registerServiceWorker();
     resourceOptimizer.optimizeFonts();
+    realTimeMonitor.startMonitoring();
     
     // DNS prefetch for external resources
     resourceOptimizer.dnsPrefetch('supabase.co');
@@ -71,6 +75,10 @@ function App() {
     // Preconnect to critical services
     resourceOptimizer.preconnect('https://fonts.googleapis.com');
     resourceOptimizer.preconnect('https://fonts.gstatic.com', true);
+    
+    return () => {
+      realTimeMonitor.stopMonitoring();
+    };
   }, []);
 
   return (
