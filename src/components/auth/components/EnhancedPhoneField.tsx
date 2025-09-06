@@ -92,12 +92,16 @@ const EnhancedPhoneField: React.FC<EnhancedPhoneFieldProps> = ({ form }) => {
                     type="tel"
                     placeholder="6XX XXX XXX"
                     className="pl-10"
-                    {...field}
+                    value={field.value ? field.value.replace(/^\+?237/, '').replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3') : ''}
                     onChange={(e) => {
                       const value = e.target.value;
-                      // Auto-format the phone number
-                      const formatted = value.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
-                      field.onChange(countryCode + formatted.replace(/\s/g, ''));
+                      // Remove country code if already present to avoid duplication
+                      const cleanValue = value.replace(/^\+?237/, '');
+                      // Keep only digits
+                      const digitsOnly = cleanValue.replace(/\D/g, '');
+                      // Only add country code + digits (no spaces for storage)
+                      const finalValue = digitsOnly ? countryCode + digitsOnly : '';
+                      field.onChange(finalValue);
                     }}
                   />
                   {isValidating && (
@@ -131,7 +135,7 @@ const EnhancedPhoneField: React.FC<EnhancedPhoneFieldProps> = ({ form }) => {
                 </Alert>
               )}
               
-              {validation.errors.length > 0 && (
+              {!validation.isValid && validation.errors?.length > 0 && (
                 <Alert className="border-red-200 bg-red-50">
                   <AlertTriangle className="h-4 w-4 text-red-600" />
                   <AlertDescription className="text-red-800">
