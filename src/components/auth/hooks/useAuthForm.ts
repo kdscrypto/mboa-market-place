@@ -68,10 +68,12 @@ export const useRegisterForm = (redirectPath: string = "/mes-annonces") => {
     setIsLoading(true);
     try {
       // Create auth user
+      const redirectUrl = `${window.location.origin}/`;
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             username: values.username,
             phone: values.phone || null

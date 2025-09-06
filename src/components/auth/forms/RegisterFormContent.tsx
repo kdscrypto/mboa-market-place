@@ -70,7 +70,7 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
     {
       id: "contact", 
       label: "Contact",
-      completed: !!form.watch("phone"),
+      completed: true, // Téléphone optionnel, donc toujours complété
       hasError: !!form.formState.errors.phone
     },
     {
@@ -89,7 +89,7 @@ const RegisterFormContent: React.FC<RegisterFormContentProps> = ({
 
   const getCurrentStep = () => {
     if (!usernameValue || !emailValue) return "personal";
-    if (!form.watch("phone")) return "contact";
+    // Téléphone optionnel, on passe cette étape
     if (!passwordValue || !confirmPasswordValue || passwordValidation.score < 70) return "security";
     if (!acceptTerms) return "terms";
     return "complete";
