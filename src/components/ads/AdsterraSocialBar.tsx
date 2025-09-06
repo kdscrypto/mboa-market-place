@@ -11,6 +11,7 @@ const AdsterraSocialBar: React.FC<AdsterraSocialBarProps> = ({
   className
 }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const [hasContent, setHasContent] = useState(false);
   const { adRef } = useAdsterraSocialBar(zoneId);
 
   useEffect(() => {
@@ -24,12 +25,43 @@ const AdsterraSocialBar: React.FC<AdsterraSocialBarProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  useEffect(() => {
+    // Check for social bar content
+    const checkContent = () => {
+      if (adRef.current) {
+        const hasAnyContent = adRef.current.children.length > 0 || 
+                               adRef.current.innerHTML.trim().length > 0;
+        setHasContent(hasAnyContent);
+        
+        if (hasAnyContent) {
+          console.log(`✅ Adsterra Social Bar content loaded for zone: ${zoneId}`);
+        }
+      }
+    };
+
+    const interval = setInterval(checkContent, 2000);
+    
+    // Stop checking after 20 seconds
+    const stopTimer = setTimeout(() => {
+      clearInterval(interval);
+      if (!hasContent) {
+        console.warn(`⚠️ Adsterra Social Bar: No content loaded for zone: ${zoneId}`);
+      }
+    }, 20000);
+
+    return () => {
+      clearTimeout(stopTimer);
+      clearInterval(interval);
+    };
+  }, [zoneId, hasContent]);
+
   const handleImpressionTrack = () => {
-    console.log(`Adsterra Social Bar impression tracked for zone: ${zoneId}`);
+    console.log(`📊 Adsterra Social Bar impression tracked for zone: ${zoneId}`);
   };
 
   // Only show on mobile
   if (!isMobile) {
+    console.log(`📱 Adsterra Social Bar hidden - not on mobile device`);
     return null;
   }
 
@@ -41,11 +73,18 @@ const AdsterraSocialBar: React.FC<AdsterraSocialBarProps> = ({
         style={{
           height: '50px',
           width: '100%',
-          backgroundColor: 'rgba(0,0,0,0.9)'
+          backgroundColor: hasContent ? 'transparent' : 'rgba(0,0,0,0.9)'
         }}
         data-zone={zoneId}
         onLoad={handleImpressionTrack}
-      />
+      >
+        {/* Fallback content while loading */}
+        {!hasContent && (
+          <div className="flex items-center justify-center h-full text-white text-xs">
+            Chargement...
+          </div>
+        )}
+      </div>
     </div>
   );
 };

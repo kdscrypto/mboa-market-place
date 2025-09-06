@@ -51,7 +51,7 @@ const SearchResultsContent: React.FC<SearchResultsContentProps> = ({
             {/* Insert native ad every 7 items */}
             {(index + 1) % 7 === 0 && (
               <AdsterraNativeBanner
-                zoneId="search-native-1"
+                zoneId="723f32db77c60f4499146c57ce5844c2"
                 className="col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-6"
                 title="Annonce recommandée"
               />

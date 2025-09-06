@@ -11,7 +11,7 @@ const Footer = () => {
       {/* Footer banner ad */}
       <div className="border-t">
         <AdsterraBanner 
-          zoneId="footer-banner-1" 
+          zoneId="723f32db77c60f4499146c57ce5844c2" 
           format="banner"
           style={{ width: "100%", height: "250px" }}
           className="my-4"

@@ -39,7 +39,7 @@ const PremiumAdGrid: React.FC<PremiumAdGridProps> = ({ ads, title }) => {
             {/* Insert native ad every 8 items */}
             {(index + 1) % 8 === 0 && (
               <AdsterraNativeBanner
-                zoneId="premium-native-1"
+                zoneId="723f32db77c60f4499146c57ce5844c2"
                 className="col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-5"
                 title="Sponsorisé"
               />
