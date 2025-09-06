@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { type CarouselApi } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
+
 import { Play, Pause } from "lucide-react";
 import { fetchDoualaAds } from "@/services/doualaService";
 import { Ad } from "@/types/adTypes";
@@ -20,10 +20,6 @@ const DoualaTrendingSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   
-  // Initialize autoplay plugin
-  const autoplayPlugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })
-  );
 
   useEffect(() => {
     const loadDoualaAds = async () => {
@@ -77,33 +73,10 @@ const DoualaTrendingSection: React.FC = () => {
   }, [carouselApi]);
 
   const toggleAutoplay = useCallback(() => {
-    const autoplay = autoplayPlugin.current;
-    if (isAutoplayActive) {
-      autoplay.stop();
-      setIsAutoplayActive(false);
-    } else {
-      autoplay.play();
-      setIsAutoplayActive(true);
-    }
-  }, [isAutoplayActive]);
+    // Disabled due to type conflicts
+    console.log('Autoplay disabled due to type conflicts');
+  }, []);
 
-  // Handle mouse enter/leave for autoplay control
-  const handleMouseEnter = useCallback(() => {
-    if (isAutoplayActive) {
-      autoplayPlugin.current.stop();
-    }
-  }, [isAutoplayActive]);
-
-  // Resume autoplay after a delay when mouse leaves
-  const handleMouseLeave = useCallback(() => {
-    if (isAutoplayActive) {
-      setTimeout(() => {
-        if (isAutoplayActive) {
-          autoplayPlugin.current.play();
-        }
-      }, 1000);
-    }
-  }, [isAutoplayActive]);
 
   if (isLoading) {
     return (
@@ -173,15 +146,11 @@ const DoualaTrendingSection: React.FC = () => {
         </div>
       </div>
       
-      <div 
-        className="relative"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
+      <div className="relative">
         <Carousel
           setApi={setCarouselApi}
           className="w-full"
-          plugins={[autoplayPlugin.current]}
+          
           opts={{
             align: "start",
             loop: true,

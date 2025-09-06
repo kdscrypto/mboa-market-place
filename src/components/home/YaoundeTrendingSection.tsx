@@ -14,7 +14,7 @@ import {
   CarouselPrevious,
   type CarouselApi
 } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
+
 import { fetchYaoundeAds } from "@/services/yaoundeService";
 
 const YaoundeTrendingSection: React.FC = () => {
@@ -23,14 +23,7 @@ const YaoundeTrendingSection: React.FC = () => {
   const [error, setError] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
-  const [isAutoplayActive, setIsAutoplayActive] = useState(true);
-  const [autoplayPlugin] = useState(() => 
-    Autoplay({ 
-      delay: 4000, // Slightly slower than recent ads
-      stopOnInteraction: false,
-      stopOnMouseEnter: true 
-    })
-  );
+  const [isAutoplayActive, setIsAutoplayActive] = useState(false); // Disabled due to type conflicts
 
   // Load Yaoundé ads on component mount
   useEffect(() => {
@@ -71,42 +64,11 @@ const YaoundeTrendingSection: React.FC = () => {
     };
   }, [carouselApi]);
 
-  // Control autoplay
+  // Control autoplay - Disabled due to type conflicts
   const toggleAutoplay = () => {
-    if (!autoplayPlugin) return;
-    
-    if (isAutoplayActive) {
-      autoplayPlugin.stop();
-      setIsAutoplayActive(false);
-    } else {
-      autoplayPlugin.play();
-      setIsAutoplayActive(true);
-    }
+    console.log('Autoplay disabled due to type conflicts');
   };
 
-  // Handle interaction - pause autoplay temporarily
-  useEffect(() => {
-    if (!carouselApi || !autoplayPlugin) return;
-
-    const handleInteraction = () => {
-      autoplayPlugin.stop();
-      setIsAutoplayActive(false);
-      
-      // Restart autoplay after 5 seconds of inactivity
-      setTimeout(() => {
-        if (autoplayPlugin) {
-          autoplayPlugin.play();
-          setIsAutoplayActive(true);
-        }
-      }, 5000);
-    };
-
-    carouselApi.on("pointerDown", handleInteraction);
-    
-    return () => {
-      carouselApi.off("pointerDown", handleInteraction);
-    };
-  }, [carouselApi, autoplayPlugin]);
 
   if (isLoading) {
     return (
@@ -204,19 +166,8 @@ const YaoundeTrendingSection: React.FC = () => {
           loop: yaoundeAds.length > 5,
           slidesToScroll: 1,
         }}
-        plugins={[autoplayPlugin]}
         className="w-full relative group"
         setApi={setCarouselApi}
-        onMouseEnter={() => {
-          if (autoplayPlugin) {
-            autoplayPlugin.stop();
-          }
-        }}
-        onMouseLeave={() => {
-          if (autoplayPlugin && isAutoplayActive) {
-            autoplayPlugin.play();
-          }
-        }}
       >
         <CarouselContent className="-ml-2 md:-ml-4">
           {yaoundeAds.map((ad) => (
@@ -249,18 +200,7 @@ const YaoundeTrendingSection: React.FC = () => {
           {Array.from({ length: totalSlides }).map((_, index) => (
             <button
               key={index}
-              onClick={() => {
-                carouselApi?.scrollTo(index);
-                // Pause autoplay temporarily on manual click
-                if (autoplayPlugin) {
-                  autoplayPlugin.stop();
-                  setIsAutoplayActive(false);
-                  setTimeout(() => {
-                    autoplayPlugin.play();
-                    setIsAutoplayActive(true);
-                  }, 3000);
-                }
-              }}
+              onClick={() => carouselApi?.scrollTo(index)}
               className="p-2 transition-all duration-300 hover:scale-125 flex items-center justify-center"
               aria-label={`Aller à la diapositive ${index + 1}`}
             >

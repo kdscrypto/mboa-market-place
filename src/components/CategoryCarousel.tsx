@@ -4,7 +4,6 @@ import { Category } from "@/data/categoriesData";
 import CategoryCard from "@/components/CategoryCard";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
 
 interface CategoryCarouselProps {
   categories: Category[];
@@ -12,26 +11,15 @@ interface CategoryCarouselProps {
 }
 
 const CategoryCarousel: React.FC<CategoryCarouselProps> = ({ categories, title }) => {
-  // Configuration du plugin autoplay avec un délai plus long pour réduire l'activité du main thread
-  const autoplayPlugin = React.useRef(
-    Autoplay({
-      delay: 8000, // Increased delay to reduce main thread work
-      stopOnInteraction: true,
-      stopOnMouseEnter: true,
-    })
-  );
-
-  // Initialisation du carousel avec direction horizontale et plugin d'autoplay optimisé
-  const [emblaRef] = useEmblaCarousel(
-    { 
+  // Initialisation du carousel avec direction horizontale
+  const [emblaRef] = useEmblaCarousel({
       axis: "x",
       loop: false, // Disable loop to reduce complexity
       dragFree: true,
       direction: "ltr",
       skipSnaps: false,
       duration: 30, // Faster transitions to reduce main thread blocking
-    },
-    [autoplayPlugin.current]
+    }
   );
 
   return (

@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
 import { cn } from "@/lib/utils";
 
 const HeroCarousel = () => {
@@ -18,24 +17,12 @@ const HeroCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [allLoaded, setAllLoaded] = useState(false);
 
-  // Auto-play configuration with improved settings for reduced main thread work
-  const autoplayPlugin = React.useRef(
-    Autoplay({
-      delay: 10000, // Longer delay to reduce frequent updates
-      stopOnInteraction: false,
-      stopOnMouseEnter: true,
-      stopOnFocusIn: true, // Stop on focus for accessibility
-    })
-  );
-
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { 
+  const [emblaRef, emblaApi] = useEmblaCarousel({
       loop: true,
       duration: 80,
       skipSnaps: false,
       startIndex: 0, // Always start with first image for LCP optimization
-    },
-    [autoplayPlugin.current]
+    }
   );
 
   // Ensure first image is immediately ready for LCP optimization
