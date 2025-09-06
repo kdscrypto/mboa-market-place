@@ -10,19 +10,35 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   build: {
-    sourcemap: true, // Enable source maps for production builds
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: {
+          // Core React libraries
           vendor: ['react', 'react-dom'],
+          // Routing
           router: ['react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-dropdown-menu'],
+          // UI components - more granular splitting
+          'ui-core': ['@radix-ui/react-dialog', '@radix-ui/react-select'],
+          'ui-extended': ['@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs', '@radix-ui/react-toast'],
+          // Data fetching
           query: ['@tanstack/react-query'],
-          supabase: ['@supabase/supabase-js']
+          // Backend
+          supabase: ['@supabase/supabase-js'],
+          // Dashboard components (lazy loaded)
+          dashboard: [
+            './src/components/dashboard/UserAdsTable',
+            './src/components/dashboard/UserMessagesTab',
+            './src/components/dashboard/PaymentTransactionsTab'
+          ]
         }
       }
     },
-    chunkSizeWarningLimit: 1000, // Increase warning limit for chunked builds
+    chunkSizeWarningLimit: 800,
+    // Enable gzip compression equivalent
+    reportCompressedSize: true,
+    // Optimize asset handling
+    assetsInlineLimit: 4096
   },
   plugins: [
     react(),
