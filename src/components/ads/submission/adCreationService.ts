@@ -130,10 +130,10 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
 // Helper function to get premium prices based on ad type
 const getPremiumPrice = (adType: string): number => {
   const priceMap: { [key: string]: number } = {
-    'premium_24h': 500,
-    'premium_7d': 2500,
-    'premium_15d': 5000,
-    'premium_30d': 10000
+    'premium_24h': 200,
+    'premium_7d': 1200,
+    'premium_15d': 2000,
+    'premium_30d': 3500
   };
   
   return priceMap[adType] || 0;
