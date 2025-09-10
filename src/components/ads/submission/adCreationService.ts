@@ -9,7 +9,12 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
   try {
     // Get current user
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session?.user) {
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      throw new Error('Erreur de session. Veuillez vous reconnecter.');
+    }
+    
+    if (!session?.user) {
       throw new Error('Vous devez être connecté pour créer une annonce');
     }
 
@@ -37,7 +42,7 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
 
     if (adError) {
       console.error('Error creating ad:', adError);
-      throw new Error('Erreur lors de la création de l\'annonce');
+      throw new Error(`Erreur lors de la création de l'annonce: ${adError.message}`);
     }
 
     console.log('Ad created successfully:', ad.id);

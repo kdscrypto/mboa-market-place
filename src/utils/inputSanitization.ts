@@ -120,7 +120,7 @@ export interface SanitizedAdData {
   title: string;
   description: string;
   category: string;
-  price: number;
+  price: string;
   region: string;
   city: string;
   phone: string;
@@ -129,11 +129,12 @@ export interface SanitizedAdData {
 }
 
 export const sanitizeAdData = (data: any): SanitizedAdData => {
+  const priceNum = Math.max(0, parseInt(data.price) || 0);
   return {
     title: sanitizeText(data.title || '', 200),
     description: sanitizeText(data.description || '', 5000),
     category: sanitizeText(data.category || '', 50),
-    price: Math.max(0, parseInt(data.price) || 0),
+    price: priceNum.toString(),
     region: sanitizeText(data.region || '', 100),
     city: sanitizeText(data.city || '', 100),
     phone: sanitizePhone(data.phone || ''),

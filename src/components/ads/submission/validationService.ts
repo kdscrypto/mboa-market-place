@@ -20,11 +20,8 @@ export const validateFormData = (formData: AdFormData): AdSubmissionData => {
     throw new Error("Le numéro de téléphone est requis");
   }
   
-  // Convert the sanitized data to match AdSubmissionData interface
-  return {
-    ...sanitizedData,
-    price: sanitizedData.price.toString() // Keep as string since AdSubmissionData expects string
-  };
+  // Return the sanitized data directly since types now match
+  return sanitizedData;
 };
 
 export const validateImages = (images: File[]): void => {
