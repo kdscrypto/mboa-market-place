@@ -369,6 +369,33 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_webhook_config: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+          webhook_type: string
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          webhook_type: string
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          webhook_type?: string
+          webhook_url?: string
+        }
+        Relationships: []
+      }
       conversation_labels: {
         Row: {
           conversation_id: string | null
