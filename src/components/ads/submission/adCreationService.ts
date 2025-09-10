@@ -13,44 +13,8 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
       throw new Error('Vous devez être connecté pour créer une annonce');
     }
 
-    // Check if it's a free standard ad
-    if (adData.adType === 'standard') {
-      console.log('Creating free standard ad...');
-      
-      const { data: ad, error: adError } = await supabase
-        .from('ads')
-        .insert({
-          user_id: session.user.id,
-          title: adData.title,
-          description: adData.description,
-          price: parseInt(adData.price) || 0,
-          category: adData.category,
-          region: adData.region,
-          city: adData.city,
-          phone: adData.phone,
-          whatsapp: adData.whatsapp,
-          ad_type: 'standard',
-          status: 'pending'
-        })
-        .select()
-        .single();
-
-      if (adError) {
-        console.error('Error creating standard ad:', adError);
-        throw new Error('Erreur lors de la création de l\'annonce');
-      }
-
-      console.log('Free standard ad created successfully:', ad.id);
-
-      return {
-        success: true,
-        adId: ad.id,
-        requiresPayment: false
-      };
-    }
-
-    // For premium ads, create the ad first with pending_payment status
-    console.log('Creating premium ad that requires payment...');
+    // For ALL ads (standard and premium), create with pending status first
+    console.log('Creating ad...');
     
     const { data: ad, error: adError } = await supabase
       .from('ads')
@@ -66,20 +30,30 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
         whatsapp: adData.whatsapp,
         ad_type: adData.adType,
         premium_expires_at: adData.premiumExpiresAt,
-        status: 'pending_payment' // Ad is pending payment
+        status: adData.adType === 'standard' ? 'pending' : 'pending_payment'
       })
       .select()
       .single();
 
     if (adError) {
-      console.error('Error creating premium ad:', adError);
+      console.error('Error creating ad:', adError);
       throw new Error('Erreur lors de la création de l\'annonce');
     }
 
-    console.log('Premium ad created with pending payment status:', ad.id);
+    console.log('Ad created successfully:', ad.id);
 
-    // Create Lygos payment for premium ads
+    // If it's a standard ad, no payment needed
+    if (adData.adType === 'standard') {
+      return {
+        success: true,
+        adId: ad.id,
+        requiresPayment: false
+      };
+    }
+
+    // For premium ads, try to create payment
     try {
+      console.log('Creating payment request for premium ad...');
       const paymentRequest: LygosPaymentRequest = {
         amount: getPremiumPrice(adData.adType),
         currency: 'XAF',
@@ -96,29 +70,40 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
         }
       };
 
+      console.log('Payment request created:', paymentRequest);
       const paymentResult = await createLygosPayment(paymentRequest);
+      console.log('Payment result received:', paymentResult);
 
-      if (paymentResult.success && paymentResult.paymentData?.payment_url) {
+      if (paymentResult.success && (paymentResult.paymentData?.payment_url || paymentResult.checkout_url)) {
+        const paymentUrl = paymentResult.paymentData?.payment_url || paymentResult.checkout_url;
         return {
           success: true,
           adId: ad.id,
           requiresPayment: true,
-          paymentUrl: paymentResult.paymentData.payment_url,
+          paymentUrl: paymentUrl,
           transactionId: paymentResult.transactionId
         };
       } else {
-        throw new Error('Erreur lors de la création du paiement');
+        // If payment creation fails, still create the ad but with pending status
+        console.warn('Payment creation failed, but ad created successfully');
+        return {
+          success: true,
+          adId: ad.id,
+          requiresPayment: false,
+          error: 'L\'annonce a été créée mais le système de paiement est temporairement indisponible. Votre annonce sera traitée manuellement.'
+        };
       }
     } catch (paymentError) {
       console.error('Payment creation failed:', paymentError);
       
-      // Delete the ad if payment creation fails
-      await supabase
-        .from('ads')
-        .delete()
-        .eq('id', ad.id);
-        
-      throw new Error('Erreur lors de la création du paiement');
+      // Don't delete the ad, just return with a warning
+      console.warn('Payment system unavailable, ad created without payment');
+      return {
+        success: true,
+        adId: ad.id,
+        requiresPayment: false,
+        error: 'L\'annonce a été créée mais le système de paiement est temporairement indisponible. Contactez le support pour activer les fonctionnalités premium.'
+      };
     }
 
   } catch (error) {
