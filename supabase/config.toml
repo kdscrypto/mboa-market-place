@@ -33,7 +33,7 @@ image_transformation = {enabled = true}
 enabled = true
 port = 54328
 site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["https://mboa-market-place.lovable.app"]
+additional_redirect_urls = ["https://mboa-market-place.lovable.app", "https://mboamarket.shop"]
 jwt_expiry = 3600
 enable_signup = true
 enable_confirmations = true
