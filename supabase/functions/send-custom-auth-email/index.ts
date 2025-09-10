@@ -112,7 +112,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (error) {
       console.error('❌ Resend error:', error);
-      throw error;
+      // Don't throw error for Resend limitations during development
+      // Allow the signup to proceed even if email fails
+      console.log('⚠️ Email failed but allowing signup to proceed for development');
+      
+      return new Response(JSON.stringify({ 
+        success: false, 
+        message: 'Account created but confirmation email could not be sent',
+        error: error.message,
+        note: 'Please verify your Resend domain or use the email address: zoaeyengafrank@gmail.com for testing'
+      }), {
+        status: 200, // Return 200 to allow signup to complete
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
     }
 
     console.log('✅ Email sent successfully:', data);
