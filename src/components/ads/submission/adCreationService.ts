@@ -113,7 +113,9 @@ export const createAdWithPayment = async (adData: AdSubmissionData): Promise<Sub
 
   } catch (error) {
     console.error('Error in createAdWithPayment:', error);
-    throw error;
+    // Make sure to provide a proper error message
+    const errorMessage = error instanceof Error ? error.message : 'Une erreur inattendue est survenue';
+    throw new Error(errorMessage);
   }
 };
 

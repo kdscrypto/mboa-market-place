@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { AdFormData } from "./AdFormTypes";
 import { SubmissionState } from "./submission/types";
 import { validateUserSession } from "./submission/authService";
@@ -65,16 +66,45 @@ export const useAdSubmission = () => {
         premiumExpiresAt
       };
 
-      // Create the ad
-      const result = await createAdWithPayment(adDataWithExpiration);
+      // Create the ad and upload images atomically
+      let result;
+      let adId;
       
-      // Upload images if any
-      if (formData.images && formData.images.length > 0) {
-        await uploadAdImages(formData.images, result.adId!);
+      try {
+        // Step 1: Create the ad
+        result = await createAdWithPayment(adDataWithExpiration);
+        adId = result.adId!;
+        
+        // Step 2: Upload images if any (this must succeed for the submission to be complete)
+        if (formData.images && formData.images.length > 0) {
+          console.log(`Uploading ${formData.images.length} images for ad ${adId}`);
+          await uploadAdImages(formData.images, adId);
+          console.log('All images uploaded successfully');
+        }
+        
+        // Only mark as submitted if everything succeeded
+        setSubmissionState(prev => ({ ...prev, isSubmitted: true }));
+        setShowPreview(false);
+        
+      } catch (uploadError) {
+        // If image upload fails, we need to clean up the ad
+        console.error('Image upload failed, cleaning up ad:', uploadError);
+        
+        if (adId) {
+          try {
+            await supabase.from('ads').delete().eq('id', adId);
+            console.log('Cleaned up ad after image upload failure');
+          } catch (cleanupError) {
+            console.error('Failed to clean up ad:', cleanupError);
+          }
+        }
+        
+        // Re-throw the error to show user the specific issue
+        const errorMessage = uploadError instanceof Error ? 
+          `Erreur lors de l'upload des images: ${uploadError.message}` : 
+          'Erreur lors de l\'upload des images';
+        throw new Error(errorMessage);
       }
-      
-      setSubmissionState(prev => ({ ...prev, isSubmitted: true }));
-      setShowPreview(false);
       
       // Handle different result types
       if (result.requiresPayment && result.paymentUrl) {
