@@ -45,7 +45,7 @@ const MessagesContent: React.FC = () => {
   }
 
   return (
-    <div className="flex h-[70vh] rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: 'var(--messaging-bg)' }}>
+    <div className="flex h-[70vh] bg-white rounded-lg shadow-sm border">
       <MessagesSidebar
         conversations={conversations}
         filteredConversations={filteredConversations}

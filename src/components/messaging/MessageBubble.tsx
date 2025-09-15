@@ -41,21 +41,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <>
       <div className={cn(
-        "flex mb-3 px-4",
+        "flex mb-4",
         isSender ? "justify-end" : "justify-start"
       )}>
-        <div 
-          className={cn(
-            "max-w-[65%] rounded-2xl px-3 py-2 relative group shadow-sm",
-            isSender 
-              ? "rounded-br-sm" 
-              : "rounded-bl-sm"
-          )}
-          style={{
-            backgroundColor: isSender ? 'var(--message-sent-bg)' : 'var(--message-received-bg)',
-            color: isSender ? 'var(--message-sent-text)' : 'var(--message-received-text)'
-          }}
-        >
+        <div className={cn(
+          "max-w-[70%] rounded-lg px-3 py-2 relative group",
+          isSender 
+            ? "bg-mboa-orange text-white" 
+            : "bg-gray-100 text-gray-900"
+        )}>
           {/* Message actions dropdown */}
           {!isSender && (
             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -80,13 +74,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           )}
 
           {/* Message content */}
-          <div className={cn("", !isSender && "pr-6")}>
+          <div className="pr-6">
             {message.message_type === 'image' && message.attachment_url ? (
               <div className="mb-2">
                 <img 
                   src={message.attachment_url} 
                   alt="Pièce jointe" 
-                  className="max-w-full h-auto rounded-lg"
+                  className="max-w-full h-auto rounded-md"
                 />
               </div>
             ) : message.message_type === 'document' && message.attachment_url ? (
@@ -94,14 +88,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <a 
                   href={message.attachment_url} 
                   download={message.attachment_name}
-                  className="text-blue-300 hover:underline"
+                  className="text-blue-500 hover:underline"
                 >
                   📎 {message.attachment_name || 'Document'}
                 </a>
               </div>
             ) : null}
             
-            <p className="text-sm leading-relaxed">{message.content}</p>
+            <p className="text-sm">{message.content}</p>
           </div>
 
           {/* Message reactions */}
@@ -115,18 +109,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             />
           )}
 
-          {/* WhatsApp-style timestamp and status */}
-          <div className="flex items-center justify-end mt-1 text-xs gap-1" style={{ color: isSender ? 'rgba(255,255,255,0.7)' : 'var(--messaging-timestamp)' }}>
+          {/* Timestamp and status */}
+          <div className={cn(
+            "flex items-center justify-between mt-1 text-xs",
+            isSender ? "text-white/70" : "text-gray-500"
+          )}>
             <span>{formatTime(message.created_at)}</span>
-            {isSender && (
-              <div className="flex items-center">
-                <MessageStatus status={message.status} />
-              </div>
-            )}
+            {isSender && <MessageStatus status={message.status} />}
           </div>
 
           {showTimestamp && (
-            <div className="text-xs mt-1" style={{ color: 'var(--messaging-timestamp)' }}>
+            <div className="text-xs text-gray-400 mt-1">
               {format(new Date(message.created_at), "PPP à HH:mm", { locale: fr })}
             </div>
           )}
