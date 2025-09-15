@@ -60,7 +60,8 @@ class AdsterraManager {
   initializeAsyncOptions() {
     if (typeof window !== 'undefined') {
       window.atAsyncOptions = window.atAsyncOptions || [];
-      console.log('🔧 Adsterra atAsyncOptions initialized');
+      window.atOptions = window.atOptions || {};
+      console.log('🔧 Adsterra configuration objects verified');
     }
   }
 }
@@ -109,13 +110,13 @@ export const useAdsterraBanner = (zoneId: string, format: string = 'banner') => 
       try {
         console.log(`🎨 Initializing Adsterra Banner - Zone: ${zoneId}, Format: ${format}`);
         
-        // Set up the container with proper attributes
+        // Set up the container with proper attributes first
         if (adRef.current) {
           adRef.current.id = `container-${zoneId}`;
           adRef.current.setAttribute('data-zone', zoneId);
         }
         
-        // Initialize atAsyncOptions for banner ads
+        // Initialize global configuration
         manager.initializeAsyncOptions();
         
         const config = {
@@ -126,8 +127,9 @@ export const useAdsterraBanner = (zoneId: string, format: string = 'banner') => 
           params: {}
         };
         
-        // Push configuration
+        // Push configuration to global array
         window.atAsyncOptions!.push(config);
+        console.log(`🔧 Banner config pushed:`, config);
         
         // Load the async script
         await manager.loadScript('https://www.profitabledisplaycontent.com/assets/js/async.min.js');
@@ -158,16 +160,19 @@ export const useAdsterraNative = (zoneId: string) => {
       try {
         console.log(`🎯 Initializing Adsterra Native - Zone: ${zoneId}`);
         
-        // Use the zoneId to construct the proper script URL
-        // This assumes your native ad script follows Adsterra's standard pattern
-        const scriptSrc = `//pl27571954.revenuecpmgate.com/${zoneId}/invoke.js`;
-        await manager.loadScript(`https:${scriptSrc}`);
-        
-        // Set up the container with the proper ID that Adsterra expects
+        // Set up the container first with the proper ID that Adsterra expects
         if (adRef.current) {
           adRef.current.id = `container-${zoneId}`;
+          adRef.current.setAttribute('data-zone', zoneId);
           console.log(`📦 Container set up with ID: container-${zoneId}`);
         }
+        
+        // Initialize global configuration
+        manager.initializeAsyncOptions();
+        
+        // Load the zone-specific invoke script
+        const scriptSrc = `//pl27571954.revenuecpmgate.com/${zoneId}/invoke.js`;
+        await manager.loadScript(`https:${scriptSrc}`);
         
         isLoaded.current = true;
         console.log(`✅ Adsterra Native Banner initialized for zone: ${zoneId}`);

@@ -36,6 +36,14 @@
       .font-loaded body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     </style>
     
+    <!-- Initialize Adsterra global configuration -->
+    <script type="text/javascript">
+      // Initialize Adsterra configuration objects globally
+      window.atAsyncOptions = window.atAsyncOptions || [];
+      window.atOptions = window.atOptions || {};
+      console.log('🔧 Adsterra global configuration initialized');
+    </script>
+    
     <!-- Load fonts asynchronously to prevent render blocking -->
     <script>
       (function() {
