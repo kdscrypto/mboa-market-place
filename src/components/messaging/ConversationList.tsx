@@ -43,14 +43,14 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
   return (
     <div className="h-full">
-      <ScrollArea className="h-full">
-        <div className="divide-y">
+      <ScrollArea className="h-full whatsapp-scrollbar">
+        <div>
           {conversations.map((conversation) => {
             const isActive = conversation.id === currentConversation;
             const hasUnread = (conversation.unread_count || 0) > 0;
             const formattedDate = format(
               new Date(conversation.last_message_at),
-              "d MMM HH:mm",
+              "HH:mm",
               { locale: fr }
             );
 
@@ -58,58 +58,77 @@ const ConversationList: React.FC<ConversationListProps> = ({
               <div
                 key={conversation.id}
                 className={cn(
-                  "flex cursor-pointer hover:bg-gray-50 p-3 transition-colors relative",
-                  isActive && "bg-blue-50 hover:bg-blue-50"
+                  "flex cursor-pointer px-4 py-3 transition-colors relative",
+                  isActive 
+                    ? "hover:bg-opacity-80" 
+                    : "hover:bg-opacity-80"
                 )}
+                style={{ 
+                  backgroundColor: isActive ? 'var(--messaging-surface-selected)' : 'transparent',
+                  borderBottom: '1px solid var(--messaging-border)'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'var(--messaging-surface-hover)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
                 onClick={() => onSelectConversation(conversation.id)}
               >
+                {/* WhatsApp-style circular avatar */}
                 <div className="flex-shrink-0 mr-3">
-                  <img
-                    src={conversation.ad_image || "/placeholder.svg"}
-                    alt={conversation.ad_title || "Annonce"}
-                    className="h-14 w-14 object-cover rounded-md"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/placeholder.svg";
-                    }}
-                  />
+                  <div className="w-12 h-12 rounded-full overflow-hidden" style={{ border: '1px solid var(--messaging-border)' }}>
+                    <img
+                      src={conversation.ad_image || "/placeholder.svg"}
+                      alt={conversation.ad_title || "Annonce"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="flex-grow min-w-0">
-                  <div className="flex justify-between items-start">
+                
+                {/* WhatsApp-style content layout */}
+                <div className="flex-1 min-w-0">
+                  {/* First line: Name + Timestamp */}
+                  <div className="flex justify-between items-center mb-1">
                     <div className="flex items-center gap-1 flex-1 min-w-0">
                       {conversation.pinned && (
-                        <Pin className="h-3 w-3 text-mboa-orange flex-shrink-0" />
+                        <Pin className="h-3 w-3 flex-shrink-0" style={{ color: 'var(--messaging-green)' }} />
                       )}
                       {conversation.archived && (
-                        <Archive className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                        <Archive className="h-3 w-3 flex-shrink-0" style={{ color: 'var(--messaging-text-muted)' }} />
                       )}
                       <h3 className={cn(
-                        "text-sm font-medium line-clamp-1",
-                        hasUnread && "font-bold"
-                      )}>
+                        "text-sm truncate",
+                        hasUnread ? "font-semibold" : "font-medium"
+                      )} style={{ color: 'var(--messaging-text-primary)' }}>
                         {conversation.ad_title || "Annonce sans titre"}
                       </h3>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                      <span className="text-xs text-gray-500">{formattedDate}</span>
-                      <ConversationActions
-                        conversationId={conversation.id}
-                        isArchived={conversation.archived}
-                        isPinned={conversation.pinned}
-                      />
-                    </div>
+                    <span className="text-xs flex-shrink-0 ml-2" style={{ color: 'var(--messaging-timestamp)' }}>
+                      {formattedDate}
+                    </span>
                   </div>
                   
-                  <ConversationLabels conversationId={conversation.id} />
-                  
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-gray-500">
+                  {/* Second line: Last message + Unread badge */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs truncate flex-1" style={{ color: 'var(--messaging-text-secondary)' }}>
                       {conversation.status === "active" ? "Conversation active" : "Archivée"}
                     </p>
                     
                     {hasUnread && (
-                      <Badge variant="default" className="bg-mboa-orange flex-shrink-0">
+                      <div 
+                        className="rounded-full min-w-[20px] h-5 flex items-center justify-center px-2 ml-2 flex-shrink-0"
+                        style={{ backgroundColor: 'var(--messaging-unread)', color: 'white', fontSize: '11px', fontWeight: '600' }}
+                      >
                         {conversation.unread_count}
-                      </Badge>
+                      </div>
                     )}
                   </div>
                 </div>

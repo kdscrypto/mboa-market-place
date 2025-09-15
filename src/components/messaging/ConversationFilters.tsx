@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Archive, Pin, Inbox } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ConversationFiltersProps {
   activeFilter: 'all' | 'archived' | 'pinned';
@@ -20,45 +21,66 @@ const ConversationFilters: React.FC<ConversationFiltersProps> = ({
   counts
 }) => {
   return (
-    <div className="flex gap-2 p-3 border-b">
-      <Button
-        variant={activeFilter === 'all' ? 'default' : 'ghost'}
-        size="sm"
+    <div className="flex gap-1 px-4 py-2" style={{ borderBottom: '1px solid var(--messaging-border)', backgroundColor: 'var(--messaging-sidebar-bg)' }}>
+      <button
         onClick={() => onFilterChange('all')}
-        className="flex items-center gap-2"
+        className={cn(
+          "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+          activeFilter === 'all' 
+            ? "text-white" 
+            : "hover:bg-white/10"
+        )}
+        style={{ 
+          backgroundColor: activeFilter === 'all' ? 'var(--messaging-green)' : 'transparent',
+          color: activeFilter === 'all' ? 'white' : 'var(--messaging-text-secondary)'
+        }}
       >
-        <Inbox className="h-4 w-4" />
-        Toutes
-        <Badge variant="secondary" className="ml-1">
-          {counts.all}
-        </Badge>
-      </Button>
+        Toutes {counts.all > 0 && (
+          <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+            {counts.all}
+          </span>
+        )}
+      </button>
       
-      <Button
-        variant={activeFilter === 'pinned' ? 'default' : 'ghost'}
-        size="sm"
+      <button
         onClick={() => onFilterChange('pinned')}
-        className="flex items-center gap-2"
+        className={cn(
+          "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+          activeFilter === 'pinned' 
+            ? "text-white" 
+            : "hover:bg-white/10"
+        )}
+        style={{ 
+          backgroundColor: activeFilter === 'pinned' ? 'var(--messaging-green)' : 'transparent',
+          color: activeFilter === 'pinned' ? 'white' : 'var(--messaging-text-secondary)'
+        }}
       >
-        <Pin className="h-4 w-4" />
-        Épinglées
-        <Badge variant="secondary" className="ml-1">
-          {counts.pinned}
-        </Badge>
-      </Button>
+        Épinglées {counts.pinned > 0 && (
+          <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+            {counts.pinned}
+          </span>
+        )}
+      </button>
       
-      <Button
-        variant={activeFilter === 'archived' ? 'default' : 'ghost'}
-        size="sm"
+      <button
         onClick={() => onFilterChange('archived')}
-        className="flex items-center gap-2"
+        className={cn(
+          "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+          activeFilter === 'archived' 
+            ? "text-white" 
+            : "hover:bg-white/10"
+        )}
+        style={{ 
+          backgroundColor: activeFilter === 'archived' ? 'var(--messaging-green)' : 'transparent',
+          color: activeFilter === 'archived' ? 'white' : 'var(--messaging-text-secondary)'
+        }}
       >
-        <Archive className="h-4 w-4" />
-        Archivées
-        <Badge variant="secondary" className="ml-1">
-          {counts.archived}
-        </Badge>
-      </Button>
+        Archivées {counts.archived > 0 && (
+          <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+            {counts.archived}
+          </span>
+        )}
+      </button>
     </div>
   );
 };

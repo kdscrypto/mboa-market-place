@@ -60,17 +60,25 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSendMessage, disabled = fal
   return (
     <form 
       onSubmit={handleSubmit} 
-      className="border-t pt-3 pb-3 bg-white sticky bottom-0"
+      className="px-4 py-3 sticky bottom-0"
+      style={{ backgroundColor: 'var(--messaging-main-bg)', borderTop: '1px solid var(--messaging-border)' }}
     >
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-3">
         <div className="flex-1 space-y-2">
-          <Textarea
+          <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Écrivez votre message..."
-            className="min-h-[60px] resize-none"
+            className="w-full px-4 py-2 border-0 focus:outline-none focus:ring-1 resize-none rounded-3xl transition-all"
+            style={{
+              backgroundColor: 'var(--messaging-input-bg)',
+              color: 'var(--messaging-text-primary)',
+              minHeight: '40px',
+              maxHeight: '120px'
+            }}
             disabled={disabled || sending}
+            rows={1}
           />
           
           <AttachmentUpload
@@ -82,13 +90,19 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSendMessage, disabled = fal
           />
         </div>
         
-        <Button
+        <button
           type="submit"
-          className="h-10 w-10 p-0 bg-mboa-orange hover:bg-mboa-orange/90"
+          className="w-10 h-10 rounded-full border-0 flex items-center justify-center transition-colors"
+          style={{
+            backgroundColor: (!message.trim() && !selectedFile) || disabled || sending 
+              ? 'var(--messaging-text-muted)' 
+              : 'var(--messaging-green)',
+            color: 'white'
+          }}
           disabled={(!message.trim() && !selectedFile) || disabled || sending}
         >
-          <Send size={18} />
-        </Button>
+          <Send size={16} />
+        </button>
       </div>
     </form>
   );

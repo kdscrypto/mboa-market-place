@@ -1,9 +1,77 @@
 
-@import url("./styles/base.css");
-@import url("./styles/utilities.css");
-@import url("./styles/components.css");
-@import url("./styles/accessibility.css");
-@import url("./styles/mobile.css");
+/* WhatsApp-style Messaging Theme */
+:root {
+  /* WhatsApp Color Palette */
+  --whatsapp-dark-bg: 15 20 25;
+  --whatsapp-sidebar-bg: 17 27 33;
+  --whatsapp-main-bg: 11 20 26;
+  --whatsapp-message-bg: 32 44 51;
+  --whatsapp-hover-bg: 42 58 65;
+  --whatsapp-selected-bg: 47 69 80;
+  --whatsapp-green: 37 211 102;
+  --whatsapp-green-dark: 0 168 132;
+  --whatsapp-text-primary: 241 241 242;
+  --whatsapp-text-secondary: 182 186 191;
+  --whatsapp-text-muted: 134 150 160;
+  --whatsapp-border: 54 70 78;
+  --whatsapp-search-bg: 47 69 80;
+  --whatsapp-input-bg: 32 44 51;
+  --whatsapp-timestamp: 170 184 194;
+  --whatsapp-unread: 25 183 51;
+  --whatsapp-checkmark: 79 188 245;
+
+  /* Messaging Theme Variables */
+  --messaging-bg: hsl(var(--whatsapp-dark-bg));
+  --messaging-sidebar-bg: hsl(var(--whatsapp-sidebar-bg));
+  --messaging-main-bg: hsl(var(--whatsapp-main-bg));
+  --messaging-surface: hsl(var(--whatsapp-message-bg));
+  --messaging-surface-hover: hsl(var(--whatsapp-hover-bg));
+  --messaging-surface-selected: hsl(var(--whatsapp-selected-bg));
+  --messaging-text-primary: hsl(var(--whatsapp-text-primary));
+  --messaging-text-secondary: hsl(var(--whatsapp-text-secondary));
+  --messaging-text-muted: hsl(var(--whatsapp-text-muted));
+  --messaging-border: hsl(var(--whatsapp-border));
+  --messaging-green: hsl(var(--whatsapp-green));
+  --messaging-green-dark: hsl(var(--whatsapp-green-dark));
+  --messaging-input-bg: hsl(var(--whatsapp-input-bg));
+  --messaging-search-bg: hsl(var(--whatsapp-search-bg));
+  --messaging-timestamp: hsl(var(--whatsapp-timestamp));
+  --messaging-unread: hsl(var(--whatsapp-unread));
+  --messaging-checkmark: hsl(var(--whatsapp-checkmark));
+
+  /* Message Bubble Variables */
+  --message-sent-bg: hsl(var(--whatsapp-green-dark));
+  --message-received-bg: hsl(var(--whatsapp-message-bg));
+  --message-sent-text: hsl(220 20% 98%);
+  --message-received-text: hsl(var(--whatsapp-text-primary));
+}
+
+/* WhatsApp-style animations */
+@keyframes message-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* WhatsApp-style scrollbar */
+.whatsapp-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.whatsapp-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.whatsapp-scrollbar::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--whatsapp-border));
+  border-radius: 3px;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

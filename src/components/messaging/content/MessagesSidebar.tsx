@@ -70,12 +70,22 @@ const MessagesSidebar: React.FC<MessagesSidebarProps> = ({
   const displayConversations = getFilteredConversations();
 
   return (
-    <div className="w-1/3 border-r flex flex-col h-full">
-      <div className="p-4 border-b flex-shrink-0">
-        <h2 className="text-lg font-semibold">Messages</h2>
+    <div className="w-1/3 flex flex-col h-full" style={{ backgroundColor: 'var(--messaging-sidebar-bg)', borderRight: '1px solid var(--messaging-border)' }}>
+      {/* WhatsApp Header */}
+      <div className="px-4 py-3 flex items-center justify-between flex-shrink-0" style={{ backgroundColor: 'var(--messaging-sidebar-bg)', borderBottom: '1px solid var(--messaging-border)' }}>
+        <h2 className="text-xl font-semibold" style={{ color: 'var(--messaging-text-primary)' }}>WhatsApp</h2>
+        <div className="flex items-center gap-3">
+          <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--messaging-text-secondary)' }}>
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </button>
+        </div>
       </div>
       
-      <div className="flex-shrink-0 p-3">
+      {/* Notifications */}
+      <div className="flex-shrink-0 px-4 py-2">
         <EnhancedNotifications
           unreadCount={totalUnread}
           soundEnabled={soundEnabled}
@@ -85,6 +95,7 @@ const MessagesSidebar: React.FC<MessagesSidebarProps> = ({
         />
       </div>
 
+      {/* Filters */}
       <div className="flex-shrink-0">
         <ConversationFilters
           activeFilter={activeFilter}
@@ -93,6 +104,7 @@ const MessagesSidebar: React.FC<MessagesSidebarProps> = ({
         />
       </div>
       
+      {/* Search */}
       <div className="flex-shrink-0">
         <ConversationSearch
           conversations={conversations}
@@ -100,6 +112,7 @@ const MessagesSidebar: React.FC<MessagesSidebarProps> = ({
         />
       </div>
       
+      {/* Conversations List */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <ConversationList
           conversations={displayConversations}

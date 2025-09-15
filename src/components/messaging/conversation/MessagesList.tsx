@@ -37,7 +37,7 @@ const MessagesList: React.FC<MessagesListProps> = ({
   }
 
   return (
-    <div className="flex-grow overflow-y-auto px-4 py-2">
+    <div className="flex-grow overflow-y-auto px-2 py-2 whatsapp-scrollbar" style={{ backgroundColor: 'var(--messaging-main-bg)' }}>
       {messages.map((message) => (
         <MessageBubble
           key={message.id}
