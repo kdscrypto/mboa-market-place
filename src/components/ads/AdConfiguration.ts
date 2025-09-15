@@ -2,24 +2,24 @@
 // Replace these with your actual Adsterra zone IDs
 
 export const ADSTERRA_ZONES = {
-  // Banner Ads
-  HEADER_BANNER: "header-banner-1", // 728x90 leaderboard
-  FOOTER_BANNER: "footer-banner-1", // 728x90 or 320x100
-  SIDEBAR_BANNER: "sidebar-banner-1", // 300x250 rectangle
-  CONTENT_BANNER: "content-banner-1", // 728x90 or 320x100
+  // Banner Ads - REPLACE WITH YOUR REAL ADSTERRA ZONE IDs
+  HEADER_BANNER: "YOUR_REAL_HEADER_BANNER_ZONE_ID", // 728x90 leaderboard
+  FOOTER_BANNER: "YOUR_REAL_FOOTER_BANNER_ZONE_ID", // 728x90 or 320x100
+  SIDEBAR_BANNER: "YOUR_REAL_SIDEBAR_BANNER_ZONE_ID", // 300x250 rectangle
+  CONTENT_BANNER: "YOUR_REAL_CONTENT_BANNER_ZONE_ID", // 728x90 or 320x100
   
-  // Native Ads - Real Zone ID
+  // Native Ads - Real Zone ID (WORKING)
   SEARCH_NATIVE: "723f32db77c60f4499146c57ce5844c2", // In search results
   PREMIUM_NATIVE: "723f32db77c60f4499146c57ce5844c2", // In premium ads grid
   CATEGORY_NATIVE: "723f32db77c60f4499146c57ce5844c2", // In category pages
   
-  // Mobile Ads - Real Zone ID
+  // Mobile Ads - Real Zone ID (WORKING)  
   MOBILE_SOCIAL_BAR: "fe10e69177de8cccddb46f67064b9c9b", // Social bar for mobile
-  MOBILE_BANNER: "mobile-banner-1", // Mobile banner
+  MOBILE_BANNER: "YOUR_REAL_MOBILE_BANNER_ZONE_ID", // Mobile banner
   
-  // Ad Detail Page
-  AD_DETAIL_SIDEBAR: "ad-detail-sidebar-1", // 300x250 in ad detail
-  AD_DETAIL_CONTENT: "ad-detail-content-1", // In content area
+  // Ad Detail Page - REPLACE WITH REAL IDs
+  AD_DETAIL_SIDEBAR: "YOUR_REAL_AD_DETAIL_SIDEBAR_ZONE_ID", // 300x250 in ad detail
+  AD_DETAIL_CONTENT: "YOUR_REAL_AD_DETAIL_CONTENT_ZONE_ID", // In content area
 } as const;
 
 export type AdsterraZoneId = typeof ADSTERRA_ZONES[keyof typeof ADSTERRA_ZONES];

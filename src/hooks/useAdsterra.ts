@@ -98,16 +98,52 @@ export const useAdsterra = (adConfig: any) => {
 };
 
 export const useAdsterraBanner = (zoneId: string, format: string = 'banner') => {
-  const config = {
-    key: zoneId,
-    format: format,
-    height: format === 'banner' ? 250 : 300,
-    width: format === 'banner' ? 300 : 728,
-    params: {}
-  };
-  
-  console.log(`🎨 Initializing Adsterra Banner - Zone: ${zoneId}, Format: ${format}`);
-  return useAdsterra(config);
+  const adRef = useRef<HTMLDivElement>(null);
+  const isLoaded = useRef(false);
+  const manager = AdsterraManager.getInstance();
+
+  useEffect(() => {
+    if (!adRef.current || isLoaded.current) return;
+
+    const loadBannerAd = async () => {
+      try {
+        console.log(`🎨 Initializing Adsterra Banner - Zone: ${zoneId}, Format: ${format}`);
+        
+        // Set up the container with proper attributes
+        if (adRef.current) {
+          adRef.current.id = `container-${zoneId}`;
+          adRef.current.setAttribute('data-zone', zoneId);
+        }
+        
+        // Initialize atAsyncOptions for banner ads
+        manager.initializeAsyncOptions();
+        
+        const config = {
+          key: zoneId,
+          format: format,
+          height: format === 'banner' ? 250 : (format === 'leaderboard' ? 90 : 600),
+          width: format === 'banner' ? 300 : (format === 'leaderboard' ? 728 : 160),
+          params: {}
+        };
+        
+        // Push configuration
+        window.atAsyncOptions!.push(config);
+        
+        // Load the async script
+        await manager.loadScript('https://www.profitabledisplaycontent.com/assets/js/async.min.js');
+        
+        isLoaded.current = true;
+        console.log(`✅ Adsterra Banner initialized for zone: ${zoneId}`);
+        
+      } catch (error) {
+        console.error('💥 Error loading Adsterra Banner:', error);
+      }
+    };
+
+    loadBannerAd();
+  }, [zoneId, format, manager]);
+
+  return { adRef };
 };
 
 export const useAdsterraNative = (zoneId: string) => {
@@ -122,14 +158,22 @@ export const useAdsterraNative = (zoneId: string) => {
       try {
         console.log(`🎯 Initializing Adsterra Native - Zone: ${zoneId}`);
         
-        // Load the specific native banner script
-        const scriptSrc = '//pl27571954.revenuecpmgate.com/723f32db77c60f4499146c57ce5844c2/invoke.js';
+        // Use the zoneId to construct the proper script URL
+        // This assumes your native ad script follows Adsterra's standard pattern
+        const scriptSrc = `//pl27571954.revenuecpmgate.com/${zoneId}/invoke.js`;
         await manager.loadScript(`https:${scriptSrc}`);
+        
+        // Set up the container with the proper ID that Adsterra expects
+        if (adRef.current) {
+          adRef.current.id = `container-${zoneId}`;
+          console.log(`📦 Container set up with ID: container-${zoneId}`);
+        }
         
         isLoaded.current = true;
         console.log(`✅ Adsterra Native Banner initialized for zone: ${zoneId}`);
       } catch (error) {
         console.error('💥 Error loading Adsterra Native Banner:', error);
+        console.error('Script URL attempted:', `https://pl27571954.revenuecpmgate.com/${zoneId}/invoke.js`);
       }
     };
 

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { ADSTERRA_ZONES } from "./AdConfiguration";
+import AdsterraDiagnostic from "./AdsterraDiagnostic";
 
 interface SystemCheck {
   name: string;
@@ -261,83 +262,87 @@ const AdsterraSystemCheck: React.FC = () => {
   }, [hasRun, isRunning, runSystemChecks]);
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          🔍 Vérification Système Adsterra
-          {overallStatus && (
-            <div className="flex gap-2 ml-auto">
-              {overallStatus.errors > 0 && (
-                <Badge variant="destructive">{overallStatus.errors} erreur(s)</Badge>
+    <div className="space-y-6">
+      <AdsterraDiagnostic />
+      
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            🔍 Vérification Système Adsterra
+            {overallStatus && (
+              <div className="flex gap-2 ml-auto">
+                {overallStatus.errors > 0 && (
+                  <Badge variant="destructive">{overallStatus.errors} erreur(s)</Badge>
+                )}
+                {overallStatus.warnings > 0 && (
+                  <Badge variant="secondary">{overallStatus.warnings} avertissement(s)</Badge>
+                )}
+                <Badge variant="default">{overallStatus.success} OK</Badge>
+              </div>
+            )}
+          </CardTitle>
+          <Button 
+            onClick={() => {
+              console.log('AdsterraSystemCheck: Manual recheck triggered...');
+              setHasRun(false);
+              runSystemChecks();
+            }} 
+            disabled={isRunning}
+            className="w-fit"
+          >
+            {isRunning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {isRunning ? 'Vérification...' : 'Relancer les vérifications'}
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {checks.map((check, index) => (
+            <div key={index} className="border rounded-lg p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(check.status)}
+                  <h4 className="font-medium">{check.name}</h4>
+                </div>
+                {getStatusBadge(check.status)}
+              </div>
+              <p className="text-sm text-gray-600">{check.details}</p>
+              {check.recommendations && (
+                <div className="mt-2 p-2 bg-yellow-50 rounded border-l-4 border-yellow-400">
+                  <p className="text-sm font-medium text-yellow-800 mb-1">Recommandations:</p>
+                  <ul className="text-sm text-yellow-700 list-disc list-inside space-y-1">
+                    {check.recommendations.map((rec, i) => (
+                      <li key={i}>{rec}</li>
+                    ))}
+                  </ul>
+                </div>
               )}
-              {overallStatus.warnings > 0 && (
-                <Badge variant="secondary">{overallStatus.warnings} avertissement(s)</Badge>
+            </div>
+          ))}
+
+          {checks.length > 0 && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+              <h4 className="font-medium text-blue-800 mb-2">📋 Résumé pour la production:</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Scripts Adsterra: {checks[0]?.status === 'success' ? '✅' : '❌'}</li>
+                <li>• Clés authentiques: {checks[2]?.status === 'success' ? '✅' : '❌'}</li>
+                <li>• Analytics configuré: {checks[3]?.status === 'success' ? '✅' : '❌'}</li>
+                <li>• Fallback adblocker: {checks[4]?.status === 'success' ? '✅' : '❌'}</li>
+                <li>• Mobile social bar: {checks[5]?.status === 'success' ? '✅' : '❌'}</li>
+              </ul>
+              {overallStatus && overallStatus.errors === 0 && (
+                <div className="mt-3 p-2 bg-green-100 rounded text-green-800 font-medium">
+                  🚀 Système prêt pour la production !
+                </div>
               )}
-              <Badge variant="default">{overallStatus.success} OK</Badge>
+              {overallStatus && overallStatus.errors > 0 && (
+                <div className="mt-3 p-2 bg-red-100 rounded text-red-800 font-medium">
+                  ⚠️ Problèmes détectés - Corrigez avant la production !
+                </div>
+              )}
             </div>
           )}
-        </CardTitle>
-        <Button 
-          onClick={() => {
-            console.log('AdsterraSystemCheck: Manual recheck triggered...');
-            setHasRun(false);
-            runSystemChecks();
-          }} 
-          disabled={isRunning}
-          className="w-fit"
-        >
-          {isRunning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-          {isRunning ? 'Vérification...' : 'Relancer les vérifications'}
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {checks.map((check, index) => (
-          <div key={index} className="border rounded-lg p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {getStatusIcon(check.status)}
-                <h4 className="font-medium">{check.name}</h4>
-              </div>
-              {getStatusBadge(check.status)}
-            </div>
-            <p className="text-sm text-gray-600">{check.details}</p>
-            {check.recommendations && (
-              <div className="mt-2 p-2 bg-yellow-50 rounded border-l-4 border-yellow-400">
-                <p className="text-sm font-medium text-yellow-800 mb-1">Recommandations:</p>
-                <ul className="text-sm text-yellow-700 list-disc list-inside space-y-1">
-                  {check.recommendations.map((rec, i) => (
-                    <li key={i}>{rec}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {checks.length > 0 && (
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-            <h4 className="font-medium text-blue-800 mb-2">📋 Résumé pour la production:</h4>
-            <ul className="text-sm text-blue-700 space-y-1">
-              <li>• Scripts Adsterra: {checks[0]?.status === 'success' ? '✅' : '❌'}</li>
-              <li>• Clés authentiques: {checks[2]?.status === 'success' ? '✅' : '❌'}</li>
-              <li>• Analytics configuré: {checks[3]?.status === 'success' ? '✅' : '❌'}</li>
-              <li>• Fallback adblocker: {checks[4]?.status === 'success' ? '✅' : '❌'}</li>
-              <li>• Mobile social bar: {checks[5]?.status === 'success' ? '✅' : '❌'}</li>
-            </ul>
-            {overallStatus && overallStatus.errors === 0 && (
-              <div className="mt-3 p-2 bg-green-100 rounded text-green-800 font-medium">
-                🚀 Système prêt pour la production !
-              </div>
-            )}
-            {overallStatus && overallStatus.errors > 0 && (
-              <div className="mt-3 p-2 bg-red-100 rounded text-red-800 font-medium">
-                ⚠️ Problèmes détectés - Corrigez avant la production !
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
