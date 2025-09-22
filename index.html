@@ -36,12 +36,109 @@
       .font-loaded body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     </style>
     
-    <!-- Initialize Adsterra global configuration -->
+    <!-- Deferred Adsterra initialization - loads after critical rendering -->
     <script type="text/javascript">
-      // Initialize Adsterra configuration objects globally
-      window.atAsyncOptions = window.atAsyncOptions || [];
-      window.atOptions = window.atOptions || {};
-      console.log('🔧 Adsterra global configuration initialized');
+      // Performance-optimized Adsterra initialization
+      window.AdsterraPerformance = {
+        isInitialized: false,
+        isLCPComplete: false,
+        isIdleTimeReached: false,
+        pendingAds: [],
+        
+        // Initialize when performance conditions are met
+        init: function() {
+          if (this.isInitialized) return;
+          
+          window.atAsyncOptions = window.atAsyncOptions || [];
+          window.atOptions = window.atOptions || {};
+          this.isInitialized = true;
+          console.log('🚀 Adsterra deferred initialization complete');
+          
+          // Process any pending ads
+          this.processPendingAds();
+        },
+        
+        // Queue ads until optimal loading time
+        queueAd: function(adLoader) {
+          if (this.canLoadAds()) {
+            adLoader();
+          } else {
+            this.pendingAds.push(adLoader);
+          }
+        },
+        
+        // Check if conditions are right for ad loading
+        canLoadAds: function() {
+          return this.isLCPComplete && this.isIdleTimeReached && this.isInitialized;
+        },
+        
+        // Process queued ads when ready
+        processPendingAds: function() {
+          if (this.canLoadAds()) {
+            while (this.pendingAds.length > 0) {
+              const adLoader = this.pendingAds.shift();
+              if (adLoader) {
+                // Use requestIdleCallback for non-blocking execution
+                if (window.requestIdleCallback) {
+                  window.requestIdleCallback(adLoader);
+                } else {
+                  setTimeout(adLoader, 100);
+                }
+              }
+            }
+          }
+        }
+      };
+      
+      // Monitor LCP completion
+      if ('PerformanceObserver' in window) {
+        const lcpObserver = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          const lastEntry = entries[entries.length - 1];
+          if (lastEntry && lastEntry.startTime < 3000) { // LCP under 3s is good
+            window.AdsterraPerformance.isLCPComplete = true;
+            console.log('📊 LCP completed, ads can start loading');
+            window.AdsterraPerformance.processPendingAds();
+          }
+        });
+        lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+        
+        // Fallback: If no LCP detected within 5s, allow ads anyway
+        setTimeout(() => {
+          if (!window.AdsterraPerformance.isLCPComplete) {
+            window.AdsterraPerformance.isLCPComplete = true;
+            console.log('⏰ LCP timeout reached, allowing ads to load');
+            window.AdsterraPerformance.processPendingAds();
+          }
+        }, 5000);
+      } else {
+        // Fallback for browsers without PerformanceObserver
+        setTimeout(() => {
+          window.AdsterraPerformance.isLCPComplete = true;
+          window.AdsterraPerformance.processPendingAds();
+        }, 2000);
+      }
+      
+      // Wait for idle time before allowing ads
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => {
+          window.AdsterraPerformance.isIdleTimeReached = true;
+          console.log('⏳ Browser idle time reached, ads ready');
+          window.AdsterraPerformance.processPendingAds();
+        }, { timeout: 3000 });
+      } else {
+        setTimeout(() => {
+          window.AdsterraPerformance.isIdleTimeReached = true;
+          window.AdsterraPerformance.processPendingAds();
+        }, 2000);
+      }
+      
+      // Initialize after page load with additional delay
+      window.addEventListener('load', function() {
+        setTimeout(() => {
+          window.AdsterraPerformance.init();
+        }, 1500); // 1.5s delay after load
+      });
     </script>
     
     <!-- Load fonts asynchronously to prevent render blocking -->

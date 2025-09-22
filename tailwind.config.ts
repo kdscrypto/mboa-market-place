@@ -63,86 +63,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Modern Mboa Market colors
-				'mboa-orange': 'var(--color-primary-accent)',
-				'mboa-green': 'var(--color-green)', 
-				'mboa-blue': 'var(--color-blue)',
-				'mboa-gray': 'var(--color-surface-elevated)',
-				'mboa-dark': 'var(--color-text-primary)',
-				
-				// Theme-aware semantic colors
-				'theme-bg': 'var(--color-background)',
-				'theme-surface': 'var(--color-surface)',
-				'theme-surface-elevated': 'var(--color-surface-elevated)',
-				'theme-text': 'var(--color-text-primary)',
-				'theme-text-secondary': 'var(--color-text-secondary)',
-				'theme-border': 'var(--color-border)',
-				'theme-header-bg': 'var(--color-header-bg)',
-				'theme-header-text': 'var(--color-header-text)',
-				'theme-header-border': 'var(--color-header-border)',
-				
-				// Extended semantic colors
-				'theme-success': 'var(--color-success)',
-				'theme-warning': 'var(--color-warning)',
-				'theme-error': 'var(--color-error)',
-				'theme-info': 'var(--color-info)',
-				
-				// Neutral scale
-				'theme-neutral': {
-					50: 'var(--color-neutral-50)',
-					100: 'var(--color-neutral-100)',
-					200: 'var(--color-neutral-200)',
-					300: 'var(--color-neutral-300)',
-					400: 'var(--color-neutral-400)',
-					500: 'var(--color-neutral-500)',
-					600: 'var(--color-neutral-600)',
-					700: 'var(--color-neutral-700)',
-					800: 'var(--color-neutral-800)',
-					900: 'var(--color-neutral-900)',
-				},
-				
-				// Gradient colors
-				'gradient-start': 'var(--color-gradient-start)',
-				'gradient-end': 'var(--color-gradient-end)',
-				'gradient-accent': 'var(--color-gradient-accent)',
-				
-				// Modern color palette additions
-				'modern-orange': {
-					50: '#FFF5F2',
-					100: '#FFE8E0',
-					200: '#FFD1C1',
-					300: '#FFB4A1',
-					400: '#FF8A65',
-					500: '#FF6B35',
-					600: '#E55A2B',
-					700: '#CC4A21',
-					800: '#B23B17',
-					900: '#992C0D',
-				},
-				'modern-green': {
-					50: '#F0FDFA',
-					100: '#CCFBF1',
-					200: '#99F6E4',
-					300: '#5EEAD4',
-					400: '#2DD4BF',
-					500: '#00C896',
-					600: '#0DB092',
-					700: '#059669',
-					800: '#047857',
-					900: '#064E3B',
-				},
-				'modern-blue': {
-					50: '#EFF6FF',
-					100: '#DBEAFE',
-					200: '#BFDBFE',
-					300: '#93C5FD',
-					400: '#60A5FA',
-					500: '#4A90E2',
-					600: '#2563EB',
-					700: '#1D4ED8',
-					800: '#1E40AF',
-					900: '#1E3A8A',
-				},
+				'mboa-orange': {
+					DEFAULT: 'hsl(var(--mboa-orange))',
+					light: 'hsl(var(--mboa-orange-light))',
+					dark: 'hsl(var(--mboa-orange-dark))'
+				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -219,12 +144,6 @@ export default {
 				'gradient-shift': 'gradient-shift 3s ease-in-out infinite',
 				'modern-pulse': 'modern-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
 				'smooth-bounce': 'smooth-bounce 1s ease-in-out infinite'
-			},
-			backgroundImage: {
-				'gradient-mboa': 'linear-gradient(135deg, var(--color-gradient-start) 0%, var(--color-gradient-end) 100%)',
-				'gradient-mboa-accent': 'linear-gradient(135deg, var(--color-gradient-start) 0%, var(--color-gradient-accent) 50%, var(--color-gradient-end) 100%)',
-				'gradient-modern': 'linear-gradient(135deg, #FF6B35 0%, #4A90E2 100%)',
-				'gradient-modern-dark': 'linear-gradient(135deg, #FF8A65 0%, #64B5F6 100%)',
 			},
 			boxShadow: {
 				'modern': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
