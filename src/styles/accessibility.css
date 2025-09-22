@@ -1,7 +1,6 @@
 
-@layer utilities {
-  /* Accessibility features */
-  .accessibility-high-contrast {
+/* Accessibility features */
+.accessibility-high-contrast {
     filter: contrast(150%) brightness(110%);
   }
   
@@ -62,10 +61,9 @@
     transition: transform 0.3s ease;
   }
   
-  .skip-link:focus {
-    transform: translateY(0);
-  }
-  }
+.skip-link:focus {
+  transform: translateY(0);
+}
   
   /* High contrast button variants for better accessibility */
   .btn-primary-accessible {
