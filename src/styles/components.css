@@ -1,6 +1,7 @@
 
-/* Enhanced dark mode form styling */
-.dark input[type="text"],
+@layer utilities {
+  /* Enhanced dark mode form styling */
+  .dark input[type="text"],
   .dark input[type="email"], 
   .dark input[type="password"],
   .dark input[type="tel"],
@@ -259,3 +260,4 @@
   .dark .text-green-800 {
     color: rgb(134, 239, 172) !important;
   }
+}
