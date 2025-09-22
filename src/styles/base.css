@@ -27,6 +27,11 @@
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
   --radius: 0.5rem;
+  
+  /* Mboa Market Brand Colors */
+  --mboa-orange: 14 100% 57%;
+  --mboa-orange-light: 14 100% 67%;
+  --mboa-orange-dark: 14 100% 47%;
 }
 
 .dark {
@@ -54,6 +59,11 @@
   --chart-3: 30 80% 55%;
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
+  
+  /* Mboa Market Brand Colors - same in dark mode */
+  --mboa-orange: 14 100% 57%;
+  --mboa-orange-light: 14 100% 67%;
+  --mboa-orange-dark: 14 100% 47%;
 }
 
 * {

@@ -62,6 +62,11 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				'mboa-orange': {
+					DEFAULT: 'hsl(var(--mboa-orange))',
+					light: 'hsl(var(--mboa-orange-light))',
+					dark: 'hsl(var(--mboa-orange-dark))'
 				}
 			},
 			borderRadius: {
