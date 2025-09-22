@@ -1,6 +1,8 @@
 // PHASE 3: Performance-optimized lazy loading with Intersection Observer
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { AdsterraZoneValidator, AdsterraUrlMapper, getConfigByZoneId, type AdsterraZoneConfig } from '@/config/adsterra';
+import { useAdAnalytics } from './useAdAnalytics';
+import { useAdPerformanceMonitor } from './useAdPerformanceMonitor';
 
 declare global {
   interface Window {
@@ -187,6 +189,10 @@ class LazyAdsterraManager {
 // Enhanced lazy loading hook with intersection observer
 export const useAdsterraLazy = (zoneKeyOrId: string, adType: 'banner' | 'native' | 'social' = 'banner') => {
   const adRef = useRef<HTMLDivElement>(null);
+  
+  // Integrate analytics and performance monitoring
+  const { trackImpression, trackClick, trackLoad, trackError } = useAdAnalytics(zoneKeyOrId, `lazy_${adType}`);
+  const { trackAdLoadStart, trackAdLoadEnd } = useAdPerformanceMonitor();
   const [state, setState] = useState<AdLoadState>({
     isVisible: false,
     isLoading: false,
