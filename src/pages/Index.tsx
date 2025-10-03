@@ -17,7 +17,8 @@ import { useOptimizedCallback } from "@/hooks/usePerformanceHooks";
 const AdsSection = lazy(() => import("@/components/home/AdsSection"));
 const FeaturesSections = lazy(() => import("@/components/home/FeaturesSections"));
 const CTASection = lazy(() => import("@/components/home/CTASection"));
-const AdsterraNativeBanner = lazy(() => import("@/components/ads/AdsterraNativeBanner"));
+// Import AdsterraNativeBanner directly (not lazy) for debugging
+import AdsterraNativeBanner from "@/components/ads/AdsterraNativeBanner";
 const GoogleAdBanner = lazy(() => import("@/components/ads/GoogleAdBanner"));
 
 const Index = () => {
@@ -93,6 +94,11 @@ const Index = () => {
     navigate(`/recherche?${searchParams.toString()}`);
   }, [navigate]);
 
+  // Debug: Log before render
+  useEffect(() => {
+    console.log('=== Index component: About to render AdsterraNativeBanner ===');
+  }, []);
+
   return (
     <div className="min-h-viewport">
       <Header />
@@ -122,14 +128,12 @@ const Index = () => {
           )}
         </Suspense>
         
-        {/* Adsterra Native Banner Placement */}
-        <Suspense fallback={<div className="h-48 bg-gray-50 animate-pulse rounded-lg mx-4 mb-8" />}>
-          <div className="mboa-container mb-8">
-            <AdsterraNativeBanner
-              title="Recommandé pour vous"
-            />
-          </div>
-        </Suspense>
+        {/* Adsterra Native Banner Placement - Direct render for debugging */}
+        <div className="mboa-container mb-8">
+          <AdsterraNativeBanner
+            title="Recommandé pour vous"
+          />
+        </div>
         
         <Suspense fallback={<div className="h-64 bg-gray-50 animate-pulse rounded-lg mx-4 mb-8" />}>
           <FeaturesSections />
