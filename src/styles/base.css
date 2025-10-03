@@ -32,6 +32,45 @@
   --mboa-orange: 14 100% 57%;
   --mboa-orange-light: 14 100% 67%;
   --mboa-orange-dark: 14 100% 47%;
+
+  /* Theme bridge tokens used across components (light & dark auto-map) */
+  --color-background: hsl(var(--background));
+  --color-surface: hsl(var(--card));
+  --color-surface-elevated: hsl(var(--muted));
+  --color-text-primary: hsl(var(--foreground));
+  --color-text-secondary: hsl(var(--muted-foreground));
+  --color-border: hsl(var(--border));
+  --color-primary-accent: hsl(var(--mboa-orange));
+
+  /* Header */
+  --color-header-bg: hsl(var(--background));
+  --color-header-border: hsl(var(--border));
+  --color-header-text: hsl(var(--foreground));
+
+  /* Buttons */
+  --color-primary-button-bg: hsl(var(--mboa-orange));
+  --color-primary-button-text: hsl(var(--primary-foreground));
+  --color-secondary-button-bg: hsl(var(--secondary));
+  --color-secondary-button-text: hsl(var(--secondary-foreground));
+  --color-secondary-button-border: hsl(var(--border));
+
+  /* CTA */
+  --color-cta-bg: hsl(var(--mboa-orange));
+  --color-cta-text: hsl(0 0% 100%);
+
+  /* Neutrals & utility tokens */
+  --color-neutral-100: hsl(210 40% 98%);
+  --color-neutral-200: hsl(214.3 31.8% 91.4%);
+  --color-neutral-600: hsl(215.4 16.3% 46.9%);
+  --color-neutral-700: hsl(222.2 47.4% 11.2%);
+  --color-neutral-800: hsl(222.2 84% 4.9%);
+  --color-green: hsl(142 71% 45%);
+  --color-warning: hsl(38 92% 50%);
+
+  /* Gradients */
+  --color-gradient-start: hsl(var(--mboa-orange));
+  --color-gradient-accent: hsl(var(--mboa-orange-light));
+  --color-gradient-end: hsl(var(--mboa-orange-dark));
 }
 
 .dark {
