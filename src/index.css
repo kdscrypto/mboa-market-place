@@ -1,10 +1,9 @@
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import url("./styles/base.css");
 @import url("./styles/utilities.css");
 @import url("./styles/components.css");
 @import url("./styles/accessibility.css");
 @import url("./styles/mobile.css");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAnalyticsSummary, getAnalyticsData } from "@/hooks/useAdAnalytics";
+import { AdAnalyticsManager } from "@/hooks/useAdAnalytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { TrendingUp, Eye, MousePointer, DollarSign } from "lucide-react";
@@ -18,40 +18,22 @@ const AdAnalyticsDashboard: React.FC<AdAnalyticsDashboardProps> = ({ className }
   });
 
   useEffect(() => {
-    // Load initial data from analytics
-    const loadAnalytics = () => {
-      try {
-        const summaryData = getAnalyticsSummary();
-        const data = getAnalyticsData();
-        
-        setSummary({
-          totalImpressions: summaryData.totalImpressions,
-          totalClicks: summaryData.totalClicks,
-          totalRevenue: 0, // Not implemented yet
-          averageCTR: summaryData.ctr
-        });
+    const analyticsManager = AdAnalyticsManager.getInstance();
+    const data = analyticsManager.getAnalytics();
+    setAnalytics(data);
 
-        // Convert analytics data to expected format
-        const formattedAnalytics = Object.entries(summaryData.zones.impressions).map(([zoneId, impressions]) => ({
-          placement: zoneId,
-          zoneId,
-          impressions: impressions as number,
-          clicks: (summaryData.zones.clicks[zoneId] as number) || 0,
-          ctr: summaryData.ctr / 100,
-          revenue: 0
-        }));
-        
-        setAnalytics(formattedAnalytics);
-      } catch (error) {
-        console.error("Error loading analytics:", error);
-      }
-    };
+    // Calculate summary
+    const totalImpressions = data.reduce((sum, item) => sum + item.impressions, 0);
+    const totalClicks = data.reduce((sum, item) => sum + item.clicks, 0);
+    const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
+    const averageCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
 
-    loadAnalytics();
-    
-    // Set up polling for real-time updates
-    const interval = setInterval(loadAnalytics, 30000);
-    return () => clearInterval(interval);
+    setSummary({
+      totalImpressions,
+      totalClicks,
+      totalRevenue,
+      averageCTR
+    });
   }, []);
 
   const chartData = analytics.map(item => ({
