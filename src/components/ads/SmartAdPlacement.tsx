@@ -80,7 +80,6 @@ const SmartAdPlacement: React.FC<SmartAdPlacementProps> = ({
     if (effectiveFormat === 'native') {
       return (
         <AdsterraNativeBanner
-          zoneId={zoneId}
           className={className}
           title="Recommandé"
         />

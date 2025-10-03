@@ -126,7 +126,6 @@ const Index = () => {
         <Suspense fallback={<div className="h-48 bg-gray-50 animate-pulse rounded-lg mx-4 mb-8" />}>
           <div className="mboa-container mb-8">
             <AdsterraNativeBanner
-              zoneId="723f32db77c60f4499146c57ce5844c2"
               title="Recommandé pour vous"
             />
           </div>

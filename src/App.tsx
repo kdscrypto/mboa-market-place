@@ -87,7 +87,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-          <AdsterraSocialBarProvider zoneId="fe10e69177de8cccddb46f67064b9c9b">
+          <AdsterraSocialBarProvider>
             <OrientationGuard>
             <BrowserRouter>
               <Routes>

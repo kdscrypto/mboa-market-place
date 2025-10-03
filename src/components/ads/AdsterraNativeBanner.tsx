@@ -1,52 +1,65 @@
 import React, { useEffect, useState } from "react";
-import { useAdsterraNative } from "@/hooks/useAdsterra";
 import { useAdAnalytics } from "@/hooks/useAdAnalytics";
 import AdContainer from "./AdContainer";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 interface AdsterraNativeBannerProps {
-  zoneId: string;
   className?: string;
   title?: string;
 }
 
 const AdsterraNativeBanner: React.FC<AdsterraNativeBannerProps> = ({
-  zoneId,
   className,
   title = "Sponsorisé"
 }) => {
-  const { adRef } = useAdsterraNative(zoneId);
-  const { trackImpression, trackClick } = useAdAnalytics(zoneId, `native_${title}`);
+  // Use the exact container ID from your Adsterra dashboard
+  const containerId = "container-723f32db77c60f4499146c57ce5844c2";
+  const scriptSrc = "//pl27571954.revenuecpmgate.com/72/3f/32/db77c60f4499146c57ce5844c2/invoke.js";
+  
+  const { trackImpression, trackClick } = useAdAnalytics(containerId, `native_${title}`);
   const [isLoading, setIsLoading] = useState(true);
   const [hasContent, setHasContent] = useState(false);
 
   const handleImpressionTrack = () => {
     trackImpression();
-    console.log(`📊 Adsterra Native Banner impression tracked for zone: ${zoneId}`);
+    console.log(`📊 Adsterra Native Banner impression tracked`);
   };
 
   const handleAdClick = () => {
     trackClick();
-    console.log(`🖱️ Adsterra Native Banner clicked for zone: ${zoneId}`);
+    console.log(`🖱️ Adsterra Native Banner clicked`);
   };
 
   useEffect(() => {
+    // Create and inject the Adsterra script
+    const script = document.createElement('script');
+    script.async = true;
+    script.setAttribute('data-cfasync', 'false');
+    script.src = scriptSrc;
+    script.id = "adsterra-native-banner-script";
+
+    const container = document.getElementById(containerId);
+    if (container) {
+      container.appendChild(script);
+      console.log(`✅ Adsterra Native Banner script injected`);
+    }
+
     // Check for ad content periodically
     const checkContent = () => {
-      if (adRef.current) {
-        const hasAnyContent = adRef.current.children.length > 0 || 
-                               adRef.current.innerHTML.trim().length > 0;
-        setHasContent(hasAnyContent);
+      if (container) {
+        const hasAnyContent = container.children.length > 1 || // More than just the script
+                               (container.innerHTML.trim().length > 100); // Has substantial content
         
         if (hasAnyContent) {
+          setHasContent(true);
           setIsLoading(false);
-          console.log(`✅ Adsterra Native Banner content loaded for zone: ${zoneId}`);
+          console.log(`✅ Adsterra Native Banner content loaded`);
         }
       }
     };
 
-    // Initial check
+    // Initial check after delay
     const initialTimer = setTimeout(checkContent, 2000);
     
     // Periodic checks for content
@@ -57,16 +70,23 @@ const AdsterraNativeBanner: React.FC<AdsterraNativeBannerProps> = ({
       setIsLoading(false);
       clearInterval(interval);
       if (!hasContent) {
-        console.warn(`⚠️ Adsterra Native Banner: No content loaded after 30s for zone: ${zoneId}`);
+        console.warn(`⚠️ Adsterra Native Banner: No content loaded after 30s`);
       }
     }, 30000);
 
+    // Cleanup function
     return () => {
       clearTimeout(initialTimer);
       clearTimeout(stopTimer);
       clearInterval(interval);
+      
+      const existingScript = document.getElementById("adsterra-native-banner-script");
+      if (existingScript && existingScript.parentNode) {
+        existingScript.parentNode.removeChild(existingScript);
+        console.log(`🧹 Adsterra Native Banner script cleaned up`);
+      }
     };
-  }, [zoneId, hasContent]);
+  }, []);
 
   return (
     <AdContainer
@@ -91,10 +111,9 @@ const AdsterraNativeBanner: React.FC<AdsterraNativeBannerProps> = ({
           </div>
         )}
         
-        {/* Ad content */}
+        {/* Ad content container - Adsterra will inject content here */}
         <div
-          ref={adRef}
-          id={`container-${zoneId}`}
+          id={containerId}
           className={cn(
             "adsterra-native-zone cursor-pointer transition-opacity duration-300",
             hasContent ? "opacity-100" : "opacity-0"
@@ -103,7 +122,6 @@ const AdsterraNativeBanner: React.FC<AdsterraNativeBannerProps> = ({
             minHeight: isLoading ? '0px' : '200px',
             width: '100%'
           }}
-          data-zone={zoneId}
           onClick={handleAdClick}
         />
         
