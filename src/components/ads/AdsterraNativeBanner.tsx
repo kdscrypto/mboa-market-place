@@ -1,77 +1,61 @@
-import React, { useEffect, useRef, useState } from 'react';
+// src/components/ads/AdsterraNativeBanner.tsx (Debugging Version)
+
+import React, { useEffect, useRef } from 'react';
 
 interface AdsterraNativeBannerProps {
   className?: string;
   title?: string;
 }
 
-const AdsterraNativeBanner: React.FC<AdsterraNativeBannerProps> = ({ className, title = "Publicité" }) => {
+const AdsterraNativeBanner: React.FC<AdsterraNativeBannerProps> = ({ className, title = "Ad Container (Waiting for script)" }) => {
+  console.log('--- [STEP 1] AdsterraNativeBanner: Component is rendering ---');
   const adContainerRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log('--- [STEP 2] AdsterraNativeBanner: useEffect hook has started ---');
+
+    // Check if the script was somehow added before
     if (document.getElementById('adsterra-native-banner-script')) {
-      console.log('Adsterra Native Banner script already exists.');
-      setIsLoading(false);
+      console.warn('AdsterraNativeBanner: Script with this ID already exists. Aborting.');
       return;
     }
 
     const container = adContainerRef.current;
+    console.log('--- [STEP 3] AdsterraNativeBanner: Checking container ref ---', container);
+
     if (!container) {
-      console.error('Adsterra Native Banner: Container div not found.');
-      setIsLoading(false);
-      return;
+      console.error('!!! FAILURE !!! AdsterraNativeBanner: Container div ref is null or undefined. useEffect cannot proceed. This is the likely cause of the problem.');
+      return; // Exit because we have nowhere to put the script
     }
 
-    // Set a timeout to hide the loader if no ad loads after 10 seconds
-    const timer = setTimeout(() => {
-      console.log('Adsterra: Ad loading timed out. Hiding loader.');
-      setIsLoading(false);
-    }, 10000);
-
-    console.log('Adsterra Native Banner: Component mounted, creating script...');
+    console.log('--- [STEP 4] AdsterraNativeBanner: Container found. Creating script element... ---');
     const script = document.createElement('script');
     script.id = 'adsterra-native-banner-script';
     script.async = true;
     script.setAttribute('data-cfasync', 'false');
     script.src = "//pl27571954.revenuecpmgate.com/72/3f/32/db77c60f4499146c57ce5844c2/invoke.js";
 
-    script.onload = () => {
-      console.log('Adsterra: invoke.js script has loaded.');
-      clearTimeout(timer);
-      setTimeout(() => setIsLoading(false), 1500);
-    };
-    
-    script.onerror = () => {
-      console.error('Adsterra: invoke.js script failed to load.');
-      clearTimeout(timer);
-      setIsLoading(false);
-    };
-
     container.appendChild(script);
-    console.log('Adsterra Native Banner: Script appended to container.');
+    console.log('--- [STEP 5] AdsterraNativeBanner: SUCCESS! Script appended to container. Check the Network tab now. ---');
 
     return () => {
-      clearTimeout(timer);
+      console.log('AdsterraNativeBanner: Cleanup function running.');
       const existingScript = document.getElementById('adsterra-native-banner-script');
       if (existingScript && existingScript.parentNode) {
         existingScript.parentNode.removeChild(existingScript);
-        console.log('Adsterra Native Banner: Script cleaned up.');
       }
     };
-  }, []);
+  }, []); // Empty array ensures this runs once after the component mounts
 
+  // Render the container with the ref attached
   return (
     <div
       ref={adContainerRef}
       id="container-723f32db77c60f4499146c57ce5844c2"
       className={className}
-      style={{ minHeight: '100px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+      style={{ minHeight: '100px', border: '2px dashed blue', padding: '10px' }} // Added a dashed border for visibility
     >
-      <p style={{ color: '#555' }}>{title}</p>
-      {isLoading && (
-        <span style={{ marginLeft: '10px', color: '#777' }}> Chargement...</span>
-      )}
+      <p style={{ color: '#888' }}>{title}</p>
     </div>
   );
 };
