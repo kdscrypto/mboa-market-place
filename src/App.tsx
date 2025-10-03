@@ -8,7 +8,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { QueryProvider } from "./providers/QueryProvider";
 import { lazy, Suspense } from "react";
 import OrientationGuard from "@/components/mobile/OrientationGuard";
-import AdsterraSocialBarProvider from "@/components/layout/AdsterraSocialBarProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { performanceMonitor } from "@/utils/performanceMonitor";
 import { resourceOptimizer } from "@/utils/resourceOptimizer";
@@ -87,7 +86,6 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-          <AdsterraSocialBarProvider>
             <OrientationGuard>
             <BrowserRouter>
               <Routes>
@@ -254,7 +252,6 @@ function App() {
               </Routes>
             </BrowserRouter>
           </OrientationGuard>
-          </AdsterraSocialBarProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryProvider>
